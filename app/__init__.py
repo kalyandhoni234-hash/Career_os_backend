@@ -7,7 +7,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app, supports_credentials=True, origins=["http://localhost:3000"])
+    CORS(app, supports_credentials=True, origins=[app.config["FRONTEND_URL"]])
 
     db.init_app(app)
     migrate.init_app(app, db)
