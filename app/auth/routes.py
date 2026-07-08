@@ -71,7 +71,7 @@ def me():
 
 @auth_bp.route("/google/login")
 def google_login():
-    redirect_uri = "http://127.0.0.1:5000/api/auth/google/callback"
+    redirect_uri = request.url_root.rstrip("/") + "/api/auth/google/callback"
     return oauth.google.authorize_redirect(redirect_uri)
 
 @auth_bp.route("/google/callback")
