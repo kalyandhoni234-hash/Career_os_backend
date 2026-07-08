@@ -12,4 +12,6 @@ class Config:
     GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
     SESSION_COOKIE_SAMESITE = "Lax"
-    SESSION_COOKIE_SECURE = False  # set True in production (HTTPS)
+    SESSION_COOKIE_SECURE = False
+    GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+    GROQ_API_KEY = os.environ.get("GROQ_API_KEY")

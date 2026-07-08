@@ -1,4 +1,4 @@
-﻿from flask import Blueprint, request, jsonify, make_response
+from flask import Blueprint, request, jsonify, make_response
 from flask_login import login_required, current_user
 from app.extensions import db
 from app.resume.models import Resume
@@ -101,7 +101,8 @@ def export_resume():
 
     projects_html = ""
     for proj in (resume.projects or []):
-        link_html = f" ({_escape(proj.get(chr(108)+chr(105)+chr(110)+chr(107)))})" if proj.get("link") else ""
+        link_val = proj.get("link")
+        link_html = f" ({_escape(link_val)})" if link_val else ""
         projects_html += f"""
         <div class="entry">
             <strong>{_escape(proj.get("name"))}</strong>{link_html}
@@ -152,3 +153,56 @@ def export_resume():
     response.headers["Content-Disposition"] = "attachment; filename=resume.pdf"
     return response
 
+@resume_bp.route("/review", methods=["POST"])
+@login_required
+def review_resume():
+    from app.ai_service import generate_text
+    import json
+
+    resume = Resume.query.filter_by(user_id=current_user.id).first()
+    if not resume:
+        return jsonify({"error": "No resume found"}), 404
+
+    experience_lines = []
+    for exp in (resume.experience or []):
+        role = exp.get("role", "")
+        company = exp.get("company", "")
+        bullets = exp.get("bullets", "")
+        experience_lines.append(f"- {role} at {company}: {bullets}")
+    experience_text = "\n".join(experience_lines)
+
+    resume_text = f"""
+Full Name: {resume.full_name}
+Summary: {resume.summary}
+Skills: {", ".join(resume.skills or [])}
+Experience:
+{experience_text}
+"""
+
+    system_instruction = """You are an expert ATS (Applicant Tracking System) resume reviewer.
+Analyze the resume and respond ONLY in valid JSON with this exact structure:
+{
+  "ats_score": <number 0-100>,
+  "strengths": ["...", "..."],
+  "weaknesses": ["...", "..."],
+  "missing_keywords": ["...", "..."],
+  "weak_action_verbs": ["...", "..."],
+  "suggestions": ["...", "..."]
+}
+Do not include any text outside the JSON object."""
+
+    raw_response = generate_text(resume_text, model="gemini", system_instruction=system_instruction)
+
+    cleaned = raw_response.strip()
+    if cleaned.startswith("```"):
+        parts = cleaned.split("```")
+        cleaned = parts[1] if len(parts) > 1 else cleaned
+        if cleaned.startswith("json"):
+            cleaned = cleaned[4:]
+
+    try:
+        review_data = json.loads(cleaned)
+    except json.JSONDecodeError:
+        return jsonify({"error": "Failed to parse AI response", "raw": raw_response}), 500
+
+    return jsonify({"review": review_data}), 200

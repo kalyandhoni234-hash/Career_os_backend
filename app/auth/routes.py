@@ -129,3 +129,10 @@ def reset_password():
     db.session.commit()
 
     return jsonify({"message": "Password reset successful"}), 200
+
+
+@auth_bp.route("/ai-test", methods=["GET"])
+def ai_test():
+    from app.ai_service import generate_text
+    result = generate_text("Say hello in one short sentence.", model="gemini")
+    return jsonify({"response": result})
