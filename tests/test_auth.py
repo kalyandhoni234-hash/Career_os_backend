@@ -8,7 +8,6 @@ def app():
     app = create_app()
     app.config.update({
         "TESTING": True,
-        "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
         "SQLALCHEMY_ENGINE_OPTIONS": {
             "poolclass": StaticPool,
             "connect_args": {"check_same_thread": False},
