@@ -26,6 +26,7 @@ def create_app():
     from app.auth.models import User
     from app.users.models import Profile  # noqa: F401
     from app.resume.models import Resume  # noqa: F401
+    from app.coach.models import CoachMessage  # noqa: F401
 
     @login_manager.user_loader
     def load_user(user_id):
