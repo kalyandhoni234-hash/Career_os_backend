@@ -1,6 +1,6 @@
-﻿from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
-from app.extensions import db
+from app.extensions import db, limiter
 from app.coach.models import CoachMessage
 from app.users.models import Profile
 from app.resume.models import Resume
@@ -21,6 +21,7 @@ def get_history():
 
 @coach_bp.route("/chat", methods=["POST"])
 @login_required
+@limiter.limit("10 per minute")
 def chat():
     from app.ai_service import generate_text
 
@@ -29,6 +30,9 @@ def chat():
 
     if not user_message:
         return jsonify({"error": "Message is required"}), 400
+
+    if len(user_message) > 2000:
+        return jsonify({"error": "Message too long (max 2000 characters)"}), 400
 
     profile = Profile.query.filter_by(user_id=current_user.id).first()
     resume = Resume.query.filter_by(user_id=current_user.id).first()
@@ -85,4 +89,3 @@ def clear_history():
     CoachMessage.query.filter_by(user_id=current_user.id).delete()
     db.session.commit()
     return jsonify({"message": "History cleared"}), 200
-

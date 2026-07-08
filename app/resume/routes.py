@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, make_response
 from flask_login import login_required, current_user
-from app.extensions import db
+from app.extensions import db, limiter
 from app.resume.models import Resume
 
 resume_bp = Blueprint("resume", __name__)
@@ -155,6 +155,7 @@ def export_resume():
 
 @resume_bp.route("/review", methods=["POST"])
 @login_required
+@limiter.limit("5 per minute")
 def review_resume():
     from app.ai_service import generate_text
     import json

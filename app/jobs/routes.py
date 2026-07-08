@@ -44,6 +44,18 @@ def create_job():
     if not company or not role:
         return jsonify({"error": "Company and role are required"}), 400
 
+    if len(company) > 255:
+        return jsonify({"error": "Company name too long (max 255 characters)"}), 400
+
+    if len(role) > 255:
+        return jsonify({"error": "Role too long (max 255 characters)"}), 400
+
+    if len(data.get("notes", "") or "") > 5000:
+        return jsonify({"error": "Notes too long (max 5000 characters)"}), 400
+
+    if len(data.get("job_link", "") or "") > 500:
+        return jsonify({"error": "Job link too long (max 500 characters)"}), 400
+
     status = data.get("status", "applied")
     if status not in VALID_STATUSES:
         return jsonify({"error": f"Status must be one of {VALID_STATUSES}"}), 400
@@ -87,6 +99,18 @@ def update_job(job_id):
         return jsonify({"error": "Job not found"}), 404
 
     data = request.get_json(silent=True) or {}
+
+    if "company" in data and len(data["company"] or "") > 255:
+        return jsonify({"error": "Company name too long (max 255 characters)"}), 400
+
+    if "role" in data and len(data["role"] or "") > 255:
+        return jsonify({"error": "Role too long (max 255 characters)"}), 400
+
+    if "notes" in data and len(data["notes"] or "") > 5000:
+        return jsonify({"error": "Notes too long (max 5000 characters)"}), 400
+
+    if "job_link" in data and len(data["job_link"] or "") > 500:
+        return jsonify({"error": "Job link too long (max 500 characters)"}), 400
 
     if "status" in data:
         if data["status"] not in VALID_STATUSES:
