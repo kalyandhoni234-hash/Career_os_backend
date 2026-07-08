@@ -1,7 +1,7 @@
 from flask import Flask, jsonify
 from flask_cors import CORS
 from config import Config
-from app.extensions import db, migrate, login_manager, bcrypt, oauth
+from app.extensions import db, migrate, login_manager, bcrypt, oauth, limiter
 
 def create_app():
     app = Flask(__name__)
@@ -14,6 +14,7 @@ def create_app():
     login_manager.init_app(app)
     bcrypt.init_app(app)
     oauth.init_app(app)
+    limiter.init_app(app)
 
     oauth.register(
         name="google",
@@ -44,6 +45,13 @@ def create_app():
     app.register_blueprint(resume_bp, url_prefix="/api/resume")
     app.register_blueprint(jobs_bp, url_prefix="/api/jobs")
     app.register_blueprint(coach_bp, url_prefix="/api/coach")
+
+    @app.after_request
+    def set_security_headers(response):
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
 
     @app.route("/health")
     def health():

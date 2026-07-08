@@ -57,3 +57,45 @@ def upsert_profile():
     db.session.commit()
 
     return jsonify({"message": "Profile saved successfully"}), 200
+
+
+@users_bp.route("/dashboard-summary", methods=["GET"])
+@login_required
+def dashboard_summary():
+    from app.resume.models import Resume
+    from app.jobs.models import Job
+    from app.coach.models import CoachMessage
+    from datetime import date
+
+    resume = Resume.query.filter_by(user_id=current_user.id).first()
+    jobs = Job.query.filter_by(user_id=current_user.id).all()
+
+    active_statuses = ["applied", "oa", "interview"]
+    active_applications = len([j for j in jobs if j.status in active_statuses])
+    offers = len([j for j in jobs if j.status == "offer"])
+
+    upcoming_deadlines = sorted(
+        [
+            {"company": j.company, "role": j.role, "deadline": j.deadline.isoformat()}
+            for j in jobs
+            if j.deadline and j.deadline >= date.today() and j.status in active_statuses
+        ],
+        key=lambda x: x["deadline"],
+    )[:3]
+
+    last_message = (
+        CoachMessage.query.filter_by(user_id=current_user.id, role="assistant")
+        .order_by(CoachMessage.created_at.desc())
+        .first()
+    )
+
+    return jsonify({
+        "has_resume": resume is not None,
+        "resume_summary_set": bool(resume and resume.summary),
+        "active_applications": active_applications,
+        "offers": offers,
+        "total_applications": len(jobs),
+        "upcoming_deadlines": upcoming_deadlines,
+        "last_coach_message": last_message.content if last_message else None,
+        "last_coach_message_at": last_message.created_at.isoformat() if last_message else None,
+    }), 200

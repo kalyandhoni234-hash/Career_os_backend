@@ -2,7 +2,7 @@ import secrets
 from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from flask_login import login_user, logout_user, login_required, current_user
-from app.extensions import db, bcrypt, oauth
+from app.extensions import db, bcrypt, oauth, limiter
 from app.auth.models import User
 
 auth_bp = Blueprint("auth", __name__)
@@ -12,6 +12,7 @@ def ping():
     return {"blueprint": "auth", "status": "alive"}
 
 @auth_bp.route("/signup", methods=["POST"])
+@limiter.limit("5 per minute")
 def signup():
     data = request.get_json(silent=True) or {}
     email = data.get("email", "").strip().lower()
@@ -38,6 +39,7 @@ def signup():
     return jsonify({"message": "Signup successful", "user_id": user.id}), 201
 
 @auth_bp.route("/login", methods=["POST"])
+@limiter.limit("5 per minute")
 def login():
     data = request.get_json(silent=True) or {}
     email = data.get("email", "").strip().lower()
@@ -92,6 +94,7 @@ def google_callback():
     return jsonify({"message": "Google login successful", "user_id": user.id, "email": user.email}), 200
 
 @auth_bp.route("/forgot-password", methods=["POST"])
+@limiter.limit("3 per minute")
 def forgot_password():
     data = request.get_json(silent=True) or {}
     email = data.get("email", "").strip().lower()
@@ -108,6 +111,7 @@ def forgot_password():
     return jsonify({"message": "Reset token generated", "reset_token": token}), 200
 
 @auth_bp.route("/reset-password", methods=["POST"])
+@limiter.limit("5 per minute")
 def reset_password():
     data = request.get_json(silent=True) or {}
     token = data.get("token", "")
@@ -129,7 +133,6 @@ def reset_password():
     db.session.commit()
 
     return jsonify({"message": "Password reset successful"}), 200
-
 
 @auth_bp.route("/ai-test", methods=["GET"])
 def ai_test():
