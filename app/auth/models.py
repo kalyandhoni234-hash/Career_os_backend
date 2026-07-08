@@ -1,0 +1,16 @@
+from datetime import datetime
+from flask_login import UserMixin
+from app.extensions import db
+
+class User(db.Model, UserMixin):
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer, primary_key=True)
+    email = db.Column(db.String(255), unique=True, nullable=False)
+    password_hash = db.Column(db.String(255), nullable=True)
+    oauth_provider = db.Column(db.String(50), nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    reset_token = db.Column(db.String(255), nullable=True)
+    reset_token_expiry = db.Column(db.DateTime, nullable=True)
+
+    profile = db.relationship("Profile", backref="user", uselist=False, cascade="all, delete-orphan")
