@@ -1,9 +1,12 @@
 import secrets
+import logging
 from datetime import datetime, timedelta
-from flask import Blueprint, request, jsonify, redirect, current_app
+from flask import Blueprint, request, jsonify, redirect, current_app, session
 from flask_login import login_user, logout_user, login_required, current_user
 from app.extensions import db, bcrypt, oauth, limiter
 from app.auth.models import User
+
+logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -72,15 +75,30 @@ def me():
 @auth_bp.route("/google/login")
 def google_login():
     redirect_uri = current_app.config["FRONTEND_URL"] + "/api/auth/google/callback"
+    session.permanent = True
+    logger.info("OAuth login initiated — redirect_uri=%s, session keys before=%s", redirect_uri, list(session.keys()))
     return oauth.google.authorize_redirect(redirect_uri)
 
 @auth_bp.route("/google/callback")
 def google_callback():
-    token = oauth.google.authorize_access_token()
+    state_from_req = request.args.get("state", "none")
+    session_keys = list(session.keys())
+    stored_state = session.get("_google_authlib_state_", "NOT_IN_SESSION")
+    logger.info("OAuth callback — state_param=%s, session_keys=%s, stored_state=%s, cookies=%s",
+                state_from_req, session_keys, str(stored_state)[:20], request.cookies)
+
+    try:
+        token = oauth.google.authorize_access_token()
+    except Exception as exc:
+        logger.error("OAuth token exchange failed: %s (state_param=%s, stored=%s, session_keys=%s)",
+                     exc, state_from_req, str(stored_state)[:20], session_keys)
+        return redirect(current_app.config["FRONTEND_URL"] + "/login?error=oauth_failed")
+
     user_info = token.get("userinfo")
 
     if not user_info or not user_info.get("email"):
-        return jsonify({"error": "Google login failed"}), 400
+        logger.error("OAuth callback — no userinfo in token")
+        return redirect(current_app.config["FRONTEND_URL"] + "/login?error=oauth_failed")
 
     email = user_info["email"].lower()
     user = User.query.filter_by(email=email).first()
@@ -91,6 +109,7 @@ def google_callback():
         db.session.commit()
 
     login_user(user)
+    logger.info("OAuth login success — email=%s", email)
     return redirect(current_app.config["FRONTEND_URL"] + "/dashboard")
 
 @auth_bp.route("/forgot-password", methods=["POST"])

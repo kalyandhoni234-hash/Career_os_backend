@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -15,7 +16,10 @@ class Config:
     GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 
     IS_PRODUCTION = os.environ.get("FLASK_ENV") == "production"
-    SESSION_COOKIE_SAMESITE = "None" if IS_PRODUCTION else "Lax"
+    SESSION_COOKIE_NAME = "career_os_session"
+    SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = IS_PRODUCTION
+    SESSION_COOKIE_HTTPONLY = True
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=2)
 
     FRONTEND_URL = os.environ.get("FRONTEND_URL", "http://localhost:3000")
