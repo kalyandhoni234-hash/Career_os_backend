@@ -1,6 +1,4 @@
 import logging
-from datetime import datetime, timezone
-from typing import Optional
 from app.extensions import db
 from app.opportunities.models import Opportunity, OpportunityMatchScore
 
@@ -71,8 +69,6 @@ def _compute_scores(user_id: int, opp: Opportunity) -> dict:
     resume_match = _calculate_resume_match(memory)
 
     profile = memory.get("career_profile", {}) or {}
-    user_role = (profile.get("target_role") or "").lower()
-    job_title = (opp.title or "").lower()
     experience_match = _calculate_experience_match(profile, opp)
 
     project_match = _calculate_project_match(memory, description_text)
@@ -120,7 +116,7 @@ def _compute_scores(user_id: int, opp: Opportunity) -> dict:
     elif skill_match >= 40:
         explanations["skill_match"] = f"You have some required skills ({len(matched)}/{len(opp.tech_stack or [])})"
     else:
-        explanations["skill_match"] = f"Several required skills missing — check the skill gap analysis"
+        explanations["skill_match"] = "Several required skills missing — check the skill gap analysis"
 
     explanations["experience_match"] = _explain_experience(profile, opp)
     explanations["project_match"] = project_match >= 50 and "Your projects demonstrate relevant experience" or "Add targeted projects to strengthen your profile"

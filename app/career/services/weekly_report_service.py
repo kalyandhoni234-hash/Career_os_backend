@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone, date
+from datetime import datetime, timedelta, date
 from app.extensions import db
 from app.career.models import CareerReport, AIRecommendation, LearningProgress, CareerScoreSnapshot
 from app.career.services.career_score_service import compute_career_score
@@ -71,7 +71,7 @@ def generate_weekly_report(user_id):
 
 def _get_weekly_achievements(user_id, since_date):
     """Get achievements from the past week."""
-    from app.career.models import LearningProgress, CareerTimelineEvent
+    from app.career.models import CareerTimelineEvent
 
     achievements = []
 

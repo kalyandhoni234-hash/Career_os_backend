@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from app.extensions import db
 from app.career.models import CareerScoreSnapshot
 

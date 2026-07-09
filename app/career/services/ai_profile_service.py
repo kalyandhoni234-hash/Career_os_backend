@@ -22,7 +22,7 @@ def build_ai_profile(user_id):
 
     # Compute strong vs weak skills
     all_skills = skills.get("resume_skills", [])
-    learning_skills = {l["skill"]: l["proficiency"] for l in learning}
+    learning_skills = {skill_entry["skill"]: skill_entry["proficiency"] for skill_entry in learning}
     strong = []
     weak = []
 

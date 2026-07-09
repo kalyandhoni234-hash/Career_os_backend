@@ -1,4 +1,3 @@
-import json
 import logging
 from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify
@@ -6,12 +5,11 @@ from flask_login import login_required, current_user
 
 from app.extensions import db
 from app.opportunities.models import (
-    Opportunity, SavedOpportunity, OpportunityMatchScore,
-    CompanyProfile,
+    Opportunity, SavedOpportunity,
 )
 from app.opportunities.services import (
     search_opportunities, get_opportunity_detail, create_opportunity, update_opportunity, seed_sample_opportunities,
-    get_or_create_company, get_company_insights, search_companies,
+    get_company_insights, search_companies,
     estimate_salary, get_market_trends,
     calculate_match_score,
     analyze_opportunity_skill_gaps,
@@ -439,10 +437,8 @@ def application_readiness(opportunity_id):
 @login_required
 def get_opportunity_recommendations():
     from app.career.models import CareerProfile
-    from app.resume.models import Resume
 
     profile = CareerProfile.query.filter_by(user_id=current_user.id).first()
-    resume = Resume.query.filter_by(user_id=current_user.id).first()
 
     q = Opportunity.query.filter_by(is_active=True)
     if profile and profile.target_role:

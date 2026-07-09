@@ -4,8 +4,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 
 from app.career.models import (
-    CareerProfile, CareerGoal, Roadmap, RoadmapNode, LearningProgress,
-    CareerTimelineEvent, AIRecommendation, CareerReport, CareerScoreSnapshot,
+    CareerProfile, CareerGoal, Roadmap, RoadmapNode, CareerTimelineEvent, AIRecommendation, CareerReport, CareerScoreSnapshot,
 )
 from app.career.services import (
     build_career_memory, compute_career_score, generate_recommendations, get_action_center,

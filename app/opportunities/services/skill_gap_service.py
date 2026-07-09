@@ -35,16 +35,13 @@ def analyze_opportunity_skill_gaps(user_id: int, opportunity_id: int, force: boo
     if opp.tech_stack:
         required = {s.lower().strip() for s in opp.tech_stack if isinstance(s, str)}
     if opp.requirements:
-        import re
         req_text = " ".join(opp.requirements)
-        req_words = set(re.findall(r'[a-zA-Z][a-zA-Z0-9+#.\-/]{1,}', req_text.lower()))
         for skill in _TECH_KEYWORDS:
             if skill in req_text.lower():
                 required.add(skill)
 
     current = list(user_skills & required)
     missing = list(required - all_user_skills)
-    matched_required = list(required & all_user_skills)
 
     coverage = round((len(current) / len(required)) * 100) if required else 100
 

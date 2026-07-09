@@ -245,20 +245,18 @@ def get_agent_dashboard(user_id):
 def get_agent_briefing(user_id):
     """Comprehensive briefing data for the Command Center dashboard."""
     from datetime import datetime, timezone, timedelta
-    from app.extensions import db
     from app.career.models import CareerProfile, CareerScoreSnapshot, CareerTimelineEvent, AIRecommendation
-    from app.career.services.career_score_service import compute_career_score
     from app.resume.models import Resume, ResumeVersion
     from app.opportunities.models import Opportunity, OpportunityMatchScore, SavedOpportunity, InterviewPack, MarketTrend
-    from app.career.services.career_memory_service import build_career_memory
     from app.opportunities.services.match_engine import calculate_match_score
+    from app.auth.models import User
 
     now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     week_ago = now - timedelta(days=7)
 
     # ── User greeting data ──
-    user = current_user
+    user = User.query.get(user_id)
     name = user.email.split("@")[0].capitalize() if user.email else "there"
     greeting_hour = now.hour
 
@@ -483,7 +481,7 @@ def get_agent_briefing(user_id):
                 recommendations.append({
                     "id": 0,
                     "action": f"Learn {skill}",
-                    "description": f"Present in high-paying backend roles",
+                    "description": "Present in high-paying backend roles",
                     "priority": 4,
                     "impact_score": 12,
                     "category": "skill",

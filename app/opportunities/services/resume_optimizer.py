@@ -87,8 +87,6 @@ def generate_cover_letter(user_id: int, opportunity_id: int, tone: str = "profes
     opp = Opportunity.query.get(opportunity_id)
     from app.resume.models import Resume
     resume = Resume.query.filter_by(user_id=user_id).first()
-    from app.users.models import Profile
-    profile = Profile.query.filter_by(user_id=user_id).first()
 
     if not opp or not resume:
         return {"error": "Opportunity or resume not found"}
@@ -103,7 +101,6 @@ def generate_cover_letter(user_id: int, opportunity_id: int, tone: str = "profes
         exp = resume.experience[0]
         experience_summary = f"{exp.get('role', '')} at {exp.get('company', '')}"
 
-    user_name = profile or {}
     email = resume.email or ""
 
     prompt = f"""Write a professional cover letter for:

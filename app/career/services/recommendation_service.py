@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from app.extensions import db
 from app.career.models import AIRecommendation
 from app.career.services.career_memory_service import build_career_memory

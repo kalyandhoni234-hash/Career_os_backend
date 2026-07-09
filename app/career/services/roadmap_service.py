@@ -1,7 +1,6 @@
-import json
 from datetime import datetime, timezone
 from app.extensions import db
-from app.career.models import Roadmap, RoadmapNode, LearningProgress, SkillGraph
+from app.career.models import Roadmap, RoadmapNode, LearningProgress
 
 
 ROADMAP_TEMPLATES = {
@@ -144,7 +143,6 @@ ROADMAP_TEMPLATES = {
 
 def generate_roadmap(user_id, category=None, target_role=None):
     """Generate a personalized learning roadmap for a user."""
-    from app.resume.models import Resume
     from app.career.services.career_memory_service import build_career_memory
 
     memory = build_career_memory(user_id)

@@ -1,9 +1,8 @@
 import logging
 from datetime import datetime, timezone
-from app.extensions import db
 from app.career.models import (
     CareerProfile, CareerGoal, Roadmap, LearningProgress,
-    SkillGraph, CareerReport, CareerTimelineEvent, AIRecommendation, CareerScoreSnapshot,
+    SkillGraph, CareerTimelineEvent, AIRecommendation, CareerScoreSnapshot,
 )
 
 logger = logging.getLogger(__name__)

@@ -4,7 +4,6 @@ from flask_login import login_required, current_user
 
 from app.agents.services import (
     get_agent_statuses,
-    get_agent_by_type,
     get_recent_tasks,
     run_agent,
     ensure_default_agents,

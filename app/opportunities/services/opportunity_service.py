@@ -1,9 +1,8 @@
 import logging
-from datetime import datetime, timezone
 from typing import Optional
 from sqlalchemy import or_
 from app.extensions import db
-from app.opportunities.models import Opportunity, CompanyProfile, SavedOpportunity
+from app.opportunities.models import Opportunity, CompanyProfile
 
 logger = logging.getLogger(__name__)
 

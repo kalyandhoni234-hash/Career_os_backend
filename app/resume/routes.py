@@ -1,6 +1,5 @@
 import json
 from io import BytesIO
-from datetime import datetime
 from flask import Blueprint, request, jsonify, make_response
 from flask_login import login_required, current_user
 from app.extensions import db, limiter
@@ -207,8 +206,8 @@ def export_resume():
 
     if resume.languages:
         lang_str = esc(", ".join(
-            f'{l.get("name","")} ({l.get("level","")})' if isinstance(l, dict) else str(l)
-            for l in resume.languages
+            f'{lang.get("name","")} ({lang.get("level","")})' if isinstance(lang, dict) else str(lang)
+            for lang in resume.languages
         ))
         items_html += f'<div class="section"><h2>Languages</h2><p>{lang_str}</p></div>'
 
@@ -400,8 +399,8 @@ def export_resume_docx():
     if resume.languages:
         add_section_heading("Languages")
         lang_str = ", ".join(
-            f'{l.get("name","")} ({l.get("level","")})' if isinstance(l, dict) else str(l)
-            for l in resume.languages
+            f'{lang.get("name","")} ({lang.get("level","")})' if isinstance(lang, dict) else str(lang)
+            for lang in resume.languages
         )
         if lang_str:
             doc.add_paragraph(lang_str)
@@ -452,7 +451,7 @@ def review_resume():
 
     skills_str = ", ".join(resume.skills or [])
     certs_str = ", ".join(f'{c.get("name","")} ({c.get("issuer","")})' for c in (resume.certificates or []))
-    lang_str = ", ".join(f'{l.get("name","")} ({l.get("level","")})' if isinstance(l, dict) else str(l) for l in (resume.languages or []))
+    lang_str = ", ".join(f'{lang.get("name","")} ({lang.get("level","")})' if isinstance(lang, dict) else str(lang) for lang in (resume.languages or []))
 
     resume_text = f"""
 Full Name: {resume.full_name or "N/A"}
