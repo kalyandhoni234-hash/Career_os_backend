@@ -74,9 +74,15 @@ def me():
 
 @auth_bp.route("/google/login")
 def google_login():
-    redirect_uri = current_app.config["FRONTEND_URL"] + "/api/auth/google/callback"
+    redirect_uri = current_app.config["GOOGLE_REDIRECT_URI"]
     session.permanent = True
-    logger.info("OAuth login initiated — redirect_uri=%s, session keys before=%s", redirect_uri, list(session.keys()))
+    logger.info(
+        "OAuth login initiated — redirect_uri=%s, frontend_url=%s, backend_url=%s, is_production=%s",
+        redirect_uri,
+        current_app.config.get("FRONTEND_URL"),
+        current_app.config.get("BACKEND_URL"),
+        current_app.config.get("IS_PRODUCTION"),
+    )
     return oauth.google.authorize_redirect(redirect_uri)
 
 @auth_bp.route("/google/callback")
@@ -84,8 +90,10 @@ def google_callback():
     state_from_req = request.args.get("state", "none")
     session_keys = list(session.keys())
     stored_state = session.get("_google_authlib_state_", "NOT_IN_SESSION")
-    logger.info("OAuth callback — state_param=%s, session_keys=%s, stored_state=%s, cookies=%s",
-                state_from_req, session_keys, str(stored_state)[:20], request.cookies)
+    logger.info("OAuth callback — state_param=%s, session_keys=%s, stored_state=%s, redirect_uri=%s, host=%s",
+                state_from_req, session_keys, str(stored_state)[:20],
+                current_app.config.get("GOOGLE_REDIRECT_URI"),
+                request.host)
 
     try:
         token = oauth.google.authorize_access_token()
