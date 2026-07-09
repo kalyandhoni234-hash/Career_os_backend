@@ -138,6 +138,15 @@ def _compute_scores(user_id: int, opp: Opportunity) -> dict:
     }
 
 
+def _safe_len(val) -> int:
+    """Return len(val) if val is a list/tuple, else val if int, else 0."""
+    if isinstance(val, (list, tuple)):
+        return len(val)
+    if isinstance(val, int):
+        return val
+    return 0
+
+
 def _calculate_resume_match(memory: dict) -> int:
     resume = memory.get("resume", {}) or {}
     if not resume:
@@ -145,13 +154,13 @@ def _calculate_resume_match(memory: dict) -> int:
     score = 0
     if resume.get("summary"):
         score += 20
-    if resume.get("experience") and len(resume.get("experience", [])) > 0:
+    if _safe_len(resume.get("experience")) > 0:
         score += 25
-    if resume.get("education") and len(resume.get("education", [])) > 0:
+    if _safe_len(resume.get("education")) > 0:
         score += 15
-    if resume.get("skills") and len(resume.get("skills", [])) > 5:
+    if _safe_len(resume.get("skills")) > 5:
         score += 20
-    if resume.get("projects") and len(resume.get("projects", [])) > 0:
+    if _safe_len(resume.get("projects")) > 0:
         score += 20
     return min(score, 100)
 
@@ -170,7 +179,7 @@ def _calculate_experience_match(profile: dict, opp: Opportunity) -> int:
 def _calculate_project_match(memory: dict, description_text: str) -> int:
     resume = memory.get("resume", {}) or {}
     projects = resume.get("projects", [])
-    if not projects:
+    if not projects or not isinstance(projects, list):
         return 0
     proj_text = " ".join(
         f"{p.get('name', '')} {p.get('description', '')} {' '.join(p.get('technologies', []) or [])}"

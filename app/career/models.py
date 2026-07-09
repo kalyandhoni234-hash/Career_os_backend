@@ -157,6 +157,8 @@ class AIRecommendation(db.Model):
     rec_type = db.Column(db.String(50), nullable=False)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
+    reasoning = db.Column(db.Text, nullable=True)
+    evidence = db.Column(db.Text, nullable=True)
     priority = db.Column(db.Integer, default=3)
     impact_score = db.Column(db.Integer, default=0)
     category = db.Column(db.String(50), nullable=True)

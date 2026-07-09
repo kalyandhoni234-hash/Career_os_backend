@@ -40,6 +40,12 @@ def create_app():
         ResumeVersionByCompany,
     )
     from app.agents.models import CareerAgent, AgentTask  # noqa: F401
+    from app.recruiters.models import (  # noqa: F401
+        Recruiter, Company, JobPost, SavedCandidate,
+        TalentPipeline, CandidateView, InterviewInvite, RecruiterNotification,
+    )
+    import importlib
+    ImportRecord = importlib.import_module("app.import.models").ImportRecord  # noqa: F401 F841
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -53,6 +59,8 @@ def create_app():
     from app.career.routes import career_bp
     from app.opportunities.routes import opportunities_bp
     from app.agents.routes import agents_bp
+    from app.recruiters.routes import recruiters_bp
+    import_bp = importlib.import_module("app.import.routes").import_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(users_bp, url_prefix="/api/users")
@@ -62,6 +70,8 @@ def create_app():
     app.register_blueprint(career_bp, url_prefix="/api/career")
     app.register_blueprint(opportunities_bp, url_prefix="/api/opportunities")
     app.register_blueprint(agents_bp, url_prefix="/api/agents")
+    app.register_blueprint(import_bp, url_prefix="/api/import")
+    app.register_blueprint(recruiters_bp, url_prefix="/api/recruiters")
 
     @app.after_request
     def set_security_headers(response):
@@ -69,6 +79,18 @@ def create_app():
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
         return response
+
+    @app.errorhandler(401)
+    def unauthorized(error):
+        return jsonify({"error": "Unauthorized — please log in again"}), 401
+
+    @app.errorhandler(500)
+    def internal_error(error):
+        return jsonify({"error": "Internal server error", "detail": str(error.original_exception) if hasattr(error, "original_exception") else None}), 500
+
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({"error": "Not found"}), 404
 
     @app.route("/health")
     def health():
