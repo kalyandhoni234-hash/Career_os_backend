@@ -1,6 +1,6 @@
 import secrets
 from datetime import datetime, timedelta
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, redirect, current_app
 from flask_login import login_user, logout_user, login_required, current_user
 from app.extensions import db, bcrypt, oauth, limiter
 from app.auth.models import User
@@ -71,7 +71,7 @@ def me():
 
 @auth_bp.route("/google/login")
 def google_login():
-    redirect_uri = request.url_root.rstrip("/") + "/api/auth/google/callback"
+    redirect_uri = current_app.config["FRONTEND_URL"] + "/api/auth/google/callback"
     return oauth.google.authorize_redirect(redirect_uri)
 
 @auth_bp.route("/google/callback")
@@ -91,7 +91,7 @@ def google_callback():
         db.session.commit()
 
     login_user(user)
-    return jsonify({"message": "Google login successful", "user_id": user.id, "email": user.email}), 200
+    return redirect(current_app.config["FRONTEND_URL"] + "/dashboard")
 
 @auth_bp.route("/forgot-password", methods=["POST"])
 @limiter.limit("3 per minute")

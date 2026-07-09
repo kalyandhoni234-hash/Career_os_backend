@@ -29,6 +29,17 @@ def create_app():
     from app.resume.models import Resume  # noqa: F401
     from app.coach.models import CoachMessage  # noqa: F401
     from app.jobs.models import Job  # noqa: F401
+    from app.career.models import (  # noqa: F401
+        CareerProfile, CareerGoal, Roadmap, RoadmapNode,
+        LearningProgress, SkillGraph, CareerReport,
+        CareerTimelineEvent, AIRecommendation, CareerScoreSnapshot,
+    )
+    from app.opportunities.models import (  # noqa: F401
+        Opportunity, CompanyProfile, SavedOpportunity, OpportunityMatchScore,
+        OpportunitySkillGap, SalaryInsight, MarketTrend, InterviewPack,
+        ResumeVersionByCompany,
+    )
+    from app.agents.models import CareerAgent, AgentTask  # noqa: F401
 
     @login_manager.user_loader
     def load_user(user_id):
@@ -39,12 +50,18 @@ def create_app():
     from app.resume.routes import resume_bp
     from app.jobs.routes import jobs_bp
     from app.coach.routes import coach_bp
+    from app.career.routes import career_bp
+    from app.opportunities.routes import opportunities_bp
+    from app.agents.routes import agents_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(users_bp, url_prefix="/api/users")
     app.register_blueprint(resume_bp, url_prefix="/api/resume")
     app.register_blueprint(jobs_bp, url_prefix="/api/jobs")
     app.register_blueprint(coach_bp, url_prefix="/api/coach")
+    app.register_blueprint(career_bp, url_prefix="/api/career")
+    app.register_blueprint(opportunities_bp, url_prefix="/api/opportunities")
+    app.register_blueprint(agents_bp, url_prefix="/api/agents")
 
     @app.after_request
     def set_security_headers(response):
