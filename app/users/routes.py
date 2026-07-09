@@ -17,6 +17,9 @@ def get_profile():
     profile = Profile.query.filter_by(user_id=current_user.id).first()
     resume = Resume.query.filter_by(user_id=current_user.id).first()
 
+    if not profile and not resume:
+        return jsonify({"profile": None}), 200
+
     data = {
         "email": current_user.email,
     }
