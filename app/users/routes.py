@@ -40,6 +40,19 @@ def get_profile():
                 "interests": profile.interests,
                 "preferred_locations": profile.preferred_locations,
                 "salary_expectation": profile.salary_expectation,
+                "first_name": profile.first_name,
+                "last_name": profile.last_name,
+                "phone_number": profile.phone_number,
+                "date_of_birth": profile.date_of_birth,
+                "gender": profile.gender,
+                "state": profile.state,
+                "city": profile.city,
+                "timezone": profile.timezone,
+                "profile_picture": profile.profile_picture,
+                "career_summary": profile.career_summary,
+                "username": profile.username,
+                "language": profile.language,
+                "date_format": profile.date_format,
             }
         )
 
@@ -73,7 +86,7 @@ def upsert_profile():
 
     resume = Resume.query.filter_by(user_id=current_user.id).first()
 
-    for field in [
+    profile_fields = [
         "education",
         "degree",
         "graduation_year",
@@ -85,7 +98,21 @@ def upsert_profile():
         "interests",
         "preferred_locations",
         "salary_expectation",
-    ]:
+        "first_name",
+        "last_name",
+        "phone_number",
+        "date_of_birth",
+        "gender",
+        "state",
+        "city",
+        "timezone",
+        "profile_picture",
+        "career_summary",
+        "username",
+        "language",
+        "date_format",
+    ]
+    for field in profile_fields:
         if field in data:
             setattr(profile, field, data[field])
 
@@ -98,10 +125,12 @@ def upsert_profile():
         "linkedin",
         "github",
     ]
-    if resume:
-        for field in resume_fields:
-            if field in data:
-                setattr(resume, field, data[field])
+    if not resume:
+        resume = Resume(user_id=current_user.id)
+        db.session.add(resume)
+    for field in resume_fields:
+        if field in data:
+            setattr(resume, field, data[field])
 
     db.session.commit()
 

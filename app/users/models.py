@@ -29,3 +29,6 @@ class Profile(db.Model):
     timezone = db.Column(db.String(100))
     profile_picture = db.Column(db.String(500))
     career_summary = db.Column(db.Text)
+    username = db.Column(db.String(100))
+    language = db.Column(db.String(10), default="en")
+    date_format = db.Column(db.String(20), default="MM/DD/YYYY")
