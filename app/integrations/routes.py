@@ -11,6 +11,7 @@ from app.integrations.services.google_calendar import GoogleCalendarService
 from app.integrations.services.google_drive import GoogleDriveService
 from app.integrations.services.outlook import OutlookService
 from app.integrations.services.slack import SlackService
+from app.integrations.profile_sync import sync_profile_from_integration
 
 logger = logging.getLogger(__name__)
 
@@ -95,6 +96,46 @@ def _refresh_if_needed(integration: Integration, service: object) -> bool:
     return True
 
 
+SYNC_HISTORY_MAX = 20
+
+
+def _record_sync_history(integration: Integration, status: str, summary: str = ""):
+    history = integration.provider_data or {}
+    sync_list = history.get("_sync_history", [])
+    sync_list.append(
+        {
+            "synced_at": datetime.now(timezone.utc).replace(tzinfo=None).isoformat(),
+            "status": status,
+            "summary": summary,
+        }
+    )
+    history["_sync_history"] = sync_list[-SYNC_HISTORY_MAX:]
+    integration.provider_data = history
+
+
+def _check_token_health(integration: Integration) -> dict:
+    if not integration.access_token:
+        return {"healthy": False, "reason": "no_token", "label": "Not connected"}
+    if integration.token_expiry:
+        now = datetime.now(timezone.utc).replace(tzinfo=None)
+        if integration.token_expiry < now:
+            return {
+                "healthy": False,
+                "reason": "expired",
+                "label": "Token expired",
+            }
+        remaining = (integration.token_expiry - now).total_seconds()
+        if remaining < 86400:
+            return {
+                "healthy": True,
+                "warning": True,
+                "reason": "expiring_soon",
+                "label": "Expires soon",
+                "expires_in_seconds": int(remaining),
+            }
+    return {"healthy": True, "reason": "ok", "label": "Active"}
+
+
 # ── List all integrations ─────────────────────────────────
 
 
@@ -130,6 +171,16 @@ def list_integrations():
             if record and record.provider_data
             else {},
         }
+        if record:
+            entry["token_health"] = _check_token_health(record)
+            sync_history = (record.provider_data or {}).get("_sync_history", [])
+            entry["sync_history_count"] = len(sync_history)
+            entry["last_sync_status"] = sync_history[-1]["status"] if sync_history else None
+        else:
+            entry["token_health"] = {"healthy": False, "reason": "no_token", "label": "Not connected"}
+            entry["sync_history_count"] = 0
+            entry["last_sync_status"] = None
+
         if not available:
             entry["setup_guide"] = (
                 f"Configure {key.upper()}_CLIENT_ID and {key.upper()}_CLIENT_SECRET in .env"
@@ -156,7 +207,7 @@ def connect(provider):
 
     state = OAuthState.create(user_id=current_user.id, provider=provider)
     redirect_uri = (
-        current_app.config["BACKEND_URL"] + f"/api/integrations/{provider}/callback"
+        current_app.config["FRONTEND_URL"] + f"/api/integrations/{provider}/callback"
     )
     authorize_url = svc.get_authorize_url(redirect_uri, state=state)
     return jsonify({"redirect_url": authorize_url}), 200
@@ -217,7 +268,7 @@ def oauth_callback(provider):
         )
 
     redirect_uri = (
-        current_app.config["BACKEND_URL"] + f"/api/integrations/{provider}/callback"
+        current_app.config["FRONTEND_URL"] + f"/api/integrations/{provider}/callback"
     )
 
     try:
@@ -260,12 +311,19 @@ def oauth_callback(provider):
             integration.provider_data = existing
         integration.last_sync_at = datetime.now(timezone.utc).replace(tzinfo=None)
         integration.sync_status = "connected"
+        _record_sync_history(integration, "success", "Initial sync completed")
     except Exception as e:
         logger.warning("Initial sync failed for %s: %s", provider, e)
         integration.sync_status = "sync_failed"
         integration.sync_error = str(e)
+        _record_sync_history(integration, "failed", str(e))
 
     db.session.commit()
+
+    try:
+        sync_profile_from_integration(integration, user_id)
+    except Exception as e:
+        logger.warning("Profile sync failed after callback for %s: %s", provider, e)
 
     frontend = current_app.config["FRONTEND_URL"]
     return redirect(
@@ -339,13 +397,21 @@ def sync(provider):
         integration.last_sync_at = datetime.now(timezone.utc).replace(tzinfo=None)
         integration.sync_status = "connected"
         integration.sync_error = None
+        _record_sync_history(integration, "success", "Sync completed")
         db.session.commit()
+
+        try:
+            sync_profile_from_integration(integration, current_user.id)
+        except Exception as pe:
+            logger.warning("Profile sync failed after sync for %s: %s", provider, pe)
+
         return jsonify(
             {"message": "Sync completed", "integration": integration.to_dict()}
         ), 200
     except Exception as e:
         integration.sync_status = "sync_failed"
         integration.sync_error = str(e)
+        _record_sync_history(integration, "failed", str(e))
         db.session.commit()
         logger.error("Sync failed for %s: %s", provider, e)
         return jsonify({"error": f"Sync failed: {str(e)}"}), 500

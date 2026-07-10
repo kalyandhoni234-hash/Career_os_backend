@@ -10,4 +10,4 @@ with app.app_context():
         print(f"Migration on startup failed (may already be up to date): {e}")
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, port=5001)

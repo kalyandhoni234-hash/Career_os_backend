@@ -14,17 +14,23 @@ class GitHubService(BaseIntegrationService):
         return bool(cfg.get("GITHUB_CLIENT_ID") and cfg.get("GITHUB_CLIENT_SECRET"))
 
     def get_authorize_url(self, redirect_uri: str, state: str = "") -> str:
+        import urllib.parse
+
         cfg = current_app.config
         client_id = cfg["GITHUB_CLIENT_ID"]
         scope = "read:user,user:email,repo"
-        url = (
-            f"https://github.com/login/oauth/authorize"
-            f"?client_id={client_id}&redirect_uri={redirect_uri}"
-            f"&scope={scope}&response_type=code"
-        )
+        params = {
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+            "scope": scope,
+            "response_type": "code",
+        }
         if state:
-            url += f"&state={state}"
-        return url
+            params["state"] = state
+        return (
+            "https://github.com/login/oauth/authorize?"
+            + urllib.parse.urlencode(params)
+        )
 
     def exchange_code(self, code: str, redirect_uri: str) -> dict:
         cfg = current_app.config
