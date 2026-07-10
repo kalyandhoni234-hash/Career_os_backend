@@ -27,13 +27,15 @@ def start_import():
 
     service = _get_service()
     record = service.process_import(source, raw_data)
-    return jsonify({
-        "record_id": record.id,
-        "status": record.status,
-        "normalized_data": record.normalized_data,
-        "confidence_scores": record.confidence_scores,
-        "error_message": record.error_message,
-    }), 201
+    return jsonify(
+        {
+            "record_id": record.id,
+            "status": record.status,
+            "normalized_data": record.normalized_data,
+            "confidence_scores": record.confidence_scores,
+            "error_message": record.error_message,
+        }
+    ), 201
 
 
 @import_bp.route("/linkedin", methods=["POST"])
@@ -47,13 +49,15 @@ def import_linkedin():
 
     service = _get_service()
     record = service.process_import("linkedin", raw_text)
-    return jsonify({
-        "record_id": record.id,
-        "status": record.status,
-        "normalized_data": record.normalized_data,
-        "confidence_scores": record.confidence_scores,
-        "error_message": record.error_message,
-    }), 201
+    return jsonify(
+        {
+            "record_id": record.id,
+            "status": record.status,
+            "normalized_data": record.normalized_data,
+            "confidence_scores": record.confidence_scores,
+            "error_message": record.error_message,
+        }
+    ), 201
 
 
 @import_bp.route("/github", methods=["POST"])
@@ -67,13 +71,15 @@ def import_github():
 
     service = _get_service()
     record = service.process_import("github", username)
-    return jsonify({
-        "record_id": record.id,
-        "status": record.status,
-        "normalized_data": record.normalized_data,
-        "confidence_scores": record.confidence_scores,
-        "error_message": record.error_message,
-    }), 201
+    return jsonify(
+        {
+            "record_id": record.id,
+            "status": record.status,
+            "normalized_data": record.normalized_data,
+            "confidence_scores": record.confidence_scores,
+            "error_message": record.error_message,
+        }
+    ), 201
 
 
 @import_bp.route("/resume/upload", methods=["POST"])
@@ -91,14 +97,17 @@ def upload_resume():
         if file.filename.lower().endswith(".pdf"):
             try:
                 import PyPDF2
+
                 reader = PyPDF2.PdfReader(file)
                 text = "".join(page.extract_text() or "" for page in reader.pages)
             except ImportError:
                 import pdfplumber
+
                 with pdfplumber.open(file) as pdf:
                     text = "".join(page.extract_text() or "" for page in pdf.pages)
         elif file.filename.lower().endswith(".docx"):
             from docx import Document
+
             doc = Document(file)
             text = "\n".join(p.text for p in doc.paragraphs)
         else:
@@ -108,13 +117,15 @@ def upload_resume():
 
     service = _get_service()
     record = service.process_import("resume", text)
-    return jsonify({
-        "record_id": record.id,
-        "status": record.status,
-        "normalized_data": record.normalized_data,
-        "confidence_scores": record.confidence_scores,
-        "error_message": record.error_message,
-    }), 201
+    return jsonify(
+        {
+            "record_id": record.id,
+            "status": record.status,
+            "normalized_data": record.normalized_data,
+            "confidence_scores": record.confidence_scores,
+            "error_message": record.error_message,
+        }
+    ), 201
 
 
 @import_bp.route("/portfolio", methods=["POST"])
@@ -128,13 +139,15 @@ def import_portfolio():
 
     service = _get_service()
     record = service.process_import("portfolio", url)
-    return jsonify({
-        "record_id": record.id,
-        "status": record.status,
-        "normalized_data": record.normalized_data,
-        "confidence_scores": record.confidence_scores,
-        "error_message": record.error_message,
-    }), 201
+    return jsonify(
+        {
+            "record_id": record.id,
+            "status": record.status,
+            "normalized_data": record.normalized_data,
+            "confidence_scores": record.confidence_scores,
+            "error_message": record.error_message,
+        }
+    ), 201
 
 
 @import_bp.route("/backup", methods=["POST"])
@@ -148,13 +161,15 @@ def import_backup():
 
     service = _get_service()
     record = service.process_import("backup", backup_data)
-    return jsonify({
-        "record_id": record.id,
-        "status": record.status,
-        "normalized_data": record.normalized_data,
-        "confidence_scores": record.confidence_scores,
-        "error_message": record.error_message,
-    }), 201
+    return jsonify(
+        {
+            "record_id": record.id,
+            "status": record.status,
+            "normalized_data": record.normalized_data,
+            "confidence_scores": record.confidence_scores,
+            "error_message": record.error_message,
+        }
+    ), 201
 
 
 @import_bp.route("/status/<int:record_id>", methods=["GET"])
@@ -164,15 +179,17 @@ def get_status(record_id):
     if not record:
         return jsonify({"error": "Import record not found"}), 404
 
-    return jsonify({
-        "record_id": record.id,
-        "source": record.source,
-        "status": record.status,
-        "confidence_scores": record.confidence_scores,
-        "error_message": record.error_message,
-        "created_at": record.created_at.isoformat() if record.created_at else None,
-        "updated_at": record.updated_at.isoformat() if record.updated_at else None,
-    }), 200
+    return jsonify(
+        {
+            "record_id": record.id,
+            "source": record.source,
+            "status": record.status,
+            "confidence_scores": record.confidence_scores,
+            "error_message": record.error_message,
+            "created_at": record.created_at.isoformat() if record.created_at else None,
+            "updated_at": record.updated_at.isoformat() if record.updated_at else None,
+        }
+    ), 200
 
 
 @import_bp.route("/<int:record_id>/confirm", methods=["PUT"])
@@ -193,11 +210,15 @@ def confirm_import(record_id):
 
     record.status = "completed"
     from datetime import datetime, timezone
+
     record.updated_at = datetime.now(timezone.utc)
     from app.extensions import db
+
     db.session.commit()
 
-    return jsonify({"message": "Import confirmed and saved", "record_id": record.id}), 200
+    return jsonify(
+        {"message": "Import confirmed and saved", "record_id": record.id}
+    ), 200
 
 
 @import_bp.route("/result/<int:record_id>", methods=["GET"])
@@ -207,12 +228,14 @@ def get_result(record_id):
     if not record:
         return jsonify({"error": "Import record not found"}), 404
 
-    return jsonify({
-        "record_id": record.id,
-        "source": record.source,
-        "status": record.status,
-        "normalized_data": record.normalized_data,
-        "confidence_scores": record.confidence_scores,
-        "import_version": record.import_version,
-        "created_at": record.created_at.isoformat() if record.created_at else None,
-    }), 200
+    return jsonify(
+        {
+            "record_id": record.id,
+            "source": record.source,
+            "status": record.status,
+            "normalized_data": record.normalized_data,
+            "confidence_scores": record.confidence_scores,
+            "import_version": record.import_version,
+            "created_at": record.created_at.isoformat() if record.created_at else None,
+        }
+    ), 200

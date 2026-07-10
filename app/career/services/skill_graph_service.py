@@ -3,15 +3,122 @@ from app.career.models import SkillGraph, LearningProgress
 
 
 SKILL_CATEGORIES = {
-    "Backend": ["python", "flask", "django", "node", "express", "java", "go", "rust", "c#", ".net", "php", "ruby", "api", "rest", "graphql", "sqlalchemy"],
-    "Frontend": ["react", "vue", "angular", "svelte", "html", "css", "javascript", "typescript", "tailwind", "next.js", "redux", "webpack"],
-    "Databases": ["sql", "postgresql", "mysql", "mongodb", "redis", "sqlite", "cassandra", "dynamodb", "elasticsearch", "oracle"],
-    "DevOps": ["docker", "kubernetes", "jenkins", "terraform", "ansible", "ci/cd", "github actions", "gitlab ci", "helm", "puppet"],
-    "Cloud": ["aws", "azure", "gcp", "cloud", "lambda", "ec2", "s3", "rds", "cloudflare"],
-    "AI/ML": ["machine learning", "deep learning", "pytorch", "tensorflow", "nlp", "llm", "rag", "langchain", "scikit-learn", "pandas", "numpy", "genai", "gemini", "openai"],
-    "Testing": ["pytest", "jest", "selenium", "cypress", "unittest", "mocha", "chai", "tdd", "integration testing"],
-    "Security": ["security", "authentication", "authorization", "jwt", "oauth", "ssl", "encryption", "penetration testing", "xss", "sql injection"],
-    "Networking": ["tcp/ip", "dns", "http", "load balancing", "cdn", "firewall", "vpn", "proxy"],
+    "Backend": [
+        "python",
+        "flask",
+        "django",
+        "node",
+        "express",
+        "java",
+        "go",
+        "rust",
+        "c#",
+        ".net",
+        "php",
+        "ruby",
+        "api",
+        "rest",
+        "graphql",
+        "sqlalchemy",
+    ],
+    "Frontend": [
+        "react",
+        "vue",
+        "angular",
+        "svelte",
+        "html",
+        "css",
+        "javascript",
+        "typescript",
+        "tailwind",
+        "next.js",
+        "redux",
+        "webpack",
+    ],
+    "Databases": [
+        "sql",
+        "postgresql",
+        "mysql",
+        "mongodb",
+        "redis",
+        "sqlite",
+        "cassandra",
+        "dynamodb",
+        "elasticsearch",
+        "oracle",
+    ],
+    "DevOps": [
+        "docker",
+        "kubernetes",
+        "jenkins",
+        "terraform",
+        "ansible",
+        "ci/cd",
+        "github actions",
+        "gitlab ci",
+        "helm",
+        "puppet",
+    ],
+    "Cloud": [
+        "aws",
+        "azure",
+        "gcp",
+        "cloud",
+        "lambda",
+        "ec2",
+        "s3",
+        "rds",
+        "cloudflare",
+    ],
+    "AI/ML": [
+        "machine learning",
+        "deep learning",
+        "pytorch",
+        "tensorflow",
+        "nlp",
+        "llm",
+        "rag",
+        "langchain",
+        "scikit-learn",
+        "pandas",
+        "numpy",
+        "genai",
+        "gemini",
+        "openai",
+    ],
+    "Testing": [
+        "pytest",
+        "jest",
+        "selenium",
+        "cypress",
+        "unittest",
+        "mocha",
+        "chai",
+        "tdd",
+        "integration testing",
+    ],
+    "Security": [
+        "security",
+        "authentication",
+        "authorization",
+        "jwt",
+        "oauth",
+        "ssl",
+        "encryption",
+        "penetration testing",
+        "xss",
+        "sql injection",
+    ],
+    "Networking": [
+        "tcp/ip",
+        "dns",
+        "http",
+        "load balancing",
+        "cdn",
+        "firewall",
+        "vpn",
+        "proxy",
+    ],
     "Mobile": ["react native", "flutter", "swift", "kotlin", "android", "ios", "dart"],
 }
 
@@ -68,7 +175,9 @@ def build_skill_graph(user_id):
 
     # Persist to database
     for category, data in category_data.items():
-        existing = SkillGraph.query.filter_by(user_id=user_id, category=category).first()
+        existing = SkillGraph.query.filter_by(
+            user_id=user_id, category=category
+        ).first()
         if existing:
             existing.proficiency = data["proficiency"]
             existing.skill_count = data["skill_count"]
@@ -95,8 +204,11 @@ def analyze_skill_gaps(user_id, target_role=None):
 
     # Get current skills
     from app.resume.models import Resume
+
     resume = Resume.query.filter_by(user_id=user_id).first()
-    current_skills = set(s.lower().strip() for s in (resume.skills or [])) if resume else set()
+    current_skills = (
+        set(s.lower().strip() for s in (resume.skills or [])) if resume else set()
+    )
 
     # Get learning skills
     learning = LearningProgress.query.filter_by(user_id=user_id).all()
@@ -110,7 +222,12 @@ def analyze_skill_gaps(user_id, target_role=None):
     required = set(s.lower() for s in role_skills)
 
     if not required:
-        return {"error": "Unknown target role", "target_role": target, "gaps": [], "graph": {}}
+        return {
+            "error": "Unknown target role",
+            "target_role": target,
+            "gaps": [],
+            "graph": {},
+        }
 
     # Find gaps
     missing = required - all_skills
@@ -119,12 +236,14 @@ def analyze_skill_gaps(user_id, target_role=None):
     # Build gap analysis
     gaps = []
     for skill in sorted(missing):
-        gaps.append({
-            "skill": skill,
-            "priority": _get_skill_priority(skill, target),
-            "estimated_ats_gain": _estimate_ats_gain(skill),
-            "recommended_project": _get_recommended_project(skill),
-        })
+        gaps.append(
+            {
+                "skill": skill,
+                "priority": _get_skill_priority(skill, target),
+                "estimated_ats_gain": _estimate_ats_gain(skill),
+                "recommended_project": _get_recommended_project(skill),
+            }
+        )
     gaps.sort(key=lambda g: g["priority"], reverse=True)
 
     # Build skill graph analysis
@@ -150,56 +269,146 @@ def _get_role_requirements(target_role):
     """Get required skills for a given target role."""
     requirements = {
         "backend engineer": [
-            "python", "flask", "sql", "postgresql", "docker", "git",
-            "rest apis", "testing", "linux",
+            "python",
+            "flask",
+            "sql",
+            "postgresql",
+            "docker",
+            "git",
+            "rest apis",
+            "testing",
+            "linux",
         ],
         "backend": [
-            "python", "flask", "sql", "postgresql", "docker", "git",
-            "rest apis", "testing", "linux",
+            "python",
+            "flask",
+            "sql",
+            "postgresql",
+            "docker",
+            "git",
+            "rest apis",
+            "testing",
+            "linux",
         ],
         "frontend engineer": [
-            "javascript", "typescript", "react", "html", "css",
-            "git", "rest apis", "testing",
+            "javascript",
+            "typescript",
+            "react",
+            "html",
+            "css",
+            "git",
+            "rest apis",
+            "testing",
         ],
         "frontend": [
-            "javascript", "typescript", "react", "html", "css",
-            "git", "rest apis", "testing",
+            "javascript",
+            "typescript",
+            "react",
+            "html",
+            "css",
+            "git",
+            "rest apis",
+            "testing",
         ],
         "full stack engineer": [
-            "python", "javascript", "typescript", "react", "flask",
-            "sql", "postgresql", "docker", "git", "rest apis", "testing",
+            "python",
+            "javascript",
+            "typescript",
+            "react",
+            "flask",
+            "sql",
+            "postgresql",
+            "docker",
+            "git",
+            "rest apis",
+            "testing",
         ],
         "fullstack": [
-            "python", "javascript", "typescript", "react", "flask",
-            "sql", "postgresql", "docker", "git", "rest apis", "testing",
+            "python",
+            "javascript",
+            "typescript",
+            "react",
+            "flask",
+            "sql",
+            "postgresql",
+            "docker",
+            "git",
+            "rest apis",
+            "testing",
         ],
         "ai engineer": [
-            "python", "machine learning", "deep learning", "pytorch",
-            "nlp", "sql", "docker", "git", "data analysis",
+            "python",
+            "machine learning",
+            "deep learning",
+            "pytorch",
+            "nlp",
+            "sql",
+            "docker",
+            "git",
+            "data analysis",
         ],
         "ai/ml engineer": [
-            "python", "machine learning", "deep learning", "pytorch",
-            "nlp", "sql", "docker", "git", "data analysis",
+            "python",
+            "machine learning",
+            "deep learning",
+            "pytorch",
+            "nlp",
+            "sql",
+            "docker",
+            "git",
+            "data analysis",
         ],
         "data engineer": [
-            "python", "sql", "postgresql", "etl", "airflow",
-            "docker", "git", "cloud", "spark",
+            "python",
+            "sql",
+            "postgresql",
+            "etl",
+            "airflow",
+            "docker",
+            "git",
+            "cloud",
+            "spark",
         ],
         "devops engineer": [
-            "linux", "docker", "kubernetes", "terraform", "ansible",
-            "ci/cd", "git", "cloud", "monitoring", "python",
+            "linux",
+            "docker",
+            "kubernetes",
+            "terraform",
+            "ansible",
+            "ci/cd",
+            "git",
+            "cloud",
+            "monitoring",
+            "python",
         ],
         "cloud engineer": [
-            "cloud", "aws", "docker", "kubernetes", "terraform",
-            "linux", "ci/cd", "networking", "python",
+            "cloud",
+            "aws",
+            "docker",
+            "kubernetes",
+            "terraform",
+            "linux",
+            "ci/cd",
+            "networking",
+            "python",
         ],
         "cybersecurity engineer": [
-            "networking", "linux", "security", "python",
-            "web security", "cryptography", "cloud security",
+            "networking",
+            "linux",
+            "security",
+            "python",
+            "web security",
+            "cryptography",
+            "cloud security",
         ],
         "product manager": [
-            "analytics", "product strategy", "agile", "user research",
-            "a/b testing", "wireframing", "technical",
+            "analytics",
+            "product strategy",
+            "agile",
+            "user research",
+            "a/b testing",
+            "wireframing",
+            "technical",
         ],
     }
 
@@ -216,10 +425,27 @@ def _get_role_requirements(target_role):
 
 def _get_skill_priority(skill, target_role):
     """Get priority ranking for a missing skill (1-5)."""
-    high_priority = ["docker", "sql", "python", "javascript", "react", "aws",
-                     "git", "flask", "typescript", "testing"]
-    medium_priority = ["redis", "mongodb", "kubernetes", "ci/cd", "linux",
-                       "rest apis", "terraform"]
+    high_priority = [
+        "docker",
+        "sql",
+        "python",
+        "javascript",
+        "react",
+        "aws",
+        "git",
+        "flask",
+        "typescript",
+        "testing",
+    ]
+    medium_priority = [
+        "redis",
+        "mongodb",
+        "kubernetes",
+        "ci/cd",
+        "linux",
+        "rest apis",
+        "terraform",
+    ]
     skill_lower = skill.lower().strip()
     if skill_lower in high_priority:
         return 5
@@ -231,10 +457,22 @@ def _get_skill_priority(skill, target_role):
 def _estimate_ats_gain(skill):
     """Estimate ATS score gain from learning a skill."""
     gains = {
-        "docker": 6, "sql": 5, "python": 8, "javascript": 5,
-        "react": 6, "aws": 7, "git": 3, "flask": 4,
-        "typescript": 5, "testing": 4, "redis": 4, "kubernetes": 7,
-        "ci/cd": 5, "linux": 4, "terraform": 6, "mongodb": 3,
+        "docker": 6,
+        "sql": 5,
+        "python": 8,
+        "javascript": 5,
+        "react": 6,
+        "aws": 7,
+        "git": 3,
+        "flask": 4,
+        "typescript": 5,
+        "testing": 4,
+        "redis": 4,
+        "kubernetes": 7,
+        "ci/cd": 5,
+        "linux": 4,
+        "terraform": 6,
+        "mongodb": 3,
     }
     return gains.get(skill.lower().strip(), 3)
 

@@ -4,7 +4,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 
 from app.extensions import db
-from app.career.models import CareerTimelineEvent, TimelineTag, TimelineAttachment
+from app.career.models import CareerTimelineEvent
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +36,7 @@ def _event_to_dict(e):
 
 # ── List / Search / Filter Events ─────────────────────────
 
+
 @timeline_bp.route("/api/timeline/events", methods=["GET"])
 @login_required
 def list_events():
@@ -62,17 +63,19 @@ def list_events():
 
     favorite = request.args.get("favorite")
     if favorite == "true":
-        query = query.filter(CareerTimelineEvent.is_favorite == True)
+        query = query.filter(CareerTimelineEvent.is_favorite)
 
     pinned = request.args.get("pinned")
     if pinned == "true":
-        query = query.filter(CareerTimelineEvent.is_pinned == True)
+        query = query.filter(CareerTimelineEvent.is_pinned)
 
     sort = request.args.get("sort", "newest")
     if sort == "oldest":
         query = query.order_by(CareerTimelineEvent.event_date.asc())
     else:
-        query = query.order_by(CareerTimelineEvent.is_pinned.desc(), CareerTimelineEvent.event_date.desc())
+        query = query.order_by(
+            CareerTimelineEvent.is_pinned.desc(), CareerTimelineEvent.event_date.desc()
+        )
 
     limit = request.args.get("limit", 50, type=int)
     offset = request.args.get("offset", 0, type=int)
@@ -80,16 +83,19 @@ def list_events():
     total = query.count()
     events = query.offset(offset).limit(limit).all()
 
-    return jsonify({
-        "events": [_event_to_dict(e) for e in events],
-        "total": total,
-        "limit": limit,
-        "offset": offset,
-        "has_more": (offset + limit) < total,
-    }), 200
+    return jsonify(
+        {
+            "events": [_event_to_dict(e) for e in events],
+            "total": total,
+            "limit": limit,
+            "offset": offset,
+            "has_more": (offset + limit) < total,
+        }
+    ), 200
 
 
 # ── Grouped Timeline (by year → month) ─────────────────────
+
 
 @timeline_bp.route("/api/timeline/grouped", methods=["GET"])
 @login_required
@@ -128,25 +134,31 @@ def grouped_timeline():
             years[year][month] = []
         years[year][month].append(_event_to_dict(e))
 
-    return jsonify({
-        "years": years,
-        "year_list": sorted(years.keys(), reverse=True),
-        "total": len(events),
-    }), 200
+    return jsonify(
+        {
+            "years": years,
+            "year_list": sorted(years.keys(), reverse=True),
+            "total": len(events),
+        }
+    ), 200
 
 
 # ── Get Single Event ───────────────────────────────────────
 
+
 @timeline_bp.route("/api/timeline/events/<int:event_id>", methods=["GET"])
 @login_required
 def get_event(event_id):
-    event = CareerTimelineEvent.query.filter_by(id=event_id, user_id=current_user.id).first()
+    event = CareerTimelineEvent.query.filter_by(
+        id=event_id, user_id=current_user.id
+    ).first()
     if not event:
         return jsonify({"error": "Event not found"}), 404
     return jsonify({"event": _event_to_dict(event)}), 200
 
 
 # ── Create Event ───────────────────────────────────────────
+
 
 @timeline_bp.route("/api/timeline/events", methods=["POST"])
 @login_required
@@ -165,8 +177,12 @@ def create_event():
     except (ValueError, TypeError):
         event_date = datetime.now(timezone.utc)
 
-    max_order = db.session.query(db.func.max(CareerTimelineEvent.sort_order))\
-        .filter_by(user_id=current_user.id).scalar() or 0
+    max_order = (
+        db.session.query(db.func.max(CareerTimelineEvent.sort_order))
+        .filter_by(user_id=current_user.id)
+        .scalar()
+        or 0
+    )
 
     event = CareerTimelineEvent(
         user_id=current_user.id,
@@ -196,14 +212,24 @@ def create_event():
 
 # ── Update Event ───────────────────────────────────────────
 
+
 @timeline_bp.route("/api/timeline/events/<int:event_id>", methods=["PUT"])
 @login_required
 def update_event(event_id):
-    event = CareerTimelineEvent.query.filter_by(id=event_id, user_id=current_user.id).first()
+    event = CareerTimelineEvent.query.filter_by(
+        id=event_id, user_id=current_user.id
+    ).first()
     if not event:
         return jsonify({"error": "Event not found"}), 404
     data = request.get_json(silent=True) or {}
-    for field in ["title", "description", "event_type", "status", "visibility", "attachment_url"]:
+    for field in [
+        "title",
+        "description",
+        "event_type",
+        "status",
+        "visibility",
+        "attachment_url",
+    ]:
         if field in data:
             setattr(event, field, data[field])
     for field in ["importance", "sort_order"]:
@@ -229,10 +255,13 @@ def update_event(event_id):
 
 # ── Delete Event ───────────────────────────────────────────
 
+
 @timeline_bp.route("/api/timeline/events/<int:event_id>", methods=["DELETE"])
 @login_required
 def delete_event(event_id):
-    event = CareerTimelineEvent.query.filter_by(id=event_id, user_id=current_user.id).first()
+    event = CareerTimelineEvent.query.filter_by(
+        id=event_id, user_id=current_user.id
+    ).first()
     if not event:
         return jsonify({"error": "Event not found"}), 404
     db.session.delete(event)
@@ -242,14 +271,21 @@ def delete_event(event_id):
 
 # ── Duplicate Event ────────────────────────────────────────
 
+
 @timeline_bp.route("/api/timeline/events/<int:event_id>/duplicate", methods=["POST"])
 @login_required
 def duplicate_event(event_id):
-    original = CareerTimelineEvent.query.filter_by(id=event_id, user_id=current_user.id).first()
+    original = CareerTimelineEvent.query.filter_by(
+        id=event_id, user_id=current_user.id
+    ).first()
     if not original:
         return jsonify({"error": "Event not found"}), 404
-    max_order = db.session.query(db.func.max(CareerTimelineEvent.sort_order))\
-        .filter_by(user_id=current_user.id).scalar() or 0
+    max_order = (
+        db.session.query(db.func.max(CareerTimelineEvent.sort_order))
+        .filter_by(user_id=current_user.id)
+        .scalar()
+        or 0
+    )
     event = CareerTimelineEvent(
         user_id=current_user.id,
         event_type=original.event_type,
@@ -272,10 +308,13 @@ def duplicate_event(event_id):
 
 # ── Toggle Pin / Favorite ──────────────────────────────────
 
+
 @timeline_bp.route("/api/timeline/events/<int:event_id>/pin", methods=["POST"])
 @login_required
 def toggle_pin(event_id):
-    event = CareerTimelineEvent.query.filter_by(id=event_id, user_id=current_user.id).first()
+    event = CareerTimelineEvent.query.filter_by(
+        id=event_id, user_id=current_user.id
+    ).first()
     if not event:
         return jsonify({"error": "Event not found"}), 404
     event.is_pinned = not event.is_pinned
@@ -286,7 +325,9 @@ def toggle_pin(event_id):
 @timeline_bp.route("/api/timeline/events/<int:event_id>/favorite", methods=["POST"])
 @login_required
 def toggle_favorite(event_id):
-    event = CareerTimelineEvent.query.filter_by(id=event_id, user_id=current_user.id).first()
+    event = CareerTimelineEvent.query.filter_by(
+        id=event_id, user_id=current_user.id
+    ).first()
     if not event:
         return jsonify({"error": "Event not found"}), 404
     event.is_favorite = not event.is_favorite
@@ -300,7 +341,9 @@ def reorder_events():
     data = request.get_json(silent=True) or {}
     order_map = data.get("order", {})
     for event_id, order in order_map.items():
-        event = CareerTimelineEvent.query.filter_by(id=int(event_id), user_id=current_user.id).first()
+        event = CareerTimelineEvent.query.filter_by(
+            id=int(event_id), user_id=current_user.id
+        ).first()
         if event:
             event.sort_order = order
     db.session.commit()
@@ -309,14 +352,20 @@ def reorder_events():
 
 # ── Event Categories (for filter UI) ──────────────────────
 
+
 @timeline_bp.route("/api/timeline/categories", methods=["GET"])
 @login_required
 def list_categories():
     uid = current_user.id
-    results = db.session.query(CareerTimelineEvent.event_type, db.func.count(CareerTimelineEvent.id))\
-        .filter_by(user_id=uid)\
-        .group_by(CareerTimelineEvent.event_type)\
-        .order_by(db.func.count(CareerTimelineEvent.id).desc()).all()
+    results = (
+        db.session.query(
+            CareerTimelineEvent.event_type, db.func.count(CareerTimelineEvent.id)
+        )
+        .filter_by(user_id=uid)
+        .group_by(CareerTimelineEvent.event_type)
+        .order_by(db.func.count(CareerTimelineEvent.id).desc())
+        .all()
+    )
     categories = []
     all_count = CareerTimelineEvent.query.filter_by(user_id=uid).count()
     for event_type, count in results:
@@ -326,22 +375,31 @@ def list_categories():
 
 # ── Stats ──────────────────────────────────────────────────
 
+
 @timeline_bp.route("/api/timeline/stats", methods=["GET"])
 @login_required
 def timeline_stats():
     uid = current_user.id
     total = CareerTimelineEvent.query.filter_by(user_id=uid).count()
     pinned = CareerTimelineEvent.query.filter_by(user_id=uid, is_pinned=True).count()
-    favorites = CareerTimelineEvent.query.filter_by(user_id=uid, is_favorite=True).count()
+    favorites = CareerTimelineEvent.query.filter_by(
+        user_id=uid, is_favorite=True
+    ).count()
     planned = CareerTimelineEvent.query.filter_by(user_id=uid, status="planned").count()
-    in_progress = CareerTimelineEvent.query.filter_by(user_id=uid, status="in_progress").count()
-    completed = CareerTimelineEvent.query.filter_by(user_id=uid, status="completed").count()
+    in_progress = CareerTimelineEvent.query.filter_by(
+        user_id=uid, status="in_progress"
+    ).count()
+    completed = CareerTimelineEvent.query.filter_by(
+        user_id=uid, status="completed"
+    ).count()
 
-    return jsonify({
-        "total": total,
-        "pinned": pinned,
-        "favorites": favorites,
-        "planned": planned,
-        "in_progress": in_progress,
-        "completed": completed,
-    }), 200
+    return jsonify(
+        {
+            "total": total,
+            "pinned": pinned,
+            "favorites": favorites,
+            "planned": planned,
+            "in_progress": in_progress,
+            "completed": completed,
+        }
+    ), 200

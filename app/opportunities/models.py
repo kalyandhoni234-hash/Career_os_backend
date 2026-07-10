@@ -29,16 +29,31 @@ class Opportunity(db.Model):
     posted_at = db.Column(db.DateTime, nullable=True)
     expires_at = db.Column(db.DateTime, nullable=True)
     scraped_at = db.Column(db.DateTime, nullable=True)
-    company_id = db.Column(db.Integer, db.ForeignKey("company_profiles.id"), nullable=True)
+    company_id = db.Column(
+        db.Integer, db.ForeignKey("company_profiles.id"), nullable=True
+    )
     raw_data = db.Column(db.JSON, default=dict)
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
-    company = db.relationship("CompanyProfile", backref=db.backref("opportunities", lazy="dynamic"))
-    saved_by_users = db.relationship("SavedOpportunity", backref="opportunity", lazy="dynamic", cascade="all, delete-orphan")
+    company = db.relationship(
+        "CompanyProfile", backref=db.backref("opportunities", lazy="dynamic")
+    )
+    saved_by_users = db.relationship(
+        "SavedOpportunity",
+        backref="opportunity",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
 
-    __table_args__ = (db.UniqueConstraint("external_id", "provider", name="uq_external_provider"),)
+    __table_args__ = (
+        db.UniqueConstraint("external_id", "provider", name="uq_external_provider"),
+    )
 
 
 class CompanyProfile(db.Model):
@@ -66,7 +81,11 @@ class CompanyProfile(db.Model):
     glassdoor_rating = db.Column(db.Float, nullable=True)
     indeed_rating = db.Column(db.Float, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
 
 class SavedOpportunity(db.Model):
@@ -74,18 +93,28 @@ class SavedOpportunity(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    opportunity_id = db.Column(db.Integer, db.ForeignKey("opportunities.id"), nullable=False)
+    opportunity_id = db.Column(
+        db.Integer, db.ForeignKey("opportunities.id"), nullable=False
+    )
     list_type = db.Column(db.String(50), default="saved")
     tags = db.Column(db.JSON, default=list)
     notes = db.Column(db.Text, nullable=True)
     applied_at = db.Column(db.DateTime, nullable=True)
     application_status = db.Column(db.String(50), nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
-    user = db.relationship("User", backref=db.backref("saved_opportunities", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("saved_opportunities", lazy="dynamic")
+    )
 
-    __table_args__ = (db.UniqueConstraint("user_id", "opportunity_id", name="uq_user_opportunity"),)
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "opportunity_id", name="uq_user_opportunity"),
+    )
 
 
 class OpportunityMatchScore(db.Model):
@@ -93,7 +122,9 @@ class OpportunityMatchScore(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    opportunity_id = db.Column(db.Integer, db.ForeignKey("opportunities.id"), nullable=False)
+    opportunity_id = db.Column(
+        db.Integer, db.ForeignKey("opportunities.id"), nullable=False
+    )
     overall_score = db.Column(db.Integer, default=0)
     ats_match = db.Column(db.Integer, default=0)
     resume_match = db.Column(db.Integer, default=0)
@@ -106,10 +137,18 @@ class OpportunityMatchScore(db.Model):
     explanation = db.Column(db.JSON, default=dict)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    user = db.relationship("User", backref=db.backref("opportunity_match_scores", lazy="dynamic"))
-    opportunity = db.relationship("Opportunity", backref=db.backref("match_scores", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("opportunity_match_scores", lazy="dynamic")
+    )
+    opportunity = db.relationship(
+        "Opportunity", backref=db.backref("match_scores", lazy="dynamic")
+    )
 
-    __table_args__ = (db.UniqueConstraint("user_id", "opportunity_id", name="uq_user_opportunity_score"),)
+    __table_args__ = (
+        db.UniqueConstraint(
+            "user_id", "opportunity_id", name="uq_user_opportunity_score"
+        ),
+    )
 
 
 class OpportunitySkillGap(db.Model):
@@ -117,7 +156,9 @@ class OpportunitySkillGap(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    opportunity_id = db.Column(db.Integer, db.ForeignKey("opportunities.id"), nullable=False)
+    opportunity_id = db.Column(
+        db.Integer, db.ForeignKey("opportunities.id"), nullable=False
+    )
     missing_skills = db.Column(db.JSON, default=list)
     current_skills = db.Column(db.JSON, default=list)
     required_skills = db.Column(db.JSON, default=list)
@@ -126,10 +167,18 @@ class OpportunitySkillGap(db.Model):
     priority = db.Column(db.String(20), default="medium")
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    user = db.relationship("User", backref=db.backref("opportunity_skill_gaps", lazy="dynamic"))
-    opportunity = db.relationship("Opportunity", backref=db.backref("skill_gaps", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("opportunity_skill_gaps", lazy="dynamic")
+    )
+    opportunity = db.relationship(
+        "Opportunity", backref=db.backref("skill_gaps", lazy="dynamic")
+    )
 
-    __table_args__ = (db.UniqueConstraint("user_id", "opportunity_id", name="uq_user_opportunity_gap"),)
+    __table_args__ = (
+        db.UniqueConstraint(
+            "user_id", "opportunity_id", name="uq_user_opportunity_gap"
+        ),
+    )
 
 
 class SalaryInsight(db.Model):
@@ -170,7 +219,9 @@ class InterviewPack(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    opportunity_id = db.Column(db.Integer, db.ForeignKey("opportunities.id"), nullable=False)
+    opportunity_id = db.Column(
+        db.Integer, db.ForeignKey("opportunities.id"), nullable=False
+    )
     likely_questions = db.Column(db.JSON, default=list)
     coding_topics = db.Column(db.JSON, default=list)
     behavioral_questions = db.Column(db.JSON, default=list)
@@ -180,10 +231,18 @@ class InterviewPack(db.Model):
     learning_resources = db.Column(db.JSON, default=list)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    user = db.relationship("User", backref=db.backref("interview_packs", lazy="dynamic"))
-    opportunity = db.relationship("Opportunity", backref=db.backref("interview_packs", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("interview_packs", lazy="dynamic")
+    )
+    opportunity = db.relationship(
+        "Opportunity", backref=db.backref("interview_packs", lazy="dynamic")
+    )
 
-    __table_args__ = (db.UniqueConstraint("user_id", "opportunity_id", name="uq_user_opportunity_interview"),)
+    __table_args__ = (
+        db.UniqueConstraint(
+            "user_id", "opportunity_id", name="uq_user_opportunity_interview"
+        ),
+    )
 
 
 class ResumeVersionByCompany(db.Model):
@@ -191,7 +250,9 @@ class ResumeVersionByCompany(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    opportunity_id = db.Column(db.Integer, db.ForeignKey("opportunities.id"), nullable=False)
+    opportunity_id = db.Column(
+        db.Integer, db.ForeignKey("opportunities.id"), nullable=False
+    )
     company_name = db.Column(db.String(255), nullable=False)
     version_name = db.Column(db.String(100), default="v1")
     resume_json = db.Column(db.JSON, nullable=False)
@@ -199,5 +260,9 @@ class ResumeVersionByCompany(db.Model):
     job_description_used = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    user = db.relationship("User", backref=db.backref("resume_versions_by_company", lazy="dynamic"))
-    opportunity = db.relationship("Opportunity", backref=db.backref("resume_versions", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("resume_versions_by_company", lazy="dynamic")
+    )
+    opportunity = db.relationship(
+        "Opportunity", backref=db.backref("resume_versions", lazy="dynamic")
+    )

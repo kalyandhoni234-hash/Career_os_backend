@@ -5,7 +5,9 @@ from app.opportunities.models import Opportunity, OpportunityMatchScore
 logger = logging.getLogger(__name__)
 
 
-def calculate_match_score(user_id: int, opportunity_id: int, force: bool = False) -> dict:
+def calculate_match_score(
+    user_id: int, opportunity_id: int, force: bool = False
+) -> dict:
     existing = OpportunityMatchScore.query.filter_by(
         user_id=user_id, opportunity_id=opportunity_id
     ).first()
@@ -53,7 +55,11 @@ def _compute_scores(user_id: int, opp: Opportunity) -> dict:
     description_text = f"{opp.description or ''}\n{' '.join(opp.requirements or [])}\n{' '.join(opp.responsibilities or [])}"
 
     ats_result = ats_score_resume(resume, description_text) if resume else None
-    ats_match = ats_result["overall_score"] if ats_result and ats_result["overall_score"] is not None else 0
+    ats_match = (
+        ats_result["overall_score"]
+        if ats_result and ats_result["overall_score"] is not None
+        else 0
+    )
 
     user_skills = set()
     if resume and resume.skills:
@@ -61,7 +67,9 @@ def _compute_scores(user_id: int, opp: Opportunity) -> dict:
     if opp.tech_stack:
         job_skills = {s.lower().strip() for s in opp.tech_stack if isinstance(s, str)}
         matched = user_skills & job_skills
-        skill_match = round((len(matched) / len(job_skills)) * 100) if job_skills else 50
+        skill_match = (
+            round((len(matched) / len(job_skills)) * 100) if job_skills else 50
+        )
     else:
         matched = set()
         skill_match = 50
@@ -99,30 +107,54 @@ def _compute_scores(user_id: int, opp: Opportunity) -> dict:
         "location_match": 0.05,
         "salary_match": 0.05,
     }
-    overall_score = round(sum(
-        scores_dict[k] * w for k, w in weights.items()
-    ))
+    overall_score = round(sum(scores_dict[k] * w for k, w in weights.items()))
 
     explanations = {}
     if ats_match >= 80:
         explanations["ats_match"] = "Your resume aligns well with this job description"
     elif ats_match >= 50:
-        explanations["ats_match"] = f"Your resume has {ats_match}% keyword match — add more relevant keywords"
+        explanations["ats_match"] = (
+            f"Your resume has {ats_match}% keyword match — add more relevant keywords"
+        )
     else:
-        explanations["ats_match"] = "Your resume needs significant optimization for this role"
+        explanations["ats_match"] = (
+            "Your resume needs significant optimization for this role"
+        )
 
     if skill_match >= 70:
-        explanations["skill_match"] = f"You match {len(matched)} of {len(opp.tech_stack or [])} required skills"
+        explanations["skill_match"] = (
+            f"You match {len(matched)} of {len(opp.tech_stack or [])} required skills"
+        )
     elif skill_match >= 40:
-        explanations["skill_match"] = f"You have some required skills ({len(matched)}/{len(opp.tech_stack or [])})"
+        explanations["skill_match"] = (
+            f"You have some required skills ({len(matched)}/{len(opp.tech_stack or [])})"
+        )
     else:
-        explanations["skill_match"] = "Several required skills missing — check the skill gap analysis"
+        explanations["skill_match"] = (
+            "Several required skills missing — check the skill gap analysis"
+        )
 
     explanations["experience_match"] = _explain_experience(profile, opp)
-    explanations["project_match"] = project_match >= 50 and "Your projects demonstrate relevant experience" or "Add targeted projects to strengthen your profile"
-    explanations["goal_match"] = goal_match >= 50 and f"Matches your career goal: {profile.get('target_role', 'N/A')}" or "Consider whether this fits your career goals"
-    explanations["location_match"] = location_match >= 50 and "Location is compatible" or "Location mismatch — consider relocation or remote"
-    explanations["salary_match"] = salary_match >= 50 and "Salary range aligns with expectations" or "Salary below expectations"
+    explanations["project_match"] = (
+        project_match >= 50
+        and "Your projects demonstrate relevant experience"
+        or "Add targeted projects to strengthen your profile"
+    )
+    explanations["goal_match"] = (
+        goal_match >= 50
+        and f"Matches your career goal: {profile.get('target_role', 'N/A')}"
+        or "Consider whether this fits your career goals"
+    )
+    explanations["location_match"] = (
+        location_match >= 50
+        and "Location is compatible"
+        or "Location mismatch — consider relocation or remote"
+    )
+    explanations["salary_match"] = (
+        salary_match >= 50
+        and "Salary range aligns with expectations"
+        or "Salary below expectations"
+    )
 
     return {
         "overall_score": overall_score,

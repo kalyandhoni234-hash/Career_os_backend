@@ -19,12 +19,17 @@ def get_or_create_company(name: str) -> CompanyProfile:
 def get_company_insights(company_name: str) -> Optional[dict]:
     company = CompanyProfile.query.filter_by(name=company_name).first()
     if not company:
-        company = CompanyProfile.query.filter(CompanyProfile.name.ilike(f"%{company_name}%")).first()
+        company = CompanyProfile.query.filter(
+            CompanyProfile.name.ilike(f"%{company_name}%")
+        ).first()
     if not company:
         return None
 
     from app.opportunities.models import Opportunity
-    active_jobs = Opportunity.query.filter_by(company_name=company.name, is_active=True).count()
+
+    active_jobs = Opportunity.query.filter_by(
+        company_name=company.name, is_active=True
+    ).count()
 
     return {
         "id": company.id,
@@ -59,7 +64,12 @@ def search_companies(query: str, page: int = 1, per_page: int = 20) -> dict:
         q = q.filter(CompanyProfile.name.ilike(like))
 
     total = q.count()
-    items = q.order_by(CompanyProfile.name.asc()).offset((page - 1) * per_page).limit(per_page).all()
+    items = (
+        q.order_by(CompanyProfile.name.asc())
+        .offset((page - 1) * per_page)
+        .limit(per_page)
+        .all()
+    )
 
     return {
         "companies": [

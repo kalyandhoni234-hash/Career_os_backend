@@ -17,9 +17,13 @@ def generate_optimized_resume(user_id: int, opportunity_id: int) -> dict:
     if not opp or not resume:
         return {"error": "Opportunity or resume not found"}
 
-    existing = ResumeVersionByCompany.query.filter_by(
-        user_id=user_id, opportunity_id=opportunity_id
-    ).order_by(ResumeVersionByCompany.created_at.desc()).first()
+    existing = (
+        ResumeVersionByCompany.query.filter_by(
+            user_id=user_id, opportunity_id=opportunity_id
+        )
+        .order_by(ResumeVersionByCompany.created_at.desc())
+        .first()
+    )
     if existing:
         return _version_to_dict(existing)
 
@@ -53,8 +57,15 @@ Generate an optimized version of this resume tailored specifically for this job.
 Return ONLY valid JSON."""
 
     try:
-        result_text = generate_text(prompt, model="gemini", system_instruction=SYSTEM_PROMPT)
-        result_text = result_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```")
+        result_text = generate_text(
+            prompt, model="gemini", system_instruction=SYSTEM_PROMPT
+        )
+        result_text = (
+            result_text.strip()
+            .removeprefix("```json")
+            .removeprefix("```")
+            .removesuffix("```")
+        )
         result = json.loads(result_text)
     except Exception as e:
         logger.warning("AI resume optimization failed, using fallback: %s", e)
@@ -76,16 +87,21 @@ Return ONLY valid JSON."""
         "optimized_summary": result.get("optimized_summary", resume.summary),
         "added_keywords": result.get("added_keywords", []),
         "skill_additions": result.get("skill_additions", []),
-        "suggested_experience_rewrites": result.get("suggested_experience_rewrites", []),
+        "suggested_experience_rewrites": result.get(
+            "suggested_experience_rewrites", []
+        ),
         "ats_improvement_estimate": result.get("ats_improvement_estimate", 60),
         "company_name": opp.company_name,
         "role": opp.title,
     }
 
 
-def generate_cover_letter(user_id: int, opportunity_id: int, tone: str = "professional") -> dict:
+def generate_cover_letter(
+    user_id: int, opportunity_id: int, tone: str = "professional"
+) -> dict:
     opp = Opportunity.query.get(opportunity_id)
     from app.resume.models import Resume
+
     resume = Resume.query.filter_by(user_id=user_id).first()
 
     if not opp or not resume:
@@ -121,8 +137,15 @@ Write a compelling, personalized cover letter (3-4 paragraphs) that connects the
 Return JSON: {{"subject": "...", "body": "...", "salutation": "...", "closing": "..."}}"""
 
     try:
-        result_text = generate_text(prompt, model="gemini", system_instruction=SYSTEM_PROMPT)
-        result_text = result_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```")
+        result_text = generate_text(
+            prompt, model="gemini", system_instruction=SYSTEM_PROMPT
+        )
+        result_text = (
+            result_text.strip()
+            .removeprefix("```json")
+            .removeprefix("```")
+            .removesuffix("```")
+        )
         result = json.loads(result_text)
     except Exception:
         result = {
@@ -135,9 +158,12 @@ Return JSON: {{"subject": "...", "body": "...", "salutation": "...", "closing": 
     return result
 
 
-def generate_email(user_id: int, opportunity_id: int, email_type: str = "application") -> dict:
+def generate_email(
+    user_id: int, opportunity_id: int, email_type: str = "application"
+) -> dict:
     opp = Opportunity.query.get(opportunity_id)
     from app.resume.models import Resume
+
     resume = Resume.query.filter_by(user_id=user_id).first()
     name = resume.full_name if resume else "Candidate"
     company = opp.company_name if opp else "Company"
@@ -151,8 +177,15 @@ Role: {role}
 Return JSON: {{"subject": "...", "body": "..."}}"""
 
     try:
-        result_text = generate_text(prompt, model="gemini", system_instruction=SYSTEM_PROMPT)
-        result_text = result_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```")
+        result_text = generate_text(
+            prompt, model="gemini", system_instruction=SYSTEM_PROMPT
+        )
+        result_text = (
+            result_text.strip()
+            .removeprefix("```json")
+            .removeprefix("```")
+            .removesuffix("```")
+        )
         result = json.loads(result_text)
     except Exception:
         result = {
@@ -163,9 +196,12 @@ Return JSON: {{"subject": "...", "body": "..."}}"""
     return result
 
 
-def generate_linkedin_message(user_id: int, opportunity_id: int, message_type: str = "connection") -> dict:
+def generate_linkedin_message(
+    user_id: int, opportunity_id: int, message_type: str = "connection"
+) -> dict:
     opp = Opportunity.query.get(opportunity_id)
     from app.resume.models import Resume
+
     resume = Resume.query.filter_by(user_id=user_id).first()
     name = resume.full_name if resume else "Candidate"
     company = opp.company_name if opp else "Company"
@@ -179,8 +215,15 @@ Target Role: {role}
 Return JSON: {{"subject": "...", "body": "..."}}"""
 
     try:
-        result_text = generate_text(prompt, model="gemini", system_instruction=SYSTEM_PROMPT)
-        result_text = result_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```")
+        result_text = generate_text(
+            prompt, model="gemini", system_instruction=SYSTEM_PROMPT
+        )
+        result_text = (
+            result_text.strip()
+            .removeprefix("```json")
+            .removeprefix("```")
+            .removesuffix("```")
+        )
         result = json.loads(result_text)
     except Exception:
         result = {
@@ -224,8 +267,15 @@ Return a JSON object with these exact keys:
 Generate at least 5 items in each array where possible. Return ONLY valid JSON."""
 
     try:
-        result_text = generate_text(prompt, model="gemini", system_instruction=SYSTEM_PROMPT)
-        result_text = result_text.strip().removeprefix("```json").removeprefix("```").removesuffix("```")
+        result_text = generate_text(
+            prompt, model="gemini", system_instruction=SYSTEM_PROMPT
+        )
+        result_text = (
+            result_text.strip()
+            .removeprefix("```json")
+            .removeprefix("```")
+            .removesuffix("```")
+        )
         result = json.loads(result_text)
     except Exception as e:
         logger.warning("AI interview question generation failed: %s", e)
@@ -261,18 +311,68 @@ def _fallback_optimization(resume_json: dict, job_description: str) -> dict:
 def _fallback_interview_pack(opp: Opportunity) -> dict:
     return {
         "likely_questions": [
-            {"question": f"Tell me about your experience with {opp.tech_stack[0] if opp.tech_stack else 'relevant technologies'}", "category": "technical", "difficulty": "medium", "preparation_tip": "Prepare specific examples using this technology"},
-            {"question": "Describe a challenging project and how you overcame obstacles", "category": "behavioral", "difficulty": "medium", "preparation_tip": "Use the STAR method"},
+            {
+                "question": f"Tell me about your experience with {opp.tech_stack[0] if opp.tech_stack else 'relevant technologies'}",
+                "category": "technical",
+                "difficulty": "medium",
+                "preparation_tip": "Prepare specific examples using this technology",
+            },
+            {
+                "question": "Describe a challenging project and how you overcame obstacles",
+                "category": "behavioral",
+                "difficulty": "medium",
+                "preparation_tip": "Use the STAR method",
+            },
         ],
-        "coding_topics": [{"topic": t, "importance": 4, "description": f"Core technology for {opp.company_name}"} for t in (opp.tech_stack or [])[:5]],
+        "coding_topics": [
+            {
+                "topic": t,
+                "importance": 4,
+                "description": f"Core technology for {opp.company_name}",
+            }
+            for t in (opp.tech_stack or [])[:5]
+        ],
         "behavioral_questions": [
-            {"question": "Why do you want to work at " + (opp.company_name or "our company") + "?", "framework": "STAR", "key_points": ["Research the company", "Connect your values"]},
-            {"question": "Tell me about a time you handled a conflict", "framework": "STAR", "key_points": ["Be honest", "Focus on resolution"]},
+            {
+                "question": "Why do you want to work at "
+                + (opp.company_name or "our company")
+                + "?",
+                "framework": "STAR",
+                "key_points": ["Research the company", "Connect your values"],
+            },
+            {
+                "question": "Tell me about a time you handled a conflict",
+                "framework": "STAR",
+                "key_points": ["Be honest", "Focus on resolution"],
+            },
         ],
-        "system_design_topics": [{"topic": "System Design", "importance": 4, "description": "General system design principles"}],
-        "company_questions": [{"question": f"What does the engineering culture look like at {opp.company_name}?", "context": "Team culture"}],
-        "preparation_checklist": ["Research the company", "Review job description", "Prepare your questions", "Practice behavioral questions"],
-        "learning_resources": [{"topic": t, "resource_type": "article", "description": f"Review {t} fundamentals"} for t in (opp.tech_stack or [])[:3]],
+        "system_design_topics": [
+            {
+                "topic": "System Design",
+                "importance": 4,
+                "description": "General system design principles",
+            }
+        ],
+        "company_questions": [
+            {
+                "question": f"What does the engineering culture look like at {opp.company_name}?",
+                "context": "Team culture",
+            }
+        ],
+        "preparation_checklist": [
+            "Research the company",
+            "Review job description",
+            "Prepare your questions",
+            "Practice behavioral questions",
+        ],
+        "learning_resources": [
+            {
+                "topic": t,
+                "resource_type": "article",
+                "description": f"Review {t} fundamentals",
+            }
+            for t in (opp.tech_stack or [])[:3]
+        ],
     }
 
 

@@ -31,15 +31,21 @@ def generate_recommendations(user_id, force=False):
         context_parts.append(f"Skills: {', '.join(skills[:15])}")
     if memory.get("career_profile", {}).get("target_role"):
         cp = memory["career_profile"]
-        context_parts.append(f"Target: {cp.get('target_role')} at {cp.get('target_company', 'any company')}")
+        context_parts.append(
+            f"Target: {cp.get('target_role')} at {cp.get('target_company', 'any company')}"
+        )
     missing = memory.get("ats", {}).get("missing_skills", [])
     if missing:
         context_parts.append(f"Missing Skills: {', '.join(missing[:10])}")
     app_data = memory.get("applications", {})
-    context_parts.append(f"Applications: {app_data.get('total_applications', 0)} total, {app_data.get('offer_count', 0)} offers")
+    context_parts.append(
+        f"Applications: {app_data.get('total_applications', 0)} total, {app_data.get('offer_count', 0)} offers"
+    )
     goals = memory.get("goals", {}).get("active_goals", [])
     if goals:
-        context_parts.append(f"Active Goals: {', '.join(g['title'] for g in goals[:3])}")
+        context_parts.append(
+            f"Active Goals: {', '.join(g['title'] for g in goals[:3])}"
+        )
 
     # Only generate AI recs if we have enough context
     if has_resume and (skills or missing):
@@ -73,6 +79,7 @@ Example:
                 if cleaned.startswith("json"):
                     cleaned = cleaned[4:]
             import json
+
             recs_data = json.loads(cleaned)
         except Exception:
             recs_data = _generate_fallback_recs(memory)
@@ -94,16 +101,18 @@ Example:
         )
         db.session.add(rec)
         db.session.flush()
-        saved.append({
-            "id": rec.id,
-            "rec_type": rec.rec_type,
-            "title": rec.title,
-            "description": rec.description,
-            "priority": rec.priority,
-            "impact_score": rec.impact_score,
-            "category": rec.category,
-            "action_link": rec.action_link,
-        })
+        saved.append(
+            {
+                "id": rec.id,
+                "rec_type": rec.rec_type,
+                "title": rec.title,
+                "description": rec.description,
+                "priority": rec.priority,
+                "impact_score": rec.impact_score,
+                "category": rec.category,
+                "action_link": rec.action_link,
+            }
+        )
     db.session.commit()
     return saved
 
@@ -119,99 +128,117 @@ def _generate_fallback_recs(memory):
     # Skill-based recommendations
     if missing:
         for skill in missing[:3]:
-            recs.append({
-                "rec_type": "learning",
-                "title": f"Learn {skill}",
-                "description": f"{skill} is missing from your skills. Adding it could improve your ATS score.",
-                "priority": 4,
-                "impact_score": 5,
-                "category": "Skill",
-                "action_link": "/roadmaps",
-            })
+            recs.append(
+                {
+                    "rec_type": "learning",
+                    "title": f"Learn {skill}",
+                    "description": f"{skill} is missing from your skills. Adding it could improve your ATS score.",
+                    "priority": 4,
+                    "impact_score": 5,
+                    "category": "Skill",
+                    "action_link": "/roadmaps",
+                }
+            )
 
     # Application-based
     if apps.get("total_applications", 0) < 5:
-        recs.append({
-            "rec_type": "job",
-            "title": "Apply to more positions",
-            "description": "You've only applied to a few positions. Increasing applications improves your chances.",
-            "priority": 5,
-            "impact_score": 10,
-            "category": "Career",
-            "action_link": "/jobs",
-        })
+        recs.append(
+            {
+                "rec_type": "job",
+                "title": "Apply to more positions",
+                "description": "You've only applied to a few positions. Increasing applications improves your chances.",
+                "priority": 5,
+                "impact_score": 10,
+                "category": "Career",
+                "action_link": "/jobs",
+            }
+        )
 
     # Resume improvements
     if not memory.get("resume", {}).get("summary"):
-        recs.append({
-            "rec_type": "resume",
-            "title": "Add a professional summary",
-            "description": "Your resume is missing a summary. A strong summary can increase ATS matching.",
-            "priority": 5,
-            "impact_score": 8,
-            "category": "Resume",
-            "action_link": "/resume",
-        })
+        recs.append(
+            {
+                "rec_type": "resume",
+                "title": "Add a professional summary",
+                "description": "Your resume is missing a summary. A strong summary can increase ATS matching.",
+                "priority": 5,
+                "impact_score": 8,
+                "category": "Resume",
+                "action_link": "/resume",
+            }
+        )
 
     # Interview prep
     if apps.get("interview_count", 0) > 0 and apps.get("offer_count", 0) == 0:
-        recs.append({
-            "rec_type": "interview",
-            "title": "Practice technical interviews",
-            "description": "You've had interviews but no offers yet. Focused interview prep could help convert.",
-            "priority": 4,
-            "impact_score": 15,
-            "category": "Interview",
-            "action_link": "/coach",
-        })
+        recs.append(
+            {
+                "rec_type": "interview",
+                "title": "Practice technical interviews",
+                "description": "You've had interviews but no offers yet. Focused interview prep could help convert.",
+                "priority": 4,
+                "impact_score": 15,
+                "category": "Interview",
+                "action_link": "/coach",
+            }
+        )
 
     # Goal-based
     if not goals:
-        recs.append({
-            "rec_type": "goal",
-            "title": "Set a career goal",
-            "description": "Setting a target role helps the AI personalize all recommendations.",
-            "priority": 3,
-            "impact_score": 5,
-            "category": "Career",
-            "action_link": "/career-overview",
-        })
+        recs.append(
+            {
+                "rec_type": "goal",
+                "title": "Set a career goal",
+                "description": "Setting a target role helps the AI personalize all recommendations.",
+                "priority": 3,
+                "impact_score": 5,
+                "category": "Career",
+                "action_link": "/career-overview",
+            }
+        )
 
     # General growth
     if len(skills) < 5:
-        recs.append({
-            "rec_type": "skill",
-            "title": "Expand your skill set",
-            "description": "You have fewer than 5 skills listed. Adding more technologies broadens opportunities.",
-            "priority": 3,
-            "impact_score": 4,
-            "category": "Skill",
-            "action_link": "/resume",
-        })
+        recs.append(
+            {
+                "rec_type": "skill",
+                "title": "Expand your skill set",
+                "description": "You have fewer than 5 skills listed. Adding more technologies broadens opportunities.",
+                "priority": 3,
+                "impact_score": 4,
+                "category": "Skill",
+                "action_link": "/resume",
+            }
+        )
 
     return recs
 
 
 def get_action_center(user_id):
     """Build today's action plan sorted by priority and impact."""
-    recs = AIRecommendation.query.filter_by(
-        user_id=user_id, is_dismissed=False, is_completed=False
-    ).order_by(
-        AIRecommendation.priority.desc(),
-        AIRecommendation.impact_score.desc(),
-    ).all()
+    recs = (
+        AIRecommendation.query.filter_by(
+            user_id=user_id, is_dismissed=False, is_completed=False
+        )
+        .order_by(
+            AIRecommendation.priority.desc(),
+            AIRecommendation.impact_score.desc(),
+        )
+        .all()
+    )
 
     plan = []
     for r in recs:
-        plan.append({
-            "id": r.id,
-            "title": r.title,
-            "description": r.description,
-            "priority": r.priority,
-            "impact_score": r.impact_score,
-            "category": r.category,
-            "action_link": r.action_link,
-            "rec_type": r.rec_type,
-            "stars": "★" * r.priority + "☆" * (5 - r.priority),
-        })
+        plan.append(
+            {
+                "id": r.id,
+                "title": r.title,
+                "description": r.description,
+                "priority": r.priority,
+                "impact_score": r.impact_score,
+                "category": r.category,
+                "action_link": r.action_link,
+                "rec_type": r.rec_type,
+                "stars": "★" * r.priority + "☆" * (5 - r.priority),
+            }
+        )
     return plan

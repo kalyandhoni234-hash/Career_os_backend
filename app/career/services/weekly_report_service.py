@@ -1,6 +1,11 @@
 from datetime import datetime, timedelta, date
 from app.extensions import db
-from app.career.models import CareerReport, AIRecommendation, LearningProgress, CareerScoreSnapshot
+from app.career.models import (
+    CareerReport,
+    AIRecommendation,
+    LearningProgress,
+    CareerScoreSnapshot,
+)
 from app.career.services.career_score_service import compute_career_score
 from app.career.services.career_memory_service import build_career_memory
 
@@ -19,11 +24,12 @@ def generate_weekly_report(user_id):
         return _serialize_report(existing)
 
     # Get scores
-    old_snapshots = CareerScoreSnapshot.query.filter_by(
-        user_id=user_id
-    ).order_by(
-        CareerScoreSnapshot.created_at.desc()
-    ).limit(2).all()
+    old_snapshots = (
+        CareerScoreSnapshot.query.filter_by(user_id=user_id)
+        .order_by(CareerScoreSnapshot.created_at.desc())
+        .limit(2)
+        .all()
+    )
     score_before = old_snapshots[-1].overall_score if len(old_snapshots) >= 2 else 0
     current_score = compute_career_score(user_id)
     score_after = current_score["overall_score"]
@@ -34,19 +40,30 @@ def generate_weekly_report(user_id):
     achievements = _get_weekly_achievements(user_id, week_start)
 
     # Get recommendations
-    active_recs = AIRecommendation.query.filter_by(
-        user_id=user_id, is_dismissed=False, is_completed=False
-    ).order_by(AIRecommendation.priority.desc()).limit(3).all()
+    active_recs = (
+        AIRecommendation.query.filter_by(
+            user_id=user_id, is_dismissed=False, is_completed=False
+        )
+        .order_by(AIRecommendation.priority.desc())
+        .limit(3)
+        .all()
+    )
 
     metrics = {
         "resume_score": current_score["breakdown"]["resume_score"],
         "ats_score": current_score["breakdown"]["ats_score"],
         "applications_score": current_score["breakdown"]["applications_score"],
-        "applications_total": memory.get("applications", {}).get("total_applications", 0),
+        "applications_total": memory.get("applications", {}).get(
+            "total_applications", 0
+        ),
         "interview_count": memory.get("applications", {}).get("interview_count", 0),
         "offer_count": memory.get("applications", {}).get("offer_count", 0),
         "skills_learning": len(memory.get("learning", [])),
-        "roadmap_progress": max((r.get("progress", 0) or 0) for r in memory.get("roadmaps", [])) if memory.get("roadmaps") else 0,
+        "roadmap_progress": max(
+            (r.get("progress", 0) or 0) for r in memory.get("roadmaps", [])
+        )
+        if memory.get("roadmaps")
+        else 0,
     }
 
     report = CareerReport(
@@ -78,17 +95,23 @@ def _get_weekly_achievements(user_id, since_date):
     # New skills learned
     recent_learning = LearningProgress.query.filter(
         LearningProgress.user_id == user_id,
-        LearningProgress.updated_at >= datetime.combine(since_date, datetime.min.time()),
+        LearningProgress.updated_at
+        >= datetime.combine(since_date, datetime.min.time()),
     ).all()
     for lp in recent_learning:
         if lp.proficiency >= 60:
             achievements.append(f"Progressed in {lp.skill_name} ({lp.proficiency}%)")
 
     # Timeline events
-    recent_events = CareerTimelineEvent.query.filter(
-        CareerTimelineEvent.user_id == user_id,
-        CareerTimelineEvent.event_date >= datetime.combine(since_date, datetime.min.time()),
-    ).order_by(CareerTimelineEvent.event_date.desc()).all()
+    recent_events = (
+        CareerTimelineEvent.query.filter(
+            CareerTimelineEvent.user_id == user_id,
+            CareerTimelineEvent.event_date
+            >= datetime.combine(since_date, datetime.min.time()),
+        )
+        .order_by(CareerTimelineEvent.event_date.desc())
+        .all()
+    )
     for e in recent_events:
         achievements.append(e.title)
 
@@ -100,11 +123,15 @@ def _generate_summary(score_before, score_after, metrics, achievements):
     parts = []
     delta = score_after - score_before
     if delta > 0:
-        parts.append(f"Your Career Score increased by {delta} points ({score_before} → {score_after}).")
+        parts.append(
+            f"Your Career Score increased by {delta} points ({score_before} → {score_after})."
+        )
     elif delta == 0:
         parts.append(f"Your Career Score held steady at {score_after}.")
     else:
-        parts.append(f"Your Career Score changed by {delta} points ({score_before} → {score_after}).")
+        parts.append(
+            f"Your Career Score changed by {delta} points ({score_before} → {score_after})."
+        )
 
     if metrics.get("skills_learning", 0) > 0:
         parts.append(f"You're learning {metrics['skills_learning']} skills.")
@@ -120,8 +147,12 @@ def _generate_summary(score_before, score_after, metrics, achievements):
 
 def get_previous_reports(user_id):
     """Get all previous weekly reports for a user."""
-    reports = CareerReport.query.filter_by(user_id=user_id)\
-        .order_by(CareerReport.created_at.desc()).limit(20).all()
+    reports = (
+        CareerReport.query.filter_by(user_id=user_id)
+        .order_by(CareerReport.created_at.desc())
+        .limit(20)
+        .all()
+    )
     return [_serialize_report(r) for r in reports]
 
 

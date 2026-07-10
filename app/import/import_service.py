@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from app.extensions import db
 from .models import ImportRecord
@@ -7,6 +8,8 @@ from .parsers.linkedin_parser import LinkedInParser
 from .parsers.github_parser import GitHubParser
 from .parsers.portfolio_parser import PortfolioParser
 from .parsers.backup_parser import BackupParser
+
+logger = logging.getLogger(__name__)
 
 
 PARSER_MAP = {
@@ -19,7 +22,6 @@ PARSER_MAP = {
 
 
 class ImportService:
-
     def __init__(self, user_id):
         self.user_id = user_id
         self.normalizer = ImportNormalizer()
@@ -29,7 +31,9 @@ class ImportService:
             user_id=self.user_id,
             source=source,
             status="processing",
-            raw_data=raw_data if isinstance(raw_data, dict) else {"text": str(raw_data)},
+            raw_data=raw_data
+            if isinstance(raw_data, dict)
+            else {"text": str(raw_data)},
         )
         db.session.add(record)
 
@@ -71,7 +75,9 @@ class ImportService:
         if isinstance(val, list):
             return "high" if len(val) >= 3 else "medium" if val else "low"
         if isinstance(val, str):
-            return "high" if len(val.strip()) > 50 else "medium" if val.strip() else "low"
+            return (
+                "high" if len(val.strip()) > 50 else "medium" if val.strip() else "low"
+            )
         return "low"
 
     def _calculate_confidence(self, data: dict) -> dict:
@@ -95,7 +101,11 @@ class ImportService:
         }
 
         values = {"high": 3, "medium": 2, "low": 1}
-        overall = round(sum(values.get(v, 1) for v in fields_scores.values()) / (len(fields_scores) * 3) * 100)
+        overall = round(
+            sum(values.get(v, 1) for v in fields_scores.values())
+            / (len(fields_scores) * 3)
+            * 100
+        )
 
         return {"overall": overall, **fields_scores}
 
@@ -132,7 +142,16 @@ class ImportService:
         nd = record.normalized_data or {}
         pi = nd.get("personal_info", {})
 
-        for field in ["full_name", "email", "phone", "location", "title", "website", "linkedin", "github"]:
+        for field in [
+            "full_name",
+            "email",
+            "phone",
+            "location",
+            "title",
+            "website",
+            "linkedin",
+            "github",
+        ]:
             val = pi.get(field)
             if val:
                 setattr(resume, field, val)
@@ -167,18 +186,21 @@ class ImportService:
     def _run_analyses(self, user_id):
         try:
             from app.career.services.career_score_service import compute_career_score
+
             compute_career_score(user_id)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to compute career score: %s", e)
 
         try:
             from app.career.services.skill_graph_service import build_skill_graph
+
             build_skill_graph(user_id)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to build skill graph: %s", e)
 
         try:
             from app.opportunities.services.skill_gap_service import analyze_skill_gaps
+
             analyze_skill_gaps(user_id)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.warning("Failed to analyze skill gaps: %s", e)

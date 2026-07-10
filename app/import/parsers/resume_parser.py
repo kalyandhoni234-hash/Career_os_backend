@@ -3,15 +3,33 @@ from .base import BaseParser
 
 
 SECTION_PATTERNS = {
-    "experience": re.compile(r"\b(EXPERIENCE|WORK\s*HISTORY|EMPLOYMENT|PROFESSIONAL\s*EXPERIENCE)\b", re.IGNORECASE),
-    "education": re.compile(r"\b(EDUCATION|ACADEMIC|SCHOOL|UNIVERSITY|COLLEGE)\b", re.IGNORECASE),
-    "skills": re.compile(r"\b(SKILLS|TECHNICAL\s*SKILLS|CORE\s*COMPETENCIES|EXPERTISE)\b", re.IGNORECASE),
-    "projects": re.compile(r"\b(PROJECTS|PORTFOLIO|PERSONAL\s*PROJECTS)\b", re.IGNORECASE),
-    "certificates": re.compile(r"\b(CERTIFICATIONS?|CERTIFICATES|LICENSES?|ACCREDITATIONS?)\b", re.IGNORECASE),
-    "achievements": re.compile(r"\b(ACHIEVEMENTS|AWARDS|HONORS|ACCOMPLISHMENTS)\b", re.IGNORECASE),
+    "experience": re.compile(
+        r"\b(EXPERIENCE|WORK\s*HISTORY|EMPLOYMENT|PROFESSIONAL\s*EXPERIENCE)\b",
+        re.IGNORECASE,
+    ),
+    "education": re.compile(
+        r"\b(EDUCATION|ACADEMIC|SCHOOL|UNIVERSITY|COLLEGE)\b", re.IGNORECASE
+    ),
+    "skills": re.compile(
+        r"\b(SKILLS|TECHNICAL\s*SKILLS|CORE\s*COMPETENCIES|EXPERTISE)\b", re.IGNORECASE
+    ),
+    "projects": re.compile(
+        r"\b(PROJECTS|PORTFOLIO|PERSONAL\s*PROJECTS)\b", re.IGNORECASE
+    ),
+    "certificates": re.compile(
+        r"\b(CERTIFICATIONS?|CERTIFICATES|LICENSES?|ACCREDITATIONS?)\b", re.IGNORECASE
+    ),
+    "achievements": re.compile(
+        r"\b(ACHIEVEMENTS|AWARDS|HONORS|ACCOMPLISHMENTS)\b", re.IGNORECASE
+    ),
     "languages": re.compile(r"\b(LANGUAGES|LANGUAGE\s*PROFICIENCY)\b", re.IGNORECASE),
-    "publications": re.compile(r"\b(PUBLICATIONS|RESEARCH|PAPERS?|THESIS)\b", re.IGNORECASE),
-    "summary": re.compile(r"\b(SUMMARY|PROFILE|ABOUT\s*ME|OBJECTIVE|PROFESSIONAL\s*SUMMARY)\b", re.IGNORECASE),
+    "publications": re.compile(
+        r"\b(PUBLICATIONS|RESEARCH|PAPERS?|THESIS)\b", re.IGNORECASE
+    ),
+    "summary": re.compile(
+        r"\b(SUMMARY|PROFILE|ABOUT\s*ME|OBJECTIVE|PROFESSIONAL\s*SUMMARY)\b",
+        re.IGNORECASE,
+    ),
 }
 
 
@@ -64,7 +82,11 @@ def _parse_experience(lines):
                 current = {}
             continue
         line_lower = line.lower()
-        if any(w in line_lower for w in ["- bullet", "•", "- "]) or line.startswith("-") or line.startswith("•"):
+        if (
+            any(w in line_lower for w in ["- bullet", "•", "- "])
+            or line.startswith("-")
+            or line.startswith("•")
+        ):
             current.setdefault("bullets", []).append(line.lstrip("- •").strip())
         elif re.match(r".+\s*[–—-]\s*.+", line) and not re.search(r"@", line):
             current.setdefault("bullets", []).append(line.strip())
@@ -166,7 +188,6 @@ def _parse_languages(lines):
 
 
 class ResumeParser(BaseParser):
-
     def parse(self, raw_data) -> dict:
         text = raw_data if isinstance(raw_data, str) else str(raw_data)
         result = self._empty_result()

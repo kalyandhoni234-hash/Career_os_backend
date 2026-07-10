@@ -5,7 +5,9 @@ from app.opportunities.models import Opportunity, OpportunitySkillGap
 logger = logging.getLogger(__name__)
 
 
-def analyze_opportunity_skill_gaps(user_id: int, opportunity_id: int, force: bool = False) -> dict:
+def analyze_opportunity_skill_gaps(
+    user_id: int, opportunity_id: int, force: bool = False
+) -> dict:
     existing = OpportunitySkillGap.query.filter_by(
         user_id=user_id, opportunity_id=opportunity_id
     ).first()
@@ -25,6 +27,7 @@ def analyze_opportunity_skill_gaps(user_id: int, opportunity_id: int, force: boo
         user_skills = {s.lower().strip() for s in resume.skills if isinstance(s, str)}
 
     from app.career.models import LearningProgress
+
     learning_skills = set()
     for lp in LearningProgress.query.filter_by(user_id=user_id).all():
         learning_skills.add(lp.skill_name.lower().strip())
@@ -82,24 +85,81 @@ def analyze_opportunity_skill_gaps(user_id: int, opportunity_id: int, force: boo
 
 
 _TECH_KEYWORDS = {
-    "python", "javascript", "typescript", "java", "go", "golang", "rust", "c++",
-    "react", "angular", "vue", "node.js", "nodejs", "django", "flask", "fastapi",
-    "docker", "kubernetes", "k8s", "aws", "gcp", "azure", "terraform",
-    "postgresql", "mysql", "mongodb", "redis", "elasticsearch", "kafka",
-    "graphql", "rest", "grpc", "machine learning", "deep learning", "ai",
-    "pytorch", "tensorflow", "pandas", "numpy", "spark", "hadoop",
-    "ci/cd", "jenkins", "git", "linux", "bash", "sql",
+    "python",
+    "javascript",
+    "typescript",
+    "java",
+    "go",
+    "golang",
+    "rust",
+    "c++",
+    "react",
+    "angular",
+    "vue",
+    "node.js",
+    "nodejs",
+    "django",
+    "flask",
+    "fastapi",
+    "docker",
+    "kubernetes",
+    "k8s",
+    "aws",
+    "gcp",
+    "azure",
+    "terraform",
+    "postgresql",
+    "mysql",
+    "mongodb",
+    "redis",
+    "elasticsearch",
+    "kafka",
+    "graphql",
+    "rest",
+    "grpc",
+    "machine learning",
+    "deep learning",
+    "ai",
+    "pytorch",
+    "tensorflow",
+    "pandas",
+    "numpy",
+    "spark",
+    "hadoop",
+    "ci/cd",
+    "jenkins",
+    "git",
+    "linux",
+    "bash",
+    "sql",
 }
 
 
 def _estimate_ats_gain_for_skill(skill: str) -> int:
     premium = {
-        "python": 8, "javascript": 7, "typescript": 7, "react": 8,
-        "docker": 6, "kubernetes": 7, "aws": 8, "gcp": 6,
-        "machine learning": 8, "sql": 6, "go": 7, "golang": 7,
-        "system design": 8, "kafka": 5, "spark": 5, "terraform": 6,
-        "redis": 4, "postgresql": 5, "mongodb": 4, "graphql": 5,
-        "django": 6, "flask": 5, "fastapi": 5,
+        "python": 8,
+        "javascript": 7,
+        "typescript": 7,
+        "react": 8,
+        "docker": 6,
+        "kubernetes": 7,
+        "aws": 8,
+        "gcp": 6,
+        "machine learning": 8,
+        "sql": 6,
+        "go": 7,
+        "golang": 7,
+        "system design": 8,
+        "kafka": 5,
+        "spark": 5,
+        "terraform": 6,
+        "redis": 4,
+        "postgresql": 5,
+        "mongodb": 4,
+        "graphql": 5,
+        "django": 6,
+        "flask": 5,
+        "fastapi": 5,
     }
     return premium.get(skill.lower(), 3)
 

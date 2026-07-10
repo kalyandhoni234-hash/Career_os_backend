@@ -7,17 +7,33 @@ from app.resume.models import Resume
 
 coach_bp = Blueprint("coach", __name__)
 
+
 @coach_bp.route("/ping")
 def ping():
     return {"blueprint": "coach", "status": "alive"}
 
+
 @coach_bp.route("/history", methods=["GET"])
 @login_required
 def get_history():
-    messages = CoachMessage.query.filter_by(user_id=current_user.id).order_by(CoachMessage.created_at.asc()).all()
-    return jsonify({
-        "messages": [{"role": m.role, "content": m.content, "created_at": m.created_at.isoformat()} for m in messages]
-    }), 200
+    messages = (
+        CoachMessage.query.filter_by(user_id=current_user.id)
+        .order_by(CoachMessage.created_at.asc())
+        .all()
+    )
+    return jsonify(
+        {
+            "messages": [
+                {
+                    "role": m.role,
+                    "content": m.content,
+                    "created_at": m.created_at.isoformat(),
+                }
+                for m in messages
+            ]
+        }
+    ), 200
+
 
 @coach_bp.route("/chat", methods=["POST"])
 @login_required
@@ -53,7 +69,12 @@ Summary: {resume.summary or "not set"}
 Skills: {", ".join(resume.skills or [])}
 """
 
-    history = CoachMessage.query.filter_by(user_id=current_user.id).order_by(CoachMessage.created_at.asc()).limit(20).all()
+    history = (
+        CoachMessage.query.filter_by(user_id=current_user.id)
+        .order_by(CoachMessage.created_at.asc())
+        .limit(20)
+        .all()
+    )
     history_text = ""
     for m in history:
         prefix = "User" if m.role == "user" else "Coach"
@@ -73,15 +94,20 @@ Conversation so far:
 {history_text}
 """
 
-    ai_response = generate_text(user_message, model="gemini", system_instruction=system_instruction)
+    ai_response = generate_text(
+        user_message, model="gemini", system_instruction=system_instruction
+    )
 
     user_msg = CoachMessage(user_id=current_user.id, role="user", content=user_message)
-    assistant_msg = CoachMessage(user_id=current_user.id, role="assistant", content=ai_response)
+    assistant_msg = CoachMessage(
+        user_id=current_user.id, role="assistant", content=ai_response
+    )
     db.session.add(user_msg)
     db.session.add(assistant_msg)
     db.session.commit()
 
     return jsonify({"response": ai_response}), 200
+
 
 @coach_bp.route("/history", methods=["DELETE"])
 @login_required

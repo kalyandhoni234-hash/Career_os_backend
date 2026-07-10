@@ -42,6 +42,10 @@ class Resume(db.Model):
     tone = db.Column(db.String(50), default="professional")
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )
 
-    versions = db.relationship("ResumeVersion", backref="resume", lazy="dynamic", cascade="all, delete-orphan")
+    versions = db.relationship(
+        "ResumeVersion", backref="resume", lazy="dynamic", cascade="all, delete-orphan"
+    )

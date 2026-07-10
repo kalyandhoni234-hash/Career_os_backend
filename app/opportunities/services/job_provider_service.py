@@ -8,13 +8,13 @@ logger = logging.getLogger(__name__)
 
 class ProviderBase(ABC):
     @abstractmethod
-    def search(self, query: str, location: Optional[str] = None, **kwargs) -> list[dict]:
-        ...
+    def search(
+        self, query: str, location: Optional[str] = None, **kwargs
+    ) -> list[dict]: ...
 
     @property
     @abstractmethod
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
 
 class ProviderRegistry:
@@ -33,9 +33,18 @@ class ProviderRegistry:
         return list(cls._providers.values())
 
 
-def search_providers(query: str, location: Optional[str] = None, providers: Optional[list[str]] = None, **kwargs) -> list[dict]:
+def search_providers(
+    query: str,
+    location: Optional[str] = None,
+    providers: Optional[list[str]] = None,
+    **kwargs,
+) -> list[dict]:
     results = []
-    targets = [ProviderRegistry.get(p) for p in providers] if providers else ProviderRegistry.all()
+    targets = (
+        [ProviderRegistry.get(p) for p in providers]
+        if providers
+        else ProviderRegistry.all()
+    )
     for provider in targets:
         if provider:
             try:
@@ -130,7 +139,14 @@ SAMPLE_OPPORTUNITIES = [
             "Analyze experiment results",
             "Collaborate with research teams",
         ],
-        "tech_stack": ["Python", "PyTorch", "TensorFlow", "AWS SageMaker", "Spark", "Kafka"],
+        "tech_stack": [
+            "Python",
+            "PyTorch",
+            "TensorFlow",
+            "AWS SageMaker",
+            "Spark",
+            "Kafka",
+        ],
         "provider": "sample",
     },
     {
@@ -159,7 +175,14 @@ SAMPLE_OPPORTUNITIES = [
             "Implement A/B experiments",
             "Contribute to design system",
         ],
-        "tech_stack": ["React", "JavaScript", "TypeScript", "Redux", "Node.js", "Webpack"],
+        "tech_stack": [
+            "React",
+            "JavaScript",
+            "TypeScript",
+            "Redux",
+            "Node.js",
+            "Webpack",
+        ],
         "provider": "sample",
     },
     {
@@ -188,7 +211,14 @@ SAMPLE_OPPORTUNITIES = [
             "Improve system reliability and uptime",
             "Lead incident response",
         ],
-        "tech_stack": ["AWS", "Kubernetes", "Docker", "Terraform", "Prometheus", "Grafana"],
+        "tech_stack": [
+            "AWS",
+            "Kubernetes",
+            "Docker",
+            "Terraform",
+            "Prometheus",
+            "Grafana",
+        ],
         "provider": "sample",
     },
     {
@@ -351,7 +381,12 @@ def seed_sample_opportunities():
     count = 0
     for data in SAMPLE_OPPORTUNITIES:
         tech_stack = data.pop("tech_stack", [])
-        opp = Opportunity(**data, tech_stack=tech_stack, is_active=True, scraped_at=datetime.now(timezone.utc))
+        opp = Opportunity(
+            **data,
+            tech_stack=tech_stack,
+            is_active=True,
+            scraped_at=datetime.now(timezone.utc),
+        )
         db.session.add(opp)
         count += 1
 

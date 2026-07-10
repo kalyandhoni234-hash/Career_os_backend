@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from flask_login import UserMixin
 from app.extensions import db
 
+
 class User(db.Model, UserMixin):
     __tablename__ = "users"
 
@@ -14,4 +15,6 @@ class User(db.Model, UserMixin):
     reset_token = db.Column(db.String(255), nullable=True)
     reset_token_expiry = db.Column(db.DateTime, nullable=True)
 
-    profile = db.relationship("Profile", backref="user", uselist=False, cascade="all, delete-orphan")
+    profile = db.relationship(
+        "Profile", backref="user", uselist=False, cascade="all, delete-orphan"
+    )

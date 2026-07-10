@@ -1,8 +1,14 @@
 import logging
 from datetime import datetime, timezone
 from app.career.models import (
-    CareerProfile, CareerGoal, Roadmap, LearningProgress,
-    SkillGraph, CareerTimelineEvent, AIRecommendation, CareerScoreSnapshot,
+    CareerProfile,
+    CareerGoal,
+    Roadmap,
+    LearningProgress,
+    SkillGraph,
+    CareerTimelineEvent,
+    AIRecommendation,
+    CareerScoreSnapshot,
 )
 
 logger = logging.getLogger(__name__)
@@ -31,6 +37,7 @@ def build_career_memory(user_id):
 
 def _get_profile_data(user_id):
     from app.users.models import Profile
+
     profile = Profile.query.filter_by(user_id=user_id).first()
     if not profile:
         return {}
@@ -66,6 +73,7 @@ def _get_career_profile(user_id):
 
 def _get_resume_data(user_id):
     from app.resume.models import Resume
+
     resume = Resume.query.filter_by(user_id=user_id).first()
     if not resume:
         return {}
@@ -86,12 +94,14 @@ def _get_resume_data(user_id):
 
 def _get_ats_data(user_id):
     from app.resume.models import Resume
+
     resume = Resume.query.filter_by(user_id=user_id).first()
     if not resume:
         return {}
     ats = None
     if resume.target_job_description:
         from app.resume.ats import score_resume
+
         try:
             ats = score_resume(resume, resume.target_job_description)
         except Exception:
@@ -111,6 +121,7 @@ def _get_ats_data(user_id):
 
 def _get_application_data(user_id):
     from app.jobs.models import Job
+
     jobs = Job.query.filter_by(user_id=user_id).all()
     total = len(jobs)
     by_status = {}
@@ -123,12 +134,15 @@ def _get_application_data(user_id):
         "by_status": by_status,
         "interview_count": interviews,
         "offer_count": offers,
-        "active_applications": sum(1 for j in jobs if j.status in ("applied", "oa", "interview")),
+        "active_applications": sum(
+            1 for j in jobs if j.status in ("applied", "oa", "interview")
+        ),
     }
 
 
 def _get_skill_data(user_id):
     from app.resume.models import Resume
+
     resume = Resume.query.filter_by(user_id=user_id).first()
     if not resume:
         raw = []
@@ -145,7 +159,10 @@ def _get_skill_data(user_id):
             clean.append(s)
     resume_skills = set(clean)
     skill_graphs = SkillGraph.query.filter_by(user_id=user_id).all()
-    graph_data = {sg.category: {"proficiency": sg.proficiency, "count": sg.skill_count} for sg in skill_graphs}
+    graph_data = {
+        sg.category: {"proficiency": sg.proficiency, "count": sg.skill_count}
+        for sg in skill_graphs
+    }
     learning = LearningProgress.query.filter_by(user_id=user_id).all()
     learning_skills = {lp.skill_name: lp.proficiency for lp in learning}
     return {
@@ -170,8 +187,11 @@ def _get_goal_data(user_id):
     return {
         "active_goals": [
             {
-                "id": g.id, "title": g.title, "target_role": g.target_role,
-                "target_company": g.target_company, "progress": g.progress,
+                "id": g.id,
+                "title": g.title,
+                "target_role": g.target_role,
+                "target_company": g.target_company,
+                "progress": g.progress,
                 "priority": g.priority,
             }
             for g in goals
@@ -185,8 +205,11 @@ def _get_roadmap_data(user_id):
     roadmaps = Roadmap.query.filter_by(user_id=user_id).all()
     return [
         {
-            "id": r.id, "title": r.title, "category": r.category,
-            "progress": r.progress, "estimated_weeks": r.estimated_weeks,
+            "id": r.id,
+            "title": r.title,
+            "category": r.category,
+            "progress": r.progress,
+            "estimated_weeks": r.estimated_weeks,
             "status": r.status,
         }
         for r in roadmaps
@@ -194,11 +217,16 @@ def _get_roadmap_data(user_id):
 
 
 def _get_timeline_data(user_id):
-    events = CareerTimelineEvent.query.filter_by(user_id=user_id)\
-        .order_by(CareerTimelineEvent.event_date.desc()).limit(20).all()
+    events = (
+        CareerTimelineEvent.query.filter_by(user_id=user_id)
+        .order_by(CareerTimelineEvent.event_date.desc())
+        .limit(20)
+        .all()
+    )
     return [
         {
-            "type": e.event_type, "title": e.title,
+            "type": e.event_type,
+            "title": e.title,
             "date": e.event_date.isoformat() if e.event_date else None,
             "importance": e.importance,
         }
@@ -208,17 +236,29 @@ def _get_timeline_data(user_id):
 
 def _get_recent_coach_data(user_id):
     from app.coach.models import CoachMessage
-    recent = CoachMessage.query.filter_by(user_id=user_id, role="assistant")\
-        .order_by(CoachMessage.created_at.desc()).limit(3).all()
+
+    recent = (
+        CoachMessage.query.filter_by(user_id=user_id, role="assistant")
+        .order_by(CoachMessage.created_at.desc())
+        .limit(3)
+        .all()
+    )
     return [
-        {"content": m.content[:200], "timestamp": m.created_at.isoformat() if m.created_at else None}
+        {
+            "content": m.content[:200],
+            "timestamp": m.created_at.isoformat() if m.created_at else None,
+        }
         for m in recent
     ]
 
 
 def _get_score_history(user_id):
-    snapshots = CareerScoreSnapshot.query.filter_by(user_id=user_id)\
-        .order_by(CareerScoreSnapshot.created_at.desc()).limit(10).all()
+    snapshots = (
+        CareerScoreSnapshot.query.filter_by(user_id=user_id)
+        .order_by(CareerScoreSnapshot.created_at.desc())
+        .limit(10)
+        .all()
+    )
     return [
         {
             "overall_score": s.overall_score,
@@ -230,12 +270,24 @@ def _get_score_history(user_id):
 
 
 def _get_recommendation_data(user_id):
-    recs = AIRecommendation.query.filter_by(user_id=user_id, is_dismissed=False, is_completed=False)\
-        .order_by(AIRecommendation.priority.desc(), AIRecommendation.impact_score.desc()).limit(10).all()
+    recs = (
+        AIRecommendation.query.filter_by(
+            user_id=user_id, is_dismissed=False, is_completed=False
+        )
+        .order_by(
+            AIRecommendation.priority.desc(), AIRecommendation.impact_score.desc()
+        )
+        .limit(10)
+        .all()
+    )
     return [
         {
-            "type": r.rec_type, "title": r.title, "description": r.description,
-            "priority": r.priority, "impact_score": r.impact_score, "category": r.category,
+            "type": r.rec_type,
+            "title": r.title,
+            "description": r.description,
+            "priority": r.priority,
+            "impact_score": r.impact_score,
+            "category": r.category,
         }
         for r in recs
     ]

@@ -1,6 +1,7 @@
 from datetime import datetime
 from app.extensions import db
 
+
 class Job(db.Model):
     __tablename__ = "jobs"
 
@@ -27,4 +28,6 @@ class Job(db.Model):
     location = db.Column(db.String(255))
 
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(
+        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+    )

@@ -1,6 +1,7 @@
 from datetime import datetime
 from app.extensions import db
 
+
 class CoachMessage(db.Model):
     __tablename__ = "coach_messages"
 

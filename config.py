@@ -17,15 +17,26 @@ class Config:
     if not SECRET_KEY:
         raise RuntimeError(
             "SECRET_KEY environment variable is required. "
-            "Generate one with: python -c \"import secrets; print(secrets.token_hex(32))\""
+            'Generate one with: python -c "import secrets; print(secrets.token_hex(32))"'
         )
 
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL", "sqlite:///career_os.db"
-    )
+    SQLALCHEMY_DATABASE_URI = os.environ.get("DATABASE_URL", "sqlite:///career_os.db")
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+
+    GITHUB_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID")
+    GITHUB_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET")
+
+    LINKEDIN_CLIENT_ID = os.environ.get("LINKEDIN_CLIENT_ID")
+    LINKEDIN_CLIENT_SECRET = os.environ.get("LINKEDIN_CLIENT_SECRET")
+
+    OUTLOOK_CLIENT_ID = os.environ.get("OUTLOOK_CLIENT_ID")
+    OUTLOOK_CLIENT_SECRET = os.environ.get("OUTLOOK_CLIENT_SECRET")
+
+    SLACK_CLIENT_ID = os.environ.get("SLACK_CLIENT_ID")
+    SLACK_CLIENT_SECRET = os.environ.get("SLACK_CLIENT_SECRET")
+
     GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
     GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 

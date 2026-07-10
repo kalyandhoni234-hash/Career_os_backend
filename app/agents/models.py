@@ -35,12 +35,20 @@ class CareerAgent(db.Model):
     total_errors = db.Column(db.Integer, default=0)
     config = db.Column(db.JSON, default=dict)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     user = db.relationship("User", backref=db.backref("career_agents", lazy="dynamic"))
-    tasks = db.relationship("AgentTask", backref="agent", lazy="dynamic", cascade="all, delete-orphan")
+    tasks = db.relationship(
+        "AgentTask", backref="agent", lazy="dynamic", cascade="all, delete-orphan"
+    )
 
-    __table_args__ = (db.UniqueConstraint("user_id", "agent_type", name="uq_user_agent_type"),)
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "agent_type", name="uq_user_agent_type"),
+    )
 
 
 class AgentTask(db.Model):

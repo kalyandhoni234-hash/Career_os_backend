@@ -3,7 +3,9 @@ from .base import BaseParser
 
 
 LINKEDIN_SECTION_MAP = {
-    "experience": re.compile(r"\b(EXPERIENCE|WORK\s*HISTORY|EMPLOYMENT)\b", re.IGNORECASE),
+    "experience": re.compile(
+        r"\b(EXPERIENCE|WORK\s*HISTORY|EMPLOYMENT)\b", re.IGNORECASE
+    ),
     "education": re.compile(r"\bEDUCATION\b", re.IGNORECASE),
     "skills": re.compile(r"\b(SKILLS|TOP\s*SKILLS)\b", re.IGNORECASE),
     "projects": re.compile(r"\bPROJECTS?\b", re.IGNORECASE),
@@ -42,11 +44,17 @@ def _parse_name_email_from_header(lines):
             continue
         if re.search(r"@", line) and not info.get("email"):
             info["email"] = line.strip()
-        elif re.search(r"linkedin\.com", line, re.IGNORECASE) and not info.get("linkedin"):
+        elif re.search(r"linkedin\.com", line, re.IGNORECASE) and not info.get(
+            "linkedin"
+        ):
             info["linkedin"] = line.strip()
         elif re.search(r"\+?\d[\d\s\-\(\)]{7,}", line) and not info.get("phone"):
             info["phone"] = line.strip()
-        elif not info.get("full_name") and len(line.split()) in (2, 3) and not re.search(r"[@http]", line, re.IGNORECASE):
+        elif (
+            not info.get("full_name")
+            and len(line.split()) in (2, 3)
+            and not re.search(r"[@http]", line, re.IGNORECASE)
+        ):
             info["full_name"] = line.strip()
     return info
 
@@ -109,7 +117,6 @@ def _parse_skills(lines):
 
 
 class LinkedInParser(BaseParser):
-
     def parse(self, raw_data) -> dict:
         text = raw_data if isinstance(raw_data, str) else str(raw_data)
         result = self._empty_result()
@@ -132,7 +139,11 @@ class LinkedInParser(BaseParser):
         if not result["personal_info"].get("full_name"):
             for line in text.split("\n"):
                 line = line.strip()
-                if line and len(line.split()) in (2, 3) and not re.search(r"[@http]", line, re.IGNORECASE):
+                if (
+                    line
+                    and len(line.split()) in (2, 3)
+                    and not re.search(r"[@http]", line, re.IGNORECASE)
+                ):
                     result["personal_info"]["full_name"] = line
                     break
 

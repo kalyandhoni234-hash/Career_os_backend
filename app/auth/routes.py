@@ -10,9 +10,11 @@ logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint("auth", __name__)
 
+
 @auth_bp.route("/ping")
 def ping():
     return {"blueprint": "auth", "status": "alive"}
+
 
 @auth_bp.route("/signup", methods=["POST"])
 @limiter.limit("5 per minute")
@@ -41,6 +43,7 @@ def signup():
 
     return jsonify({"message": "Signup successful", "user_id": user.id}), 201
 
+
 @auth_bp.route("/login", methods=["POST"])
 @limiter.limit("5 per minute")
 def login():
@@ -62,16 +65,19 @@ def login():
     login_user(user, remember=True)
     return jsonify({"message": "Login successful", "user_id": user.id}), 200
 
+
 @auth_bp.route("/logout", methods=["POST"])
 @login_required
 def logout():
     logout_user()
     return jsonify({"message": "Logout successful"}), 200
 
+
 @auth_bp.route("/me", methods=["GET"])
 @login_required
 def me():
     return jsonify({"user_id": current_user.id, "email": current_user.email}), 200
+
 
 @auth_bp.route("/google/login")
 def google_login():
@@ -86,28 +92,42 @@ def google_login():
     )
     return oauth.google.authorize_redirect(redirect_uri)
 
+
 @auth_bp.route("/google/callback")
 def google_callback():
     state_from_req = request.args.get("state", "none")
     session_keys = list(session.keys())
     stored_state = session.get("_google_authlib_state_", "NOT_IN_SESSION")
-    logger.info("OAuth callback — state_param=%s, session_keys=%s, stored_state=%s, redirect_uri=%s, host=%s",
-                state_from_req, session_keys, str(stored_state)[:20],
-                current_app.config.get("GOOGLE_REDIRECT_URI"),
-                request.host)
+    logger.info(
+        "OAuth callback — state_param=%s, session_keys=%s, stored_state=%s, redirect_uri=%s, host=%s",
+        state_from_req,
+        session_keys,
+        str(stored_state)[:20],
+        current_app.config.get("GOOGLE_REDIRECT_URI"),
+        request.host,
+    )
 
     try:
         token = oauth.google.authorize_access_token()
     except Exception as exc:
-        logger.error("OAuth token exchange failed: %s (state_param=%s, stored=%s, session_keys=%s)",
-                     exc, state_from_req, str(stored_state)[:20], session_keys)
-        return redirect(current_app.config["FRONTEND_URL"] + "/login?error=oauth_failed")
+        logger.error(
+            "OAuth token exchange failed: %s (state_param=%s, stored=%s, session_keys=%s)",
+            exc,
+            state_from_req,
+            str(stored_state)[:20],
+            session_keys,
+        )
+        return redirect(
+            current_app.config["FRONTEND_URL"] + "/login?error=oauth_failed"
+        )
 
     user_info = token.get("userinfo")
 
     if not user_info or not user_info.get("email"):
         logger.error("OAuth callback — no userinfo in token")
-        return redirect(current_app.config["FRONTEND_URL"] + "/login?error=oauth_failed")
+        return redirect(
+            current_app.config["FRONTEND_URL"] + "/login?error=oauth_failed"
+        )
 
     email = user_info["email"].lower()
     user = User.query.filter_by(email=email).first()
@@ -122,6 +142,7 @@ def google_callback():
     logger.info("OAuth login success — email=%s", email)
     return redirect(current_app.config["FRONTEND_URL"] + "/dashboard")
 
+
 @auth_bp.route("/forgot-password", methods=["POST"])
 @limiter.limit("3 per minute")
 def forgot_password():
@@ -130,7 +151,9 @@ def forgot_password():
 
     user = User.query.filter_by(email=email).first()
     if not user:
-        return jsonify({"message": "If that email exists, a reset link has been sent"}), 200
+        return jsonify(
+            {"message": "If that email exists, a reset link has been sent"}
+        ), 200
 
     token = secrets.token_urlsafe(32)
     user.reset_token = token
@@ -138,6 +161,7 @@ def forgot_password():
     db.session.commit()
 
     return jsonify({"message": "Reset token generated", "reset_token": token}), 200
+
 
 @auth_bp.route("/reset-password", methods=["POST"])
 @limiter.limit("5 per minute")
@@ -153,7 +177,11 @@ def reset_password():
         return jsonify({"error": "Password must be at least 8 characters"}), 400
 
     user = User.query.filter_by(reset_token=token).first()
-    if not user or not user.reset_token_expiry or user.reset_token_expiry < datetime.utcnow():
+    if (
+        not user
+        or not user.reset_token_expiry
+        or user.reset_token_expiry < datetime.utcnow()
+    ):
         return jsonify({"error": "Invalid or expired reset token"}), 400
 
     user.password_hash = bcrypt.generate_password_hash(new_password).decode("utf-8")
@@ -163,8 +191,10 @@ def reset_password():
 
     return jsonify({"message": "Password reset successful"}), 200
 
+
 @auth_bp.route("/ai-test", methods=["GET"])
 def ai_test():
     from app.ai_service import generate_text
+
     result = generate_text("Say hello in one short sentence.", model="gemini")
     return jsonify({"response": result})

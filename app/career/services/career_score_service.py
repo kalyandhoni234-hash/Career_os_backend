@@ -18,8 +18,12 @@ def compute_career_score(user_id):
     resume_score = 0
     if resume:
         fields = [
-            resume.full_name, resume.email, resume.summary,
-            resume.experience, resume.education, resume.skills,
+            resume.full_name,
+            resume.email,
+            resume.summary,
+            resume.experience,
+            resume.education,
+            resume.skills,
             resume.projects,
         ]
         filled = sum(1 for f in fields if f)
@@ -33,6 +37,7 @@ def compute_career_score(user_id):
     ats_score = 0
     if resume and resume.target_job_description:
         from app.resume.ats import score_resume
+
         try:
             ats_result = score_resume(resume, resume.target_job_description)
             ats_score = ats_result.get("overall_score", 0)
@@ -82,14 +87,14 @@ def compute_career_score(user_id):
 
     # Weighted overall score
     overall = int(
-        resume_score * 0.25 +
-        ats_score * 0.20 +
-        projects_score * 0.10 +
-        apps_score * 0.15 +
-        learning_score * 0.10 +
-        interview_score * 0.10 +
-        skill_coverage * 0.10 +
-        roadmap_bonus
+        resume_score * 0.25
+        + ats_score * 0.20
+        + projects_score * 0.10
+        + apps_score * 0.15
+        + learning_score * 0.10
+        + interview_score * 0.10
+        + skill_coverage * 0.10
+        + roadmap_bonus
     )
     overall = max(0, min(100, overall))
 

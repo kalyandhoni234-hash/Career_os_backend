@@ -5,6 +5,7 @@ Revises: a1b2c3d4e5f6
 Create Date: 2026-07-08 22:30:00.000000
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 
@@ -100,7 +101,12 @@ def upgrade():
         sa.Column("posted_at", sa.DateTime(), nullable=True),
         sa.Column("expires_at", sa.DateTime(), nullable=True),
         sa.Column("scraped_at", sa.DateTime(), nullable=True),
-        sa.Column("company_id", sa.Integer(), sa.ForeignKey("company_profiles.id"), nullable=True),
+        sa.Column(
+            "company_id",
+            sa.Integer(),
+            sa.ForeignKey("company_profiles.id"),
+            nullable=True,
+        ),
         sa.Column("raw_data", sa.JSON(), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
@@ -112,7 +118,12 @@ def upgrade():
         "saved_opportunities",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("opportunity_id", sa.Integer(), sa.ForeignKey("opportunities.id"), nullable=False),
+        sa.Column(
+            "opportunity_id",
+            sa.Integer(),
+            sa.ForeignKey("opportunities.id"),
+            nullable=False,
+        ),
         sa.Column("list_type", sa.String(length=50), nullable=True),
         sa.Column("tags", sa.JSON(), nullable=True),
         sa.Column("notes", sa.Text(), nullable=True),
@@ -127,7 +138,12 @@ def upgrade():
         "opportunity_match_scores",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("opportunity_id", sa.Integer(), sa.ForeignKey("opportunities.id"), nullable=False),
+        sa.Column(
+            "opportunity_id",
+            sa.Integer(),
+            sa.ForeignKey("opportunities.id"),
+            nullable=False,
+        ),
         sa.Column("overall_score", sa.Integer(), nullable=True),
         sa.Column("ats_match", sa.Integer(), nullable=True),
         sa.Column("resume_match", sa.Integer(), nullable=True),
@@ -140,13 +156,20 @@ def upgrade():
         sa.Column("explanation", sa.JSON(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("user_id", "opportunity_id", name="uq_user_opportunity_score"),
+        sa.UniqueConstraint(
+            "user_id", "opportunity_id", name="uq_user_opportunity_score"
+        ),
     )
     op.create_table(
         "opportunity_skill_gaps",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("opportunity_id", sa.Integer(), sa.ForeignKey("opportunities.id"), nullable=False),
+        sa.Column(
+            "opportunity_id",
+            sa.Integer(),
+            sa.ForeignKey("opportunities.id"),
+            nullable=False,
+        ),
         sa.Column("missing_skills", sa.JSON(), nullable=True),
         sa.Column("current_skills", sa.JSON(), nullable=True),
         sa.Column("required_skills", sa.JSON(), nullable=True),
@@ -155,13 +178,20 @@ def upgrade():
         sa.Column("priority", sa.String(length=20), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("user_id", "opportunity_id", name="uq_user_opportunity_gap"),
+        sa.UniqueConstraint(
+            "user_id", "opportunity_id", name="uq_user_opportunity_gap"
+        ),
     )
     op.create_table(
         "interview_packs",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("opportunity_id", sa.Integer(), sa.ForeignKey("opportunities.id"), nullable=False),
+        sa.Column(
+            "opportunity_id",
+            sa.Integer(),
+            sa.ForeignKey("opportunities.id"),
+            nullable=False,
+        ),
         sa.Column("likely_questions", sa.JSON(), nullable=True),
         sa.Column("coding_topics", sa.JSON(), nullable=True),
         sa.Column("behavioral_questions", sa.JSON(), nullable=True),
@@ -171,13 +201,20 @@ def upgrade():
         sa.Column("learning_resources", sa.JSON(), nullable=True),
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
-        sa.UniqueConstraint("user_id", "opportunity_id", name="uq_user_opportunity_interview"),
+        sa.UniqueConstraint(
+            "user_id", "opportunity_id", name="uq_user_opportunity_interview"
+        ),
     )
     op.create_table(
         "resume_versions_by_company",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.Integer(), sa.ForeignKey("users.id"), nullable=False),
-        sa.Column("opportunity_id", sa.Integer(), sa.ForeignKey("opportunities.id"), nullable=False),
+        sa.Column(
+            "opportunity_id",
+            sa.Integer(),
+            sa.ForeignKey("opportunities.id"),
+            nullable=False,
+        ),
         sa.Column("company_name", sa.String(length=255), nullable=False),
         sa.Column("version_name", sa.String(length=100), nullable=True),
         sa.Column("resume_json", sa.JSON(), nullable=False),

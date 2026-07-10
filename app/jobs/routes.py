@@ -9,6 +9,7 @@ jobs_bp = Blueprint("jobs", __name__)
 VALID_STATUSES = ["applied", "oa", "interview", "offer", "rejected"]
 VALID_PRIORITIES = ["low", "medium", "high"]
 
+
 def _serialize(job):
     return {
         "id": job.id,
@@ -29,15 +30,22 @@ def _serialize(job):
         "updated_at": job.updated_at.isoformat() if job.updated_at else None,
     }
 
+
 @jobs_bp.route("/ping")
 def ping():
     return {"blueprint": "jobs", "status": "alive"}
 
+
 @jobs_bp.route("", methods=["GET"])
 @login_required
 def list_jobs():
-    jobs = Job.query.filter_by(user_id=current_user.id).order_by(Job.created_at.desc()).all()
+    jobs = (
+        Job.query.filter_by(user_id=current_user.id)
+        .order_by(Job.created_at.desc())
+        .all()
+    )
     return jsonify({"jobs": [_serialize(j) for j in jobs]}), 200
+
 
 @jobs_bp.route("", methods=["POST"])
 @login_required
@@ -107,6 +115,7 @@ def create_job():
 
     return jsonify({"message": "Job created", "job": _serialize(job)}), 201
 
+
 @jobs_bp.route("/<int:job_id>", methods=["GET"])
 @login_required
 def get_job(job_id):
@@ -114,6 +123,7 @@ def get_job(job_id):
     if not job:
         return jsonify({"error": "Job not found"}), 404
     return jsonify({"job": _serialize(job)}), 200
+
 
 @jobs_bp.route("/<int:job_id>", methods=["PUT"])
 @login_required
@@ -143,7 +153,9 @@ def update_job(job_id):
 
     if "priority" in data:
         if data["priority"] not in VALID_PRIORITIES:
-            return jsonify({"error": f"Priority must be one of {VALID_PRIORITIES}"}), 400
+            return jsonify(
+                {"error": f"Priority must be one of {VALID_PRIORITIES}"}
+            ), 400
         job.priority = data["priority"]
 
     if "ats_score" in data:
@@ -151,7 +163,9 @@ def update_job(job_id):
             try:
                 val = int(data["ats_score"])
                 if val < 0 or val > 100:
-                    return jsonify({"error": "ATS score must be between 0 and 100"}), 400
+                    return jsonify(
+                        {"error": "ATS score must be between 0 and 100"}
+                    ), 400
                 job.ats_score = val
             except (TypeError, ValueError):
                 return jsonify({"error": "ATS score must be an integer"}), 400
@@ -180,6 +194,7 @@ def update_job(job_id):
     db.session.commit()
     return jsonify({"message": "Job updated", "job": _serialize(job)}), 200
 
+
 @jobs_bp.route("/<int:job_id>", methods=["DELETE"])
 @login_required
 def delete_job(job_id):
@@ -191,97 +206,116 @@ def delete_job(job_id):
     db.session.commit()
     return jsonify({"message": "Job deleted"}), 200
 
+
 @jobs_bp.route("/suggestions", methods=["GET"])
 @login_required
 def get_suggestions():
-    jobs = Job.query.filter_by(user_id=current_user.id).order_by(Job.created_at.desc()).all()
+    jobs = (
+        Job.query.filter_by(user_id=current_user.id)
+        .order_by(Job.created_at.desc())
+        .all()
+    )
     has_resume = hasattr(current_user, "resume") and current_user.resume is not None
 
     suggestions = []
 
     if not has_resume:
-        suggestions.append({
-            "id": "create-resume",
-            "title": "Create your resume",
-            "description": "An ATS-optimized resume is your first step to landing interviews.",
-            "impact": "high",
-            "category": "resume",
-            "action": "Create Resume",
-            "link": "/resume",
-            "score_impact": "+15 ATS",
-        })
+        suggestions.append(
+            {
+                "id": "create-resume",
+                "title": "Create your resume",
+                "description": "An ATS-optimized resume is your first step to landing interviews.",
+                "impact": "high",
+                "category": "resume",
+                "action": "Create Resume",
+                "link": "/resume",
+                "score_impact": "+15 ATS",
+            }
+        )
 
     if len(jobs) < 3:
-        suggestions.append({
-            "id": "apply-more",
-            "title": "Apply to more positions",
-            "description": "Top performers apply to 10+ positions to maximize interview chances.",
-            "impact": "high",
-            "category": "applications",
-            "action": "Add Application",
-            "link": None,
-            "score_impact": "+25% Interview Rate",
-        })
+        suggestions.append(
+            {
+                "id": "apply-more",
+                "title": "Apply to more positions",
+                "description": "Top performers apply to 10+ positions to maximize interview chances.",
+                "impact": "high",
+                "category": "applications",
+                "action": "Add Application",
+                "link": None,
+                "score_impact": "+25% Interview Rate",
+            }
+        )
     else:
         applied = sum(1 for j in jobs if j.status == "applied")
         if applied > 0:
-            suggestions.append({
-                "id": "follow-up",
-                "title": "Follow up on applications",
-                "description": f"You have {applied} application{'s' if applied > 1 else ''} awaiting follow-up. Send a polite check-in email.",
-                "impact": "medium",
-                "category": "applications",
-                "action": "Review Applications",
-                "link": None,
-                "score_impact": "+10% Response Rate",
-            })
+            suggestions.append(
+                {
+                    "id": "follow-up",
+                    "title": "Follow up on applications",
+                    "description": f"You have {applied} application{'s' if applied > 1 else ''} awaiting follow-up. Send a polite check-in email.",
+                    "impact": "medium",
+                    "category": "applications",
+                    "action": "Review Applications",
+                    "link": None,
+                    "score_impact": "+10% Response Rate",
+                }
+            )
 
         oa_count = sum(1 for j in jobs if j.status == "oa")
         if oa_count > 0:
-            suggestions.append({
-                "id": "practice-oa",
-                "title": "Prepare for online assessments",
-                "description": f"Practice DSA and system design for your {oa_count} upcoming OA{'s' if oa_count > 1 else ''}.",
-                "impact": "high",
-                "category": "interview-prep",
-                "action": "Practice Now",
-                "link": "/coach",
-                "score_impact": "+20% OA Success",
-            })
+            suggestions.append(
+                {
+                    "id": "practice-oa",
+                    "title": "Prepare for online assessments",
+                    "description": f"Practice DSA and system design for your {oa_count} upcoming OA{'s' if oa_count > 1 else ''}.",
+                    "impact": "high",
+                    "category": "interview-prep",
+                    "action": "Practice Now",
+                    "link": "/coach",
+                    "score_impact": "+20% OA Success",
+                }
+            )
 
         interview_count = sum(1 for j in jobs if j.status == "interview")
         if interview_count > 0:
-            suggestions.append({
-                "id": "interview-coach",
-                "title": "Practice interviews",
-                "description": f"You have {interview_count} upcoming interview{'s' if interview_count > 1 else ''}. Use the AI career coach to prepare.",
-                "impact": "high",
-                "category": "interview-prep",
-                "action": "Practice with Coach",
-                "link": "/coach",
-                "score_impact": "+30% Offer Rate",
-            })
+            suggestions.append(
+                {
+                    "id": "interview-coach",
+                    "title": "Practice interviews",
+                    "description": f"You have {interview_count} upcoming interview{'s' if interview_count > 1 else ''}. Use the AI career coach to prepare.",
+                    "impact": "high",
+                    "category": "interview-prep",
+                    "action": "Practice with Coach",
+                    "link": "/coach",
+                    "score_impact": "+30% Offer Rate",
+                }
+            )
 
-    suggestions.append({
-        "id": "ats-score",
-        "title": "Optimize your resume for ATS",
-        "description": "Run an ATS check to ensure your resume passes automated filters.",
-        "impact": "high",
-        "category": "resume",
-        "action": "Check ATS Score",
-        "link": "/resume",
-        "score_impact": "+6 ATS",
-    })
+    suggestions.append(
+        {
+            "id": "ats-score",
+            "title": "Optimize your resume for ATS",
+            "description": "Run an ATS check to ensure your resume passes automated filters.",
+            "impact": "high",
+            "category": "resume",
+            "action": "Check ATS Score",
+            "link": "/resume",
+            "score_impact": "+6 ATS",
+        }
+    )
 
-    suggestions.append({
-        "id": "linkedin-profile",
-        "title": "Update your LinkedIn profile",
-        "description": "Recruiters check LinkedIn — make sure your profile reflects your latest experience.",
-        "impact": "medium",
-        "category": "networking",
-        "action": "Open LinkedIn",
-        "link": None,
-        "score_impact": "+15% Recruiter Outreach",
-    })
+    suggestions.append(
+        {
+            "id": "linkedin-profile",
+            "title": "Update your LinkedIn profile",
+            "description": "Recruiters check LinkedIn — make sure your profile reflects your latest experience.",
+            "impact": "medium",
+            "category": "networking",
+            "action": "Open LinkedIn",
+            "link": None,
+            "score_impact": "+15% Recruiter Outreach",
+        }
+    )
 
     return jsonify({"suggestions": suggestions}), 200

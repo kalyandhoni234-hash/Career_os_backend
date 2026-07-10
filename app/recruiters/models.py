@@ -1,11 +1,14 @@
 from datetime import datetime, timezone
 from app.extensions import db
 
+
 class Recruiter(db.Model):
     __tablename__ = "recruiters"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), nullable=False, unique=True
+    )
     company_id = db.Column(db.Integer, db.ForeignKey("companies.id"), nullable=True)
     full_name = db.Column(db.String(255))
     title = db.Column(db.String(255))
@@ -15,6 +18,7 @@ class Recruiter(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = db.relationship("User", backref=db.backref("recruiter", uselist=False))
+
 
 class Company(db.Model):
     __tablename__ = "companies"
@@ -35,6 +39,7 @@ class Company(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     job_posts = db.relationship("JobPost", backref="company", lazy="dynamic")
+
 
 class JobPost(db.Model):
     __tablename__ = "job_posts"
@@ -57,9 +62,16 @@ class JobPost(db.Model):
     status = db.Column(db.String(20), default="active")
     is_remote = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
-    recruiter = db.relationship("Recruiter", backref=db.backref("job_posts", lazy="dynamic"))
+    recruiter = db.relationship(
+        "Recruiter", backref=db.backref("job_posts", lazy="dynamic")
+    )
+
 
 class SavedCandidate(db.Model):
     __tablename__ = "saved_candidates"
@@ -67,17 +79,24 @@ class SavedCandidate(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     recruiter_id = db.Column(db.Integer, db.ForeignKey("recruiters.id"), nullable=False)
     candidate_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    pipeline_id = db.Column(db.Integer, db.ForeignKey("talent_pipelines.id"), nullable=True)
+    pipeline_id = db.Column(
+        db.Integer, db.ForeignKey("talent_pipelines.id"), nullable=True
+    )
     notes = db.Column(db.Text)
     rating = db.Column(db.Integer)
     status = db.Column(db.String(50), default="saved")
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    recruiter = db.relationship("Recruiter", backref=db.backref("saved_candidates", lazy="dynamic"))
+    recruiter = db.relationship(
+        "Recruiter", backref=db.backref("saved_candidates", lazy="dynamic")
+    )
     candidate = db.relationship("User", foreign_keys=[candidate_id])
-    pipeline = db.relationship("TalentPipeline", backref=db.backref("saved_candidates", lazy="dynamic"))
+    pipeline = db.relationship(
+        "TalentPipeline", backref=db.backref("saved_candidates", lazy="dynamic")
+    )
 
     __table_args__ = (db.UniqueConstraint("recruiter_id", "candidate_id"),)
+
 
 class TalentPipeline(db.Model):
     __tablename__ = "talent_pipelines"
@@ -89,9 +108,12 @@ class TalentPipeline(db.Model):
     color = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    recruiter = db.relationship("Recruiter", backref=db.backref("talent_pipelines", lazy="dynamic"))
+    recruiter = db.relationship(
+        "Recruiter", backref=db.backref("talent_pipelines", lazy="dynamic")
+    )
 
     __table_args__ = (db.UniqueConstraint("recruiter_id", "name"),)
+
 
 class CandidateView(db.Model):
     __tablename__ = "candidate_views"
@@ -102,8 +124,11 @@ class CandidateView(db.Model):
     source = db.Column(db.String(50))
     viewed_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    recruiter = db.relationship("Recruiter", backref=db.backref("candidate_views", lazy="dynamic"))
+    recruiter = db.relationship(
+        "Recruiter", backref=db.backref("candidate_views", lazy="dynamic")
+    )
     candidate = db.relationship("User", foreign_keys=[candidate_id])
+
 
 class InterviewInvite(db.Model):
     __tablename__ = "interview_invites"
@@ -121,9 +146,14 @@ class InterviewInvite(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     responded_at = db.Column(db.DateTime)
 
-    recruiter = db.relationship("Recruiter", backref=db.backref("interview_invites", lazy="dynamic"))
+    recruiter = db.relationship(
+        "Recruiter", backref=db.backref("interview_invites", lazy="dynamic")
+    )
     candidate = db.relationship("User", foreign_keys=[candidate_id])
-    job_post = db.relationship("JobPost", backref=db.backref("interview_invites", lazy="dynamic"))
+    job_post = db.relationship(
+        "JobPost", backref=db.backref("interview_invites", lazy="dynamic")
+    )
+
 
 class RecruiterNotification(db.Model):
     __tablename__ = "recruiter_notifications"
@@ -137,4 +167,6 @@ class RecruiterNotification(db.Model):
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    recruiter = db.relationship("Recruiter", backref=db.backref("notifications", lazy="dynamic"))
+    recruiter = db.relationship(
+        "Recruiter", backref=db.backref("notifications", lazy="dynamic")
+    )

@@ -7,7 +7,6 @@ GITHUB_API = "https://api.github.com"
 
 
 class GitHubParser(BaseParser):
-
     def __init__(self, token=None):
         self.token = token
 
@@ -39,7 +38,9 @@ class GitHubParser(BaseParser):
         result["summary"] = user.get("bio") or ""
 
         try:
-            repos = self._get(f"{GITHUB_API}/users/{username}/repos?per_page=100&sort=updated")
+            repos = self._get(
+                f"{GITHUB_API}/users/{username}/repos?per_page=100&sort=updated"
+            )
         except requests.RequestException:
             repos = []
 
@@ -59,7 +60,9 @@ class GitHubParser(BaseParser):
 
             try:
                 lang_data = self._get(repo["languages_url"])
-                proj["technologies"] = list(lang_data.keys()) if lang_data else proj["technologies"]
+                proj["technologies"] = (
+                    list(lang_data.keys()) if lang_data else proj["technologies"]
+                )
                 for lang in lang_data:
                     lang_counter[lang] += 1
             except requests.RequestException:

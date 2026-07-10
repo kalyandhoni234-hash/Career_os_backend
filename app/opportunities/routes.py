@@ -5,16 +5,26 @@ from flask_login import login_required, current_user
 
 from app.extensions import db
 from app.opportunities.models import (
-    Opportunity, SavedOpportunity,
+    Opportunity,
+    SavedOpportunity,
 )
 from app.opportunities.services import (
-    search_opportunities, get_opportunity_detail, create_opportunity, update_opportunity, seed_sample_opportunities,
-    get_company_insights, search_companies,
-    estimate_salary, get_market_trends,
+    search_opportunities,
+    get_opportunity_detail,
+    create_opportunity,
+    update_opportunity,
+    seed_sample_opportunities,
+    get_company_insights,
+    search_companies,
+    estimate_salary,
+    get_market_trends,
     calculate_match_score,
     analyze_opportunity_skill_gaps,
-    generate_optimized_resume, generate_cover_letter,
-    generate_email, generate_linkedin_message, generate_interview_questions,
+    generate_optimized_resume,
+    generate_cover_letter,
+    generate_email,
+    generate_linkedin_message,
+    generate_interview_questions,
 )
 
 logger = logging.getLogger(__name__)
@@ -282,7 +292,9 @@ def generate_email_endpoint(opportunity_id):
 def generate_linkedin_message_endpoint(opportunity_id):
     data = request.get_json(silent=True) or {}
     msg_type = data.get("message_type", "connection")
-    result = generate_linkedin_message(current_user.id, opportunity_id, message_type=msg_type)
+    result = generate_linkedin_message(
+        current_user.id, opportunity_id, message_type=msg_type
+    )
     return jsonify({"message": result}), 200
 
 
@@ -327,7 +339,9 @@ def salary_estimate():
     if not role:
         return jsonify({"error": "role is required"}), 400
 
-    result = estimate_salary(role, location=location, experience_level=experience_level, skills=skills)
+    result = estimate_salary(
+        role, location=location, experience_level=experience_level, skills=skills
+    )
     return jsonify({"salary": result}), 200
 
 
@@ -359,50 +373,150 @@ def application_readiness(opportunity_id):
     checks = []
 
     if not resume:
-        checks.append({"check": "Resume", "status": "fail", "message": "No resume found. Create one first."})
+        checks.append(
+            {
+                "check": "Resume",
+                "status": "fail",
+                "message": "No resume found. Create one first.",
+            }
+        )
     elif not resume.summary:
-        checks.append({"check": "Resume Summary", "status": "warn", "message": "Add a professional summary to your resume"})
+        checks.append(
+            {
+                "check": "Resume Summary",
+                "status": "warn",
+                "message": "Add a professional summary to your resume",
+            }
+        )
     else:
-        checks.append({"check": "Resume", "status": "pass", "message": "Resume exists and looks complete"})
+        checks.append(
+            {
+                "check": "Resume",
+                "status": "pass",
+                "message": "Resume exists and looks complete",
+            }
+        )
 
     score_data = memory.get("score_history", [])
     if score_data:
-        overall = score_data[0].get("overall_score", 0) if isinstance(score_data[0], dict) else 0
+        overall = (
+            score_data[0].get("overall_score", 0)
+            if isinstance(score_data[0], dict)
+            else 0
+        )
         if overall >= 60:
-            checks.append({"check": "Career Score", "status": "pass", "message": f"Score: {overall}/100 — ready to apply"})
+            checks.append(
+                {
+                    "check": "Career Score",
+                    "status": "pass",
+                    "message": f"Score: {overall}/100 — ready to apply",
+                }
+            )
         elif overall >= 40:
-            checks.append({"check": "Career Score", "status": "warn", "message": f"Score: {overall}/100 — improve before applying aggressively"})
+            checks.append(
+                {
+                    "check": "Career Score",
+                    "status": "warn",
+                    "message": f"Score: {overall}/100 — improve before applying aggressively",
+                }
+            )
         else:
-            checks.append({"check": "Career Score", "status": "warn", "message": f"Score: {overall}/100 — strengthen your profile first"})
+            checks.append(
+                {
+                    "check": "Career Score",
+                    "status": "warn",
+                    "message": f"Score: {overall}/100 — strengthen your profile first",
+                }
+            )
     else:
-        checks.append({"check": "Career Score", "status": "info", "message": "Complete your profile to get a career score"})
+        checks.append(
+            {
+                "check": "Career Score",
+                "status": "info",
+                "message": "Complete your profile to get a career score",
+            }
+        )
 
     match_score = calculate_match_score(current_user.id, opportunity_id)
     if match_score.get("overall_score", 0) >= 70:
-        checks.append({"check": "Job Match", "status": "pass", "message": f"Strong match ({match_score['overall_score']}%)"})
+        checks.append(
+            {
+                "check": "Job Match",
+                "status": "pass",
+                "message": f"Strong match ({match_score['overall_score']}%)",
+            }
+        )
     elif match_score.get("overall_score", 0) >= 40:
-        checks.append({"check": "Job Match", "status": "warn", "message": f"Moderate match ({match_score['overall_score']}%) — consider improving"})
+        checks.append(
+            {
+                "check": "Job Match",
+                "status": "warn",
+                "message": f"Moderate match ({match_score['overall_score']}%) — consider improving",
+            }
+        )
     else:
-        checks.append({"check": "Job Match", "status": "warn", "message": f"Low match ({match_score.get('overall_score', 0)}%) — focus on skill gaps first"})
+        checks.append(
+            {
+                "check": "Job Match",
+                "status": "warn",
+                "message": f"Low match ({match_score.get('overall_score', 0)}%) — focus on skill gaps first",
+            }
+        )
 
     ats = match_score.get("ats_match", 0)
     if ats >= 70:
-        checks.append({"check": "ATS Readiness", "status": "pass", "message": f"ATS score: {ats}% — resume is well-optimized"})
+        checks.append(
+            {
+                "check": "ATS Readiness",
+                "status": "pass",
+                "message": f"ATS score: {ats}% — resume is well-optimized",
+            }
+        )
     elif ats >= 40:
-        checks.append({"check": "ATS Readiness", "status": "warn", "message": f"ATS score: {ats}% — optimize resume keywords"})
+        checks.append(
+            {
+                "check": "ATS Readiness",
+                "status": "warn",
+                "message": f"ATS score: {ats}% — optimize resume keywords",
+            }
+        )
     else:
-        checks.append({"check": "ATS Readiness", "status": "warn", "message": f"ATS score: {ats}% — significant resume optimization needed"})
+        checks.append(
+            {
+                "check": "ATS Readiness",
+                "status": "warn",
+                "message": f"ATS score: {ats}% — significant resume optimization needed",
+            }
+        )
 
     if resume and resume.skills and opp.tech_stack:
         user_skills = {s.lower() for s in resume.skills if isinstance(s, str)}
         job_skills = {s.lower() for s in opp.tech_stack if isinstance(s, str)}
         missing = job_skills - user_skills
         if not missing:
-            checks.append({"check": "Skill Coverage", "status": "pass", "message": "You have all required skills"})
+            checks.append(
+                {
+                    "check": "Skill Coverage",
+                    "status": "pass",
+                    "message": "You have all required skills",
+                }
+            )
         elif len(missing) <= 2:
-            checks.append({"check": "Skill Coverage", "status": "warn", "message": f"Missing {len(missing)} skill(s): {', '.join(missing)}"})
+            checks.append(
+                {
+                    "check": "Skill Coverage",
+                    "status": "warn",
+                    "message": f"Missing {len(missing)} skill(s): {', '.join(missing)}",
+                }
+            )
         else:
-            checks.append({"check": "Skill Coverage", "status": "warn", "message": f"Missing {len(missing)} skills — review skill gap analysis"})
+            checks.append(
+                {
+                    "check": "Skill Coverage",
+                    "status": "warn",
+                    "message": f"Missing {len(missing)} skills — review skill gap analysis",
+                }
+            )
 
     fail_count = sum(1 for c in checks if c["status"] == "fail")
     warn_count = sum(1 for c in checks if c["status"] == "warn")
@@ -420,14 +534,16 @@ def application_readiness(opportunity_id):
         verdict = "ready"
         verdict_message = "You're ready to apply! Good luck!"
 
-    return jsonify({
-        "readiness": {
-            "verdict": verdict,
-            "message": verdict_message,
-            "checks": checks,
-            "overall_score": match_score.get("overall_score", 0),
+    return jsonify(
+        {
+            "readiness": {
+                "verdict": verdict,
+                "message": verdict_message,
+                "checks": checks,
+                "overall_score": match_score.get("overall_score", 0),
+            }
         }
-    }), 200
+    ), 200
 
 
 # ── Recommendations ────────────────────────────────────────
@@ -451,22 +567,24 @@ def get_opportunity_recommendations():
     scored = []
     for opp in opportunities:
         match = calculate_match_score(current_user.id, opp.id)
-        scored.append({
-            "opportunity": {
-                "id": opp.id,
-                "title": opp.title,
-                "company_name": opp.company_name,
-                "company_logo": opp.company_logo,
-                "location": opp.location,
-                "remote_type": opp.remote_type,
-                "salary_min": opp.salary_min,
-                "salary_max": opp.salary_max,
-                "currency": opp.currency,
-                "employment_type": opp.employment_type,
-                "tech_stack": opp.tech_stack or [],
-            },
-            "match_score": match,
-        })
+        scored.append(
+            {
+                "opportunity": {
+                    "id": opp.id,
+                    "title": opp.title,
+                    "company_name": opp.company_name,
+                    "company_logo": opp.company_logo,
+                    "location": opp.location,
+                    "remote_type": opp.remote_type,
+                    "salary_min": opp.salary_min,
+                    "salary_max": opp.salary_max,
+                    "currency": opp.currency,
+                    "employment_type": opp.employment_type,
+                    "tech_stack": opp.tech_stack or [],
+                },
+                "match_score": match,
+            }
+        )
 
     scored.sort(key=lambda x: x["match_score"].get("overall_score", 0), reverse=True)
 

@@ -2,14 +2,28 @@ from .base import BaseParser
 
 
 EXPECTED_TOP_KEYS = {
-    "personal_info", "summary", "experience", "education",
-    "projects", "skills", "certificates", "achievements",
-    "languages", "publications",
+    "personal_info",
+    "summary",
+    "experience",
+    "education",
+    "projects",
+    "skills",
+    "certificates",
+    "achievements",
+    "languages",
+    "publications",
 }
 
 PERSONAL_INFO_FIELDS = {
-    "full_name", "email", "phone", "location", "title",
-    "linkedin", "github", "website", "portfolio",
+    "full_name",
+    "email",
+    "phone",
+    "location",
+    "title",
+    "linkedin",
+    "github",
+    "website",
+    "portfolio",
 }
 
 EXPERIENCE_FIELDS = {"company", "role", "start", "end", "bullets", "technologies"}
@@ -20,7 +34,6 @@ LANGUAGE_FIELDS = {"name", "level"}
 
 
 class BackupParser(BaseParser):
-
     def parse(self, raw_data) -> dict:
         data = raw_data if isinstance(raw_data, dict) else {}
         result = self._empty_result()
@@ -28,7 +41,13 @@ class BackupParser(BaseParser):
         if not data:
             return result
 
-        optional_keys = {"achievements", "publications", "certificates", "languages", "projects"}
+        optional_keys = {
+            "achievements",
+            "publications",
+            "certificates",
+            "languages",
+            "projects",
+        }
         for key in EXPECTED_TOP_KEYS:
             if key not in data and key not in optional_keys:
                 return result
@@ -40,9 +59,7 @@ class BackupParser(BaseParser):
             if field not in pi:
                 return result
 
-        result["personal_info"] = {
-            k: pi.get(k, "") for k in PERSONAL_INFO_FIELDS
-        }
+        result["personal_info"] = {k: pi.get(k, "") for k in PERSONAL_INFO_FIELDS}
         result["summary"] = data.get("summary", "")
 
         for entry in data.get("experience", []):
@@ -65,8 +82,18 @@ class BackupParser(BaseParser):
             if isinstance(entry, dict) and "name" in entry:
                 result["languages"].append(entry)
 
-        result["skills"] = data.get("skills", []) if isinstance(data.get("skills"), list) else []
-        result["achievements"] = data.get("achievements", []) if isinstance(data.get("achievements"), list) else []
-        result["publications"] = data.get("publications", []) if isinstance(data.get("publications"), list) else []
+        result["skills"] = (
+            data.get("skills", []) if isinstance(data.get("skills"), list) else []
+        )
+        result["achievements"] = (
+            data.get("achievements", [])
+            if isinstance(data.get("achievements"), list)
+            else []
+        )
+        result["publications"] = (
+            data.get("publications", [])
+            if isinstance(data.get("publications"), list)
+            else []
+        )
 
         return result

@@ -70,7 +70,9 @@ def _snapshot(resume):
         "linkedin": resume.linkedin,
         "github": resume.github,
         "portfolio": resume.portfolio,
-        "experience": _normalize_list_field(resume.experience, ["bullets", "technologies"]),
+        "experience": _normalize_list_field(
+            resume.experience, ["bullets", "technologies"]
+        ),
         "education": resume.education,
         "projects": _normalize_list_field(resume.projects, ["technologies"]),
         "skills": resume.skills,
@@ -106,10 +108,24 @@ def upsert_resume():
         db.session.add(resume)
 
     for field in [
-        "full_name", "email", "phone", "location", "summary", "title",
-        "website", "linkedin", "github", "portfolio",
-        "experience", "education", "projects", "skills",
-        "certificates", "achievements", "languages", "publications",
+        "full_name",
+        "email",
+        "phone",
+        "location",
+        "summary",
+        "title",
+        "website",
+        "linkedin",
+        "github",
+        "portfolio",
+        "experience",
+        "education",
+        "projects",
+        "skills",
+        "certificates",
+        "achievements",
+        "languages",
+        "publications",
         "tone",
     ]:
         if field in data:
@@ -124,7 +140,9 @@ def upsert_resume():
 
     # Create a version snapshot
     version_name = data.get("version_name") or f"v{resume.versions.count() + 1}"
-    version = ResumeVersion(resume_id=resume.id, version_name=version_name, snapshot=_snapshot(resume))
+    version = ResumeVersion(
+        resume_id=resume.id, version_name=version_name, snapshot=_snapshot(resume)
+    )
     db.session.add(version)
     db.session.commit()
 
@@ -143,7 +161,14 @@ def export_resume():
     def esc(text):
         if not text:
             return ""
-        return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;").replace("'", "&#39;")
+        return (
+            str(text)
+            .replace("&", "&amp;")
+            .replace("<", "&lt;")
+            .replace(">", "&gt;")
+            .replace('"', "&quot;")
+            .replace("'", "&#39;")
+        )
 
     items_html = ""
 
@@ -162,7 +187,11 @@ def export_resume():
                 bullets = bullets.split("\n")
             bullet_items = "".join(f"<li>{esc(b)}</li>" for b in bullets if b.strip())
             tech = exp.get("technologies", "")
-            tech_str = f'<p class="tech"><strong>Technologies:</strong> {esc(", ".join(tech) if isinstance(tech, list) else tech)}</p>' if tech else ""
+            tech_str = (
+                f'<p class="tech"><strong>Technologies:</strong> {esc(", ".join(tech) if isinstance(tech, list) else tech)}</p>'
+                if tech
+                else ""
+            )
             exp_entries += f'<div class="entry"><div class="entry-header"><strong>{role}</strong> at {company}</div><div class="date">{start} - {end}</div><ul>{bullet_items}</ul>{tech_str}</div>'
         if exp_entries:
             items_html += f'<div class="section"><h2>Experience</h2>{exp_entries}</div>'
@@ -187,7 +216,11 @@ def export_resume():
             name = esc(proj.get("name", ""))
             desc = esc(proj.get("description", ""))
             tech = proj.get("technologies", "")
-            tech_str = f'<p class="tech"><strong>Technologies:</strong> {esc(", ".join(tech) if isinstance(tech, list) else tech)}</p>' if tech else ""
+            tech_str = (
+                f'<p class="tech"><strong>Technologies:</strong> {esc(", ".join(tech) if isinstance(tech, list) else tech)}</p>'
+                if tech
+                else ""
+            )
             url = proj.get("url", "")
             url_str = f'<p><a href="{esc(url)}">{esc(url)}</a></p>' if url else ""
             proj_entries += f'<div class="entry"><div class="entry-header"><strong>{name}</strong></div><p>{desc}</p>{tech_str}{url_str}</div>'
@@ -199,20 +232,26 @@ def export_resume():
         items_html += f'<div class="section"><h2>Skills</h2><p>{skills_str}</p></div>'
 
     cert_html = ""
-    for cert in (resume.certificates or []):
-        cert_html += f'<div class="entry"><strong>{esc(cert.get("name",""))}</strong> - {esc(cert.get("issuer",""))} ({esc(cert.get("date",""))})</div>'
+    for cert in resume.certificates or []:
+        cert_html += f'<div class="entry"><strong>{esc(cert.get("name", ""))}</strong> - {esc(cert.get("issuer", ""))} ({esc(cert.get("date", ""))})</div>'
     if cert_html:
         items_html += f'<div class="section"><h2>Certificates</h2>{cert_html}</div>'
 
     if resume.languages:
-        lang_str = esc(", ".join(
-            f'{lang.get("name","")} ({lang.get("level","")})' if isinstance(lang, dict) else str(lang)
-            for lang in resume.languages
-        ))
+        lang_str = esc(
+            ", ".join(
+                f"{lang.get('name', '')} ({lang.get('level', '')})"
+                if isinstance(lang, dict)
+                else str(lang)
+                for lang in resume.languages
+            )
+        )
         items_html += f'<div class="section"><h2>Languages</h2><p>{lang_str}</p></div>'
 
     name = esc(resume.full_name or "Resume")
-    contact = ", ".join(filter(None, [esc(resume.email), esc(resume.phone), esc(resume.location)]))
+    contact = ", ".join(
+        filter(None, [esc(resume.email), esc(resume.phone), esc(resume.location)])
+    )
 
     html_content = f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">
@@ -241,7 +280,9 @@ a {{ color: #2563eb; text-decoration: none; }}
     pdf_bytes = HTML(string=html_content).write_pdf()
     response = make_response(pdf_bytes)
     response.headers["Content-Type"] = "application/pdf"
-    response.headers["Content-Disposition"] = f"attachment; filename={resume.full_name or 'resume'}.pdf"
+    response.headers["Content-Disposition"] = (
+        f"attachment; filename={resume.full_name or 'resume'}.pdf"
+    )
     return response
 
 
@@ -399,7 +440,9 @@ def export_resume_docx():
     if resume.languages:
         add_section_heading("Languages")
         lang_str = ", ".join(
-            f'{lang.get("name","")} ({lang.get("level","")})' if isinstance(lang, dict) else str(lang)
+            f"{lang.get('name', '')} ({lang.get('level', '')})"
+            if isinstance(lang, dict)
+            else str(lang)
             for lang in resume.languages
         )
         if lang_str:
@@ -409,12 +452,17 @@ def export_resume_docx():
     doc.save(bio)
     bio.seek(0)
     response = make_response(bio.read())
-    response.headers["Content-Type"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    response.headers["Content-Disposition"] = f"attachment; filename={resume.full_name or 'resume'}.docx"
+    response.headers["Content-Type"] = (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    response.headers["Content-Disposition"] = (
+        f"attachment; filename={resume.full_name or 'resume'}.docx"
+    )
     return response
 
 
 # ── AI Resume Review ──────────────────────────────────────
+
 
 @resume_bp.route("/review", methods=["POST"])
 @login_required
@@ -427,7 +475,7 @@ def review_resume():
         return jsonify({"error": "No resume found"}), 404
 
     experience_lines = []
-    for exp in (resume.experience or []):
+    for exp in resume.experience or []:
         role = exp.get("role", "")
         company = exp.get("company", "")
         bullets = exp.get("bullets", "")
@@ -438,10 +486,12 @@ def review_resume():
         tech = exp.get("technologies", "")
         if isinstance(tech, list):
             tech = ", ".join(tech)
-        experience_lines.append(f"- {role} at {company}\n{bullets}\n  Technologies: {tech}")
+        experience_lines.append(
+            f"- {role} at {company}\n{bullets}\n  Technologies: {tech}"
+        )
 
     project_lines = []
-    for proj in (resume.projects or []):
+    for proj in resume.projects or []:
         pname = proj.get("name", "")
         pdesc = proj.get("description", "")
         tech = proj.get("technologies", "")
@@ -450,8 +500,16 @@ def review_resume():
         project_lines.append(f"- {pname}: {pdesc} [{tech}]")
 
     skills_str = ", ".join(resume.skills or [])
-    certs_str = ", ".join(f'{c.get("name","")} ({c.get("issuer","")})' for c in (resume.certificates or []))
-    lang_str = ", ".join(f'{lang.get("name","")} ({lang.get("level","")})' if isinstance(lang, dict) else str(lang) for lang in (resume.languages or []))
+    certs_str = ", ".join(
+        f"{c.get('name', '')} ({c.get('issuer', '')})"
+        for c in (resume.certificates or [])
+    )
+    lang_str = ", ".join(
+        f"{lang.get('name', '')} ({lang.get('level', '')})"
+        if isinstance(lang, dict)
+        else str(lang)
+        for lang in (resume.languages or [])
+    )
 
     resume_text = f"""
 Full Name: {resume.full_name or "N/A"}
@@ -480,7 +538,9 @@ Projects:
 }
 Do not include any text outside the JSON object."""
 
-    raw_response = generate_text(resume_text, model="gemini", system_instruction=system_instruction)
+    raw_response = generate_text(
+        resume_text, model="gemini", system_instruction=system_instruction
+    )
 
     cleaned = raw_response.strip()
     if cleaned.startswith("```"):
@@ -492,12 +552,15 @@ Do not include any text outside the JSON object."""
     try:
         review_data = json.loads(cleaned)
     except json.JSONDecodeError:
-        return jsonify({"error": "Failed to parse AI response", "raw": raw_response}), 500
+        return jsonify(
+            {"error": "Failed to parse AI response", "raw": raw_response}
+        ), 500
 
     return jsonify({"review": review_data}), 200
 
 
 # ── ATS Scoring ───────────────────────────────────────────
+
 
 @resume_bp.route("/ats-score", methods=["POST"])
 @login_required
@@ -518,6 +581,7 @@ def ats_score():
 
 # ── Resume Versions ───────────────────────────────────────
 
+
 @resume_bp.route("/versions", methods=["GET"])
 @login_required
 def list_versions():
@@ -525,17 +589,23 @@ def list_versions():
     if not resume:
         return jsonify({"versions": []}), 200
 
-    versions = ResumeVersion.query.filter_by(resume_id=resume.id).order_by(ResumeVersion.created_at.desc()).all()
-    return jsonify({
-        "versions": [
-            {
-                "id": v.id,
-                "version_name": v.version_name,
-                "created_at": v.created_at.isoformat() if v.created_at else None,
-            }
-            for v in versions
-        ]
-    }), 200
+    versions = (
+        ResumeVersion.query.filter_by(resume_id=resume.id)
+        .order_by(ResumeVersion.created_at.desc())
+        .all()
+    )
+    return jsonify(
+        {
+            "versions": [
+                {
+                    "id": v.id,
+                    "version_name": v.version_name,
+                    "created_at": v.created_at.isoformat() if v.created_at else None,
+                }
+                for v in versions
+            ]
+        }
+    ), 200
 
 
 @resume_bp.route("/versions/<int:version_id>", methods=["GET"])
@@ -549,7 +619,18 @@ def get_version(version_id):
     if not version:
         return jsonify({"error": "Version not found"}), 404
 
-    return jsonify({"version": {"id": version.id, "version_name": version.version_name, "snapshot": version.snapshot, "created_at": version.created_at.isoformat() if version.created_at else None}}), 200
+    return jsonify(
+        {
+            "version": {
+                "id": version.id,
+                "version_name": version.version_name,
+                "snapshot": version.snapshot,
+                "created_at": version.created_at.isoformat()
+                if version.created_at
+                else None,
+            }
+        }
+    ), 200
 
 
 @resume_bp.route("/versions/<int:version_id>/restore", methods=["POST"])
@@ -576,7 +657,11 @@ def restore_version(version_id):
 
     db.session.commit()
 
-    new_version = ResumeVersion(resume_id=resume.id, version_name=f"{version.version_name} (restored)", snapshot=_snapshot(resume))
+    new_version = ResumeVersion(
+        resume_id=resume.id,
+        version_name=f"{version.version_name} (restored)",
+        snapshot=_snapshot(resume),
+    )
     db.session.add(new_version)
     db.session.commit()
 
@@ -625,14 +710,17 @@ def compare_versions():
         if s1.get(key) != s2.get(key):
             diffs[key] = {"from": s1.get(key), "to": s2.get(key)}
 
-    return jsonify({
-        "version_a": {"id": v1.id, "version_name": v1.version_name},
-        "version_b": {"id": v2.id, "version_name": v2.version_name},
-        "differences": diffs,
-    }), 200
+    return jsonify(
+        {
+            "version_a": {"id": v1.id, "version_name": v1.version_name},
+            "version_b": {"id": v2.id, "version_name": v2.version_name},
+            "differences": diffs,
+        }
+    ), 200
 
 
 # ── AI Resume Assistant ───────────────────────────────────
+
 
 @resume_bp.route("/ai/improve-summary", methods=["POST"])
 @login_required
@@ -694,7 +782,13 @@ Return in JSON format:
     try:
         return jsonify(json.loads(cleaned)), 200
     except json.JSONDecodeError:
-        return jsonify({"original": bullet, "rewritten": result.strip(), "explanation": "AI generated response."}), 200
+        return jsonify(
+            {
+                "original": bullet,
+                "rewritten": result.strip(),
+                "explanation": "AI generated response.",
+            }
+        ), 200
 
 
 @resume_bp.route("/ai/ats-optimize", methods=["POST"])
@@ -734,7 +828,14 @@ Return in JSON format:
     try:
         return jsonify(json.loads(cleaned)), 200
     except json.JSONDecodeError:
-        return jsonify({"original": text, "optimized": result.strip(), "keywords_added": [], "changes": []}), 200
+        return jsonify(
+            {
+                "original": text,
+                "optimized": result.strip(),
+                "keywords_added": [],
+                "changes": [],
+            }
+        ), 200
 
 
 @resume_bp.route("/ai/generate-achievement", methods=["POST"])
@@ -797,6 +898,7 @@ Return the rewritten text only."""
 
 # ── Cover Letter Generator ────────────────────────────────
 
+
 @resume_bp.route("/cover-letter", methods=["POST"])
 @login_required
 @limiter.limit("5 per minute")
@@ -815,11 +917,13 @@ def generate_cover_letter():
         skills = ", ".join(resume.skills or [])
         summary = resume.summary or ""
         exp_items = []
-        for exp in (resume.experience or []):
+        for exp in resume.experience or []:
             bullets = exp.get("bullets", "")
             if isinstance(bullets, list):
                 bullets = "; ".join(bullets)
-            exp_items.append(f"{exp.get('role','')} at {exp.get('company','')}: {bullets}")
+            exp_items.append(
+                f"{exp.get('role', '')} at {exp.get('company', '')}: {bullets}"
+            )
         experience = "\n".join(exp_items)
         resume_text = f"Summary: {summary}\nSkills: {skills}\nExperience:\n{experience}"
 

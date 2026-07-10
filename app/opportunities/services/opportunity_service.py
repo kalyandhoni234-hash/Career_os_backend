@@ -79,6 +79,7 @@ def search_opportunities(
     # Post-filter by minimum match score if requested
     if min_match_score is not None and user_id is not None:
         from app.opportunities.services.match_engine import calculate_match_score
+
         scored = []
         for o in items:
             score = calculate_match_score(user_id, o.id)
@@ -174,10 +175,12 @@ def _opp_to_dict(opp: Opportunity, detail: bool = False) -> dict:
         "url": opp.url,
     }
     if detail:
-        d.update({
-            "description": opp.description,
-            "requirements": opp.requirements or [],
-            "responsibilities": opp.responsibilities or [],
-            "expires_at": opp.expires_at.isoformat() if opp.expires_at else None,
-        })
+        d.update(
+            {
+                "description": opp.description,
+                "requirements": opp.requirements or [],
+                "responsibilities": opp.responsibilities or [],
+                "expires_at": opp.expires_at.isoformat() if opp.expires_at else None,
+            }
+        )
     return d

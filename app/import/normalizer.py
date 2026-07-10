@@ -41,16 +41,19 @@ SKILL_SYNONYMS = {
 
 
 class ImportNormalizer:
-
     def normalize(self, raw_data: dict, source: str) -> dict:
         result = dict(raw_data)
-        result["personal_info"] = self._normalize_personal_info(result.get("personal_info", {}))
+        result["personal_info"] = self._normalize_personal_info(
+            result.get("personal_info", {})
+        )
         result["summary"] = (result.get("summary") or "").strip()
         result["skills"] = self.deduplicate_skills(result.get("skills", []))
         result["experience"] = self._normalize_experience(result.get("experience", []))
         result["education"] = self._normalize_education(result.get("education", []))
         result["projects"] = self._normalize_projects(result.get("projects", []))
-        result["certificates"] = self._normalize_certificates(result.get("certificates", []))
+        result["certificates"] = self._normalize_certificates(
+            result.get("certificates", [])
+        )
         result["languages"] = self._normalize_languages(result.get("languages", []))
         result["achievements"] = [a for a in (result.get("achievements") or []) if a]
         result["publications"] = [p for p in (result.get("publications") or []) if p]
@@ -59,8 +62,17 @@ class ImportNormalizer:
 
     def _normalize_personal_info(self, info: dict) -> dict:
         cleaned = {}
-        for key in ["full_name", "email", "phone", "location", "title",
-                     "linkedin", "github", "website", "portfolio"]:
+        for key in [
+            "full_name",
+            "email",
+            "phone",
+            "location",
+            "title",
+            "linkedin",
+            "github",
+            "website",
+            "portfolio",
+        ]:
             val = info.get(key, "")
             cleaned[key] = val.strip() if isinstance(val, str) else ""
         return cleaned
@@ -185,7 +197,9 @@ class ImportNormalizer:
                     if value and not merged.get("personal_info", {}).get(field):
                         merged.setdefault("personal_info", {})[field] = value
             elif key == "skills":
-                existing_skills = set(s.lower() for s in (existing_data.get("skills") or []))
+                existing_skills = set(
+                    s.lower() for s in (existing_data.get("skills") or [])
+                )
                 for skill in imported_data.get("skills", []):
                     if skill.lower() not in existing_skills:
                         merged.setdefault("skills", []).append(skill)
@@ -195,15 +209,22 @@ class ImportNormalizer:
                     for e in (existing_data.get("experience") or [])
                 )
                 for exp in imported_data.get("experience", []):
-                    if (exp.get("company", ""), exp.get("role", "")) not in existing_keys:
+                    if (
+                        exp.get("company", ""),
+                        exp.get("role", ""),
+                    ) not in existing_keys:
                         merged.setdefault("experience", []).append(exp)
             elif key == "education":
-                existing_schools = set(e.get("school", "") for e in (existing_data.get("education") or []))
+                existing_schools = set(
+                    e.get("school", "") for e in (existing_data.get("education") or [])
+                )
                 for edu in imported_data.get("education", []):
                     if edu.get("school", "") not in existing_schools:
                         merged.setdefault("education", []).append(edu)
             elif key == "projects":
-                existing_names = set(p.get("name", "") for p in (existing_data.get("projects") or []))
+                existing_names = set(
+                    p.get("name", "") for p in (existing_data.get("projects") or [])
+                )
                 for proj in imported_data.get("projects", []):
                     if proj.get("name", "") not in existing_names:
                         merged.setdefault("projects", []).append(proj)

@@ -59,37 +59,53 @@ def job_discovery_results():
     from datetime import datetime, timezone, timedelta
 
     cutoff = datetime.now(timezone.utc) - timedelta(days=7)
-    opps = Opportunity.query.filter(
-        Opportunity.created_at >= cutoff,
-        Opportunity.provider.in_(["linkedin", "indeed", "naukri", "foundit", "internshala", "agent"]),
-    ).order_by(Opportunity.created_at.desc()).limit(20).all()
+    opps = (
+        Opportunity.query.filter(
+            Opportunity.created_at >= cutoff,
+            Opportunity.provider.in_(
+                ["linkedin", "indeed", "naukri", "foundit", "internshala", "agent"]
+            ),
+        )
+        .order_by(Opportunity.created_at.desc())
+        .limit(20)
+        .all()
+    )
 
-    return jsonify({
-        "discovered": [{
-            "id": o.id,
-            "title": o.title,
-            "company_name": o.company_name,
-            "company_logo": o.company_logo,
-            "location": o.location,
-            "remote_type": o.remote_type,
-            "salary_min": o.salary_min,
-            "salary_max": o.salary_max,
-            "currency": o.currency,
-            "employment_type": o.employment_type,
-            "tech_stack": o.tech_stack or [],
-            "posted_at": o.posted_at.isoformat() if o.posted_at else None,
-            "created_at": o.created_at.isoformat() if o.created_at else None,
-            "provider": o.provider,
-        } for o in opps],
-        "total": len(opps),
-    }), 200
+    return jsonify(
+        {
+            "discovered": [
+                {
+                    "id": o.id,
+                    "title": o.title,
+                    "company_name": o.company_name,
+                    "company_logo": o.company_logo,
+                    "location": o.location,
+                    "remote_type": o.remote_type,
+                    "salary_min": o.salary_min,
+                    "salary_max": o.salary_max,
+                    "currency": o.currency,
+                    "employment_type": o.employment_type,
+                    "tech_stack": o.tech_stack or [],
+                    "posted_at": o.posted_at.isoformat() if o.posted_at else None,
+                    "created_at": o.created_at.isoformat() if o.created_at else None,
+                    "provider": o.provider,
+                }
+                for o in opps
+            ],
+            "total": len(opps),
+        }
+    ), 200
 
 
 @agents_bp.route("/<agent_type>/run", methods=["POST"])
 @login_required
 def trigger_agent(agent_type):
     if agent_type not in AGENT_TYPES:
-        return jsonify({"error": f"Unknown agent type '{agent_type}'. Valid types: {', '.join(AGENT_TYPES)}"}), 400
+        return jsonify(
+            {
+                "error": f"Unknown agent type '{agent_type}'. Valid types: {', '.join(AGENT_TYPES)}"
+            }
+        ), 400
     result = run_agent(current_user.id, agent_type)
     if result is None:
         return jsonify({"error": "Agent not found"}), 404

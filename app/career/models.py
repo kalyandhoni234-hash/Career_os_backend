@@ -6,7 +6,9 @@ class CareerProfile(db.Model):
     __tablename__ = "career_profiles"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False
+    )
     target_role = db.Column(db.String(255), nullable=True)
     target_company = db.Column(db.String(255), nullable=True)
     target_location = db.Column(db.String(255), nullable=True)
@@ -18,7 +20,11 @@ class CareerProfile(db.Model):
     career_goal_type = db.Column(db.String(50), default="internship")
     interests = db.Column(db.JSON, default=list)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     user = db.relationship("User", backref=db.backref("career_profile", uselist=False))
 
@@ -38,7 +44,11 @@ class CareerGoal(db.Model):
     progress = db.Column(db.Integer, default=0)
     category = db.Column(db.String(50), default="career")
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     user = db.relationship("User", backref=db.backref("career_goals", lazy="dynamic"))
 
@@ -57,11 +67,20 @@ class Roadmap(db.Model):
     status = db.Column(db.String(50), default="active")
     source = db.Column(db.String(50), default="ai_generated")
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     user = db.relationship("User", backref=db.backref("roadmaps", lazy="dynamic"))
-    nodes = db.relationship("RoadmapNode", backref="roadmap", lazy="dynamic", cascade="all, delete-orphan",
-                            order_by="RoadmapNode.order")
+    nodes = db.relationship(
+        "RoadmapNode",
+        backref="roadmap",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+        order_by="RoadmapNode.order",
+    )
 
 
 class RoadmapNode(db.Model):
@@ -92,11 +111,19 @@ class LearningProgress(db.Model):
     source = db.Column(db.String(100), nullable=True)
     notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
-    user = db.relationship("User", backref=db.backref("learning_progress", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("learning_progress", lazy="dynamic")
+    )
 
-    __table_args__ = (db.UniqueConstraint("user_id", "skill_name", name="uq_user_skill"),)
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "skill_name", name="uq_user_skill"),
+    )
 
 
 class SkillGraph(db.Model):
@@ -108,11 +135,17 @@ class SkillGraph(db.Model):
     proficiency = db.Column(db.Integer, default=0)
     skill_count = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     user = db.relationship("User", backref=db.backref("skill_graphs", lazy="dynamic"))
 
-    __table_args__ = (db.UniqueConstraint("user_id", "category", name="uq_user_category"),)
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "category", name="uq_user_category"),
+    )
 
 
 class CareerReport(db.Model):
@@ -145,7 +178,9 @@ class CareerTimelineEvent(db.Model):
     importance = db.Column(db.Integer, default=1)
     status = db.Column(db.String(50), default="completed")
     tags = db.Column(db.JSON, default=list)
-    related_goal_id = db.Column(db.Integer, db.ForeignKey("career_goals.id"), nullable=True)
+    related_goal_id = db.Column(
+        db.Integer, db.ForeignKey("career_goals.id"), nullable=True
+    )
     attachment_url = db.Column(db.String(500), nullable=True)
     visibility = db.Column(db.String(50), default="public")
     is_favorite = db.Column(db.Boolean, default=False)
@@ -153,10 +188,18 @@ class CareerTimelineEvent(db.Model):
     sort_order = db.Column(db.Integer, default=0)
     metadata_json = db.Column(db.JSON, default=dict)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
-    user = db.relationship("User", backref=db.backref("career_timeline_events", lazy="dynamic"))
-    related_goal = db.relationship("CareerGoal", backref=db.backref("timeline_events", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("career_timeline_events", lazy="dynamic")
+    )
+    related_goal = db.relationship(
+        "CareerGoal", backref=db.backref("timeline_events", lazy="dynamic")
+    )
 
 
 class TimelineTag(db.Model):
@@ -176,7 +219,9 @@ class TimelineAttachment(db.Model):
     __tablename__ = "timeline_attachments"
 
     id = db.Column(db.Integer, primary_key=True)
-    event_id = db.Column(db.Integer, db.ForeignKey("career_timeline_events.id"), nullable=False)
+    event_id = db.Column(
+        db.Integer, db.ForeignKey("career_timeline_events.id"), nullable=False
+    )
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
     filename = db.Column(db.String(255), nullable=False)
     original_filename = db.Column(db.String(255), nullable=False)
@@ -185,8 +230,12 @@ class TimelineAttachment(db.Model):
     file_url = db.Column(db.String(500), nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    event = db.relationship("CareerTimelineEvent", backref=db.backref("attachments", lazy="dynamic"))
-    user = db.relationship("User", backref=db.backref("timeline_attachments", lazy="dynamic"))
+    event = db.relationship(
+        "CareerTimelineEvent", backref=db.backref("attachments", lazy="dynamic")
+    )
+    user = db.relationship(
+        "User", backref=db.backref("timeline_attachments", lazy="dynamic")
+    )
 
 
 class AIRecommendation(db.Model):
@@ -208,7 +257,9 @@ class AIRecommendation(db.Model):
     is_completed = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    user = db.relationship("User", backref=db.backref("ai_recommendations", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("ai_recommendations", lazy="dynamic")
+    )
 
 
 class UserEducation(db.Model):
@@ -227,9 +278,18 @@ class UserEducation(db.Model):
     achievements = db.Column(db.Text, nullable=True)
     order = db.Column(db.Integer, default=0)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
-    user = db.relationship("User", backref=db.backref("user_education", lazy="dynamic", order_by="UserEducation.order"))
+    user = db.relationship(
+        "User",
+        backref=db.backref(
+            "user_education", lazy="dynamic", order_by="UserEducation.order"
+        ),
+    )
 
 
 class UserSkill(db.Model):
@@ -244,7 +304,9 @@ class UserSkill(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = db.relationship("User", backref=db.backref("user_skills", lazy="dynamic"))
-    __table_args__ = (db.UniqueConstraint("user_id", "name", name="uq_user_skill_name"),)
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "name", name="uq_user_skill_name"),
+    )
 
 
 class UserInterest(db.Model):
@@ -257,7 +319,9 @@ class UserInterest(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = db.relationship("User", backref=db.backref("user_interests", lazy="dynamic"))
-    __table_args__ = (db.UniqueConstraint("user_id", "name", name="uq_user_interest_name"),)
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "name", name="uq_user_interest_name"),
+    )
 
 
 class UserLanguage(db.Model):
@@ -270,7 +334,9 @@ class UserLanguage(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = db.relationship("User", backref=db.backref("user_languages", lazy="dynamic"))
-    __table_args__ = (db.UniqueConstraint("user_id", "language", name="uq_user_language"),)
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "language", name="uq_user_language"),
+    )
 
 
 class SocialLink(db.Model):
@@ -283,7 +349,9 @@ class SocialLink(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = db.relationship("User", backref=db.backref("social_links", lazy="dynamic"))
-    __table_args__ = (db.UniqueConstraint("user_id", "platform", name="uq_user_platform"),)
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "platform", name="uq_user_platform"),
+    )
 
 
 class ResumeFile(db.Model):
@@ -305,7 +373,9 @@ class UserPreference(db.Model):
     __tablename__ = "user_preferences"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False
+    )
     job_alerts = db.Column(db.Boolean, default=True)
     weekly_ai_review = db.Column(db.Boolean, default=True)
     email_notifications = db.Column(db.Boolean, default=True)
@@ -313,7 +383,11 @@ class UserPreference(db.Model):
     resume_visibility = db.Column(db.String(50), default="private")
     theme_preference = db.Column(db.String(20), default="system")
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
 
     user = db.relationship("User", backref=db.backref("preferences", uselist=False))
 
@@ -334,4 +408,6 @@ class CareerScoreSnapshot(db.Model):
     breakdown = db.Column(db.JSON, default=dict)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
-    user = db.relationship("User", backref=db.backref("career_score_snapshots", lazy="dynamic"))
+    user = db.relationship(
+        "User", backref=db.backref("career_score_snapshots", lazy="dynamic")
+    )
