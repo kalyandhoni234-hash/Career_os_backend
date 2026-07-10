@@ -113,6 +113,10 @@ def create_app():
 
     app.register_blueprint(recruiters_bp, url_prefix="/api/recruiters")
 
+    from app.onboarding.routes import onboarding_bp
+
+    app.register_blueprint(onboarding_bp)
+
     @app.after_request
     def set_security_headers(response):
         response.headers["X-Content-Type-Options"] = "nosniff"

@@ -140,7 +140,7 @@ def google_callback():
     session.permanent = True
     login_user(user, remember=True)
     logger.info("OAuth login success — email=%s", email)
-    return redirect(current_app.config["FRONTEND_URL"] + "/dashboard")
+    return redirect(current_app.config["FRONTEND_URL"] + "/onboarding")
 
 
 @auth_bp.route("/forgot-password", methods=["POST"])
