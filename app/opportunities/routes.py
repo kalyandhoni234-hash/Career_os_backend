@@ -38,9 +38,14 @@ def ping():
 
 
 @opportunities_bp.route("/seed", methods=["POST"])
+@login_required
 def seed():
-    seed_sample_opportunities()
-    return jsonify({"message": "Sample opportunities seeded"}), 200
+    from flask import current_app
+
+    if not current_app.config.get("IS_PRODUCTION"):
+        seed_sample_opportunities()
+        return jsonify({"message": "Sample opportunities seeded"}), 200
+    return jsonify({"error": "Seeding disabled in production"}), 403
 
 
 # ── Search & List ──────────────────────────────────────────

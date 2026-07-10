@@ -375,10 +375,10 @@ def _get_ats_score(user_id):
     resume = Resume.query.filter_by(user_id=user_id).first()
     if not resume:
         return None
-    from app.resume.ats import calculate_ats_score
+    from app.resume.ats import score_resume
 
     try:
-        result = calculate_ats_score(resume.id)
+        result = score_resume(resume, job_description="")
         return result.get("overall", None) if result else None
     except Exception:
         return None

@@ -10,4 +10,7 @@ with app.app_context():
         print(f"Migration on startup failed (may already be up to date): {e}")
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5001)
+    import os
+
+    debug = os.environ.get("FLASK_ENV") != "production"
+    app.run(debug=debug, port=5001)

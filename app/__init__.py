@@ -125,15 +125,8 @@ def create_app():
         return jsonify({"error": "Unauthorized — please log in again"}), 401
 
     @app.errorhandler(500)
-    def internal_error(error):
-        return jsonify(
-            {
-                "error": "Internal server error",
-                "detail": str(error.original_exception)
-                if hasattr(error, "original_exception")
-                else None,
-            }
-        ), 500
+    def internal_error(_error):
+        return jsonify({"error": "Internal server error"}), 500
 
     @app.errorhandler(404)
     def not_found(error):

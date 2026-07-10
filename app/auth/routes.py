@@ -193,6 +193,7 @@ def reset_password():
 
 
 @auth_bp.route("/ai-test", methods=["GET"])
+@login_required
 def ai_test():
     from app.ai_service import generate_text
 
