@@ -33,6 +33,9 @@ def create_app():
         CareerProfile, CareerGoal, Roadmap, RoadmapNode,
         LearningProgress, SkillGraph, CareerReport,
         CareerTimelineEvent, AIRecommendation, CareerScoreSnapshot,
+        UserEducation, UserSkill, UserInterest, UserLanguage,
+        SocialLink, ResumeFile, UserPreference,
+        TimelineTag, TimelineAttachment,
     )
     from app.opportunities.models import (  # noqa: F401
         Opportunity, CompanyProfile, SavedOpportunity, OpportunityMatchScore,
@@ -57,6 +60,8 @@ def create_app():
     from app.jobs.routes import jobs_bp
     from app.coach.routes import coach_bp
     from app.career.routes import career_bp
+    from app.career.profile_routes import profile_bp
+    from app.career.timeline_routes import timeline_bp
     from app.opportunities.routes import opportunities_bp
     from app.agents.routes import agents_bp
     from app.recruiters.routes import recruiters_bp
@@ -68,6 +73,8 @@ def create_app():
     app.register_blueprint(jobs_bp, url_prefix="/api/jobs")
     app.register_blueprint(coach_bp, url_prefix="/api/coach")
     app.register_blueprint(career_bp, url_prefix="/api/career")
+    app.register_blueprint(profile_bp)
+    app.register_blueprint(timeline_bp)
     app.register_blueprint(opportunities_bp, url_prefix="/api/opportunities")
     app.register_blueprint(agents_bp, url_prefix="/api/agents")
     app.register_blueprint(import_bp, url_prefix="/api/import")

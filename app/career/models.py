@@ -141,12 +141,52 @@ class CareerTimelineEvent(db.Model):
     event_type = db.Column(db.String(50), nullable=False)
     title = db.Column(db.String(255), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    metadata_json = db.Column(db.JSON, default=dict)
     event_date = db.Column(db.DateTime, nullable=False)
     importance = db.Column(db.Integer, default=1)
+    status = db.Column(db.String(50), default="completed")
+    tags = db.Column(db.JSON, default=list)
+    related_goal_id = db.Column(db.Integer, db.ForeignKey("career_goals.id"), nullable=True)
+    attachment_url = db.Column(db.String(500), nullable=True)
+    visibility = db.Column(db.String(50), default="public")
+    is_favorite = db.Column(db.Boolean, default=False)
+    is_pinned = db.Column(db.Boolean, default=False)
+    sort_order = db.Column(db.Integer, default=0)
+    metadata_json = db.Column(db.JSON, default=dict)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     user = db.relationship("User", backref=db.backref("career_timeline_events", lazy="dynamic"))
+    related_goal = db.relationship("CareerGoal", backref=db.backref("timeline_events", lazy="dynamic"))
+
+
+class TimelineTag(db.Model):
+    __tablename__ = "timeline_tags"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    color = db.Column(db.String(20), default="#6366f1")
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship("User", backref=db.backref("timeline_tags", lazy="dynamic"))
+    __table_args__ = (db.UniqueConstraint("user_id", "name"),)
+
+
+class TimelineAttachment(db.Model):
+    __tablename__ = "timeline_attachments"
+
+    id = db.Column(db.Integer, primary_key=True)
+    event_id = db.Column(db.Integer, db.ForeignKey("career_timeline_events.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    file_size = db.Column(db.Integer, default=0)
+    file_type = db.Column(db.String(50), nullable=False)
+    file_url = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    event = db.relationship("CareerTimelineEvent", backref=db.backref("attachments", lazy="dynamic"))
+    user = db.relationship("User", backref=db.backref("timeline_attachments", lazy="dynamic"))
 
 
 class AIRecommendation(db.Model):
@@ -169,6 +209,113 @@ class AIRecommendation(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = db.relationship("User", backref=db.backref("ai_recommendations", lazy="dynamic"))
+
+
+class UserEducation(db.Model):
+    __tablename__ = "user_education"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    institution = db.Column(db.String(255), nullable=False)
+    degree = db.Column(db.String(255), nullable=False)
+    branch = db.Column(db.String(255), nullable=True)
+    specialization = db.Column(db.String(255), nullable=True)
+    graduation_year = db.Column(db.Integer, nullable=True)
+    current_semester = db.Column(db.Integer, nullable=True)
+    cgpa = db.Column(db.Float, nullable=True)
+    relevant_coursework = db.Column(db.JSON, default=list)
+    achievements = db.Column(db.Text, nullable=True)
+    order = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship("User", backref=db.backref("user_education", lazy="dynamic", order_by="UserEducation.order"))
+
+
+class UserSkill(db.Model):
+    __tablename__ = "user_skills"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    experience_level = db.Column(db.String(50), default="beginner")
+    years_of_experience = db.Column(db.Float, default=0)
+    confidence_rating = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship("User", backref=db.backref("user_skills", lazy="dynamic"))
+    __table_args__ = (db.UniqueConstraint("user_id", "name", name="uq_user_skill_name"),)
+
+
+class UserInterest(db.Model):
+    __tablename__ = "user_interests"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    is_custom = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship("User", backref=db.backref("user_interests", lazy="dynamic"))
+    __table_args__ = (db.UniqueConstraint("user_id", "name", name="uq_user_interest_name"),)
+
+
+class UserLanguage(db.Model):
+    __tablename__ = "user_languages"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    language = db.Column(db.String(100), nullable=False)
+    proficiency = db.Column(db.String(50), default="intermediate")
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship("User", backref=db.backref("user_languages", lazy="dynamic"))
+    __table_args__ = (db.UniqueConstraint("user_id", "language", name="uq_user_language"),)
+
+
+class SocialLink(db.Model):
+    __tablename__ = "social_links"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    platform = db.Column(db.String(50), nullable=False)
+    url = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship("User", backref=db.backref("social_links", lazy="dynamic"))
+    __table_args__ = (db.UniqueConstraint("user_id", "platform", name="uq_user_platform"),)
+
+
+class ResumeFile(db.Model):
+    __tablename__ = "resume_files"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    file_size = db.Column(db.Integer, default=0)
+    file_type = db.Column(db.String(50), nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
+    uploaded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship("User", backref=db.backref("resume_files", lazy="dynamic"))
+
+
+class UserPreference(db.Model):
+    __tablename__ = "user_preferences"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), unique=True, nullable=False)
+    job_alerts = db.Column(db.Boolean, default=True)
+    weekly_ai_review = db.Column(db.Boolean, default=True)
+    email_notifications = db.Column(db.Boolean, default=True)
+    public_profile = db.Column(db.Boolean, default=False)
+    resume_visibility = db.Column(db.String(50), default="private")
+    theme_preference = db.Column(db.String(20), default="system")
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship("User", backref=db.backref("preferences", uselist=False))
 
 
 class CareerScoreSnapshot(db.Model):

@@ -58,7 +58,8 @@ def login():
     if not bcrypt.check_password_hash(user.password_hash, password):
         return jsonify({"error": "Invalid email or password"}), 401
 
-    login_user(user)
+    session.permanent = True
+    login_user(user, remember=True)
     return jsonify({"message": "Login successful", "user_id": user.id}), 200
 
 @auth_bp.route("/logout", methods=["POST"])
@@ -116,7 +117,8 @@ def google_callback():
         db.session.add(user)
         db.session.commit()
 
-    login_user(user)
+    session.permanent = True
+    login_user(user, remember=True)
     logger.info("OAuth login success — email=%s", email)
     return redirect(current_app.config["FRONTEND_URL"] + "/dashboard")
 

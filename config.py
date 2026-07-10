@@ -34,7 +34,12 @@ class Config:
     SESSION_COOKIE_SAMESITE = "Lax"
     SESSION_COOKIE_SECURE = IS_PRODUCTION
     SESSION_COOKIE_HTTPONLY = True
-    PERMANENT_SESSION_LIFETIME = timedelta(hours=2)
+    PERMANENT_SESSION_LIFETIME = timedelta(days=7)
+    REMEMBER_COOKIE_NAME = "career_os_remember"
+    REMEMBER_COOKIE_DURATION = timedelta(days=30)
+    REMEMBER_COOKIE_SAMESITE = "Lax"
+    REMEMBER_COOKIE_SECURE = IS_PRODUCTION
+    REMEMBER_COOKIE_HTTPONLY = True
 
     FRONTEND_URL = _strip_trailing_slash(
         os.environ.get("FRONTEND_URL", "http://localhost:3000")
