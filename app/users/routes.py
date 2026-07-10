@@ -261,7 +261,7 @@ def dashboard_summary():
             "has_resume": resume is not None,
             "resume_summary_set": bool(resume and resume.summary),
             "profile_completeness": profile_completeness,
-            "resume_skills": resume.skills if resume else [],
+            "resume_skills": resume.skills if resume and resume.skills is not None else [],
             "active_applications": active_applications,
             "offers": offers,
             "total_applications": len(jobs),
