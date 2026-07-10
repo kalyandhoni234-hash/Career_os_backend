@@ -207,7 +207,7 @@ def connect(provider):
 
     state = OAuthState.create(user_id=current_user.id, provider=provider)
     redirect_uri = (
-        current_app.config["FRONTEND_URL"] + f"/api/integrations/{provider}/callback"
+        current_app.config["BACKEND_URL"] + f"/api/integrations/{provider}/callback"
     )
     authorize_url = svc.get_authorize_url(redirect_uri, state=state)
     return jsonify({"redirect_url": authorize_url}), 200
@@ -268,7 +268,7 @@ def oauth_callback(provider):
         )
 
     redirect_uri = (
-        current_app.config["FRONTEND_URL"] + f"/api/integrations/{provider}/callback"
+        current_app.config["BACKEND_URL"] + f"/api/integrations/{provider}/callback"
     )
 
     try:
