@@ -134,6 +134,9 @@ def upsert_profile():
 
     db.session.commit()
 
+    from app.core.integration import on_profile_changed
+    on_profile_changed(current_user.id)
+
     return jsonify({"message": "Profile saved successfully"}), 200
 
 

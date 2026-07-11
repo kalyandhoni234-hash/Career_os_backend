@@ -119,6 +119,10 @@ def create_app():
 
     app.register_blueprint(recruiters_bp, url_prefix="/api/recruiters")
 
+    from app.extension.routes import extension_bp
+
+    app.register_blueprint(extension_bp)
+
     from app.onboarding.routes import onboarding_bp
 
     app.register_blueprint(onboarding_bp)

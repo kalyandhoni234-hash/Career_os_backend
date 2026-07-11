@@ -255,6 +255,10 @@ def update_node_progress(node_id):
     result = update_roadmap_progress(current_user.id, node_id, status)
     if not result:
         return jsonify({"error": "Node not found"}), 404
+
+    from app.core.integration import on_roadmap_progress_changed
+    on_roadmap_progress_changed(current_user.id, node_id)
+
     return jsonify({"roadmap": result}), 200
 
 

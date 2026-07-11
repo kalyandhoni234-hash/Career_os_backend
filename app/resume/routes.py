@@ -146,6 +146,9 @@ def upsert_resume():
     db.session.add(version)
     db.session.commit()
 
+    from app.core.integration import on_resume_changed
+    on_resume_changed(current_user.id)
+
     return jsonify({"message": "Resume saved successfully", "id": resume.id}), 200
 
 

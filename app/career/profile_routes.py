@@ -881,6 +881,10 @@ def update_profile():
             return jsonify({"error": f"Unknown section: {section}"}), 400
 
         db.session.commit()
+
+        from app.core.integration import on_profile_changed
+        on_profile_changed(uid)
+
         return jsonify(
             {"message": f"{section} updated", "completion_pct": _completion_pct(uid)}
         ), 200

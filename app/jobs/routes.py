@@ -113,6 +113,9 @@ def create_job():
     db.session.add(job)
     db.session.commit()
 
+    from app.core.integration import on_application_changed
+    on_application_changed(current_user.id, job.id)
+
     return jsonify({"message": "Job created", "job": _serialize(job)}), 201
 
 
@@ -192,6 +195,10 @@ def update_job(job_id):
             job.deadline = None
 
     db.session.commit()
+
+    from app.core.integration import on_application_changed
+    on_application_changed(current_user.id, job.id)
+
     return jsonify({"message": "Job updated", "job": _serialize(job)}), 200
 
 
