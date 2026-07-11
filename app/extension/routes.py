@@ -9,7 +9,7 @@ When the extension detects a job application:
 """
 
 import logging
-from datetime import datetime, timedelta, date
+from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.extensions import db
@@ -32,7 +32,6 @@ def create_extension_application():
         return jsonify({"error": "Company and role are required"}), 400
 
     from app.jobs.models import Job
-    from app.career.services.career_score_service import compute_career_score
     from app.career.services.skill_graph_service import analyze_skill_gaps
 
     job_description = (data.get("job_description") or "").strip()

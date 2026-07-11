@@ -7,6 +7,7 @@ external event bus.
 """
 
 import logging
+from datetime import datetime, timezone
 
 from app.extensions import db
 
@@ -74,6 +75,7 @@ def on_application_changed(user_id: int, job_id: int) -> None:
                 user_id=user_id,
                 event_type="application",
                 title=f"Application {job.status}: {job.role} at {job.company}",
+                event_date=datetime.now(timezone.utc),
                 importance=3,
             )
             db.session.add(event)
