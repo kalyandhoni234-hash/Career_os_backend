@@ -8,6 +8,7 @@ from app.opportunities.models import (
     Opportunity,
     SavedOpportunity,
 )
+from app.jobs.models import Job
 from app.opportunities.services import (
     search_opportunities,
     get_opportunity_detail,
@@ -145,13 +146,17 @@ def list_saved_opportunities():
         opp = Opportunity.query.get(s.opportunity_id)
         if not opp:
             continue
+        linked_job = Job.query.filter_by(
+            user_id=current_user.id, opportunity_id=s.opportunity_id
+        ).first()
         item = {
             "saved_id": s.id,
             "list_type": s.list_type,
             "tags": s.tags or [],
             "notes": s.notes,
-            "applied_at": s.applied_at.isoformat() if s.applied_at else None,
-            "application_status": s.application_status,
+            "applied_at": linked_job.created_at.isoformat() if linked_job else None,
+            "application_status": linked_job.status if linked_job else None,
+            "job_id": linked_job.id if linked_job else None,
             "created_at": s.created_at.isoformat() if s.created_at else None,
             "opportunity": {
                 "id": opp.id,
@@ -219,12 +224,40 @@ def update_saved_opportunity(opportunity_id):
         return jsonify({"error": "Not saved"}), 404
 
     data = request.get_json(silent=True) or {}
-    for field in ("list_type", "tags", "notes", "application_status"):
+    for field in ("list_type", "tags", "notes"):
         if field in data:
             setattr(saved, field, data[field])
-    if data.get("applied"):
-        saved.applied_at = datetime.now(timezone.utc)
+
+    # Application lifecycle (status / applied date) is owned by Job, not
+    # SavedOpportunity. Applying here creates or updates the linked Job so
+    # there is one place the application tracker, dashboard, and coach all
+    # read from, and fires the same sync hook the Chrome extension uses.
+    job_for_hook = None
+    if data.get("applied") or data.get("application_status"):
+        opp = Opportunity.query.get(opportunity_id)
+        job = Job.query.filter_by(
+            user_id=current_user.id, opportunity_id=opportunity_id
+        ).first()
+        if not job:
+            job = Job(
+                user_id=current_user.id,
+                opportunity_id=opportunity_id,
+                company=opp.company_name if opp else "Unknown",
+                role=opp.title if opp else "Unknown",
+                status=data.get("application_status", "applied"),
+                job_link=opp.url if opp else None,
+            )
+            db.session.add(job)
+        elif data.get("application_status"):
+            job.status = data["application_status"]
+        job_for_hook = job
+
     db.session.commit()
+
+    if job_for_hook is not None:
+        from app.core.integration import on_application_changed
+
+        on_application_changed(current_user.id, job_for_hook.id)
 
     return jsonify({"message": "Updated"}), 200
 

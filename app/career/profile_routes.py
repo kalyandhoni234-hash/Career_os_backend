@@ -12,12 +12,12 @@ from app.career.models import (
     UserInterest,
     UserLanguage,
     SocialLink,
-    ResumeFile,
     UserPreference,
     CareerProfile,
     CareerGoal,
     CareerTimelineEvent,
 )
+from app.resume.models import ResumeFile
 from app.users.models import Profile
 
 logger = logging.getLogger(__name__)

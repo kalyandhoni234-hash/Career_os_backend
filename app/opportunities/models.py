@@ -89,6 +89,15 @@ class CompanyProfile(db.Model):
 
 
 class SavedOpportunity(db.Model):
+    """Tracks a user's interest in an Opportunity (saved/interested/etc).
+
+    Does NOT track application lifecycle (status, applied date) — that is
+    owned exclusively by `Job` (see app/jobs/models.py) to avoid two places
+    disagreeing about whether/when a user applied. Once a user applies,
+    look up the linked `Job` via `Job.query.filter_by(opportunity_id=...)`
+    instead of fields on this model.
+    """
+
     __tablename__ = "saved_opportunities"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -99,8 +108,6 @@ class SavedOpportunity(db.Model):
     list_type = db.Column(db.String(50), default="saved")
     tags = db.Column(db.JSON, default=list)
     notes = db.Column(db.Text, nullable=True)
-    applied_at = db.Column(db.DateTime, nullable=True)
-    application_status = db.Column(db.String(50), nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
         db.DateTime,
@@ -245,24 +252,4 @@ class InterviewPack(db.Model):
     )
 
 
-class ResumeVersionByCompany(db.Model):
-    __tablename__ = "resume_versions_by_company"
 
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
-    opportunity_id = db.Column(
-        db.Integer, db.ForeignKey("opportunities.id"), nullable=False
-    )
-    company_name = db.Column(db.String(255), nullable=False)
-    version_name = db.Column(db.String(100), default="v1")
-    resume_json = db.Column(db.JSON, nullable=False)
-    ats_score = db.Column(db.Integer, nullable=True)
-    job_description_used = db.Column(db.Text, nullable=True)
-    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
-
-    user = db.relationship(
-        "User", backref=db.backref("resume_versions_by_company", lazy="dynamic")
-    )
-    opportunity = db.relationship(
-        "Opportunity", backref=db.backref("resume_versions", lazy="dynamic")
-    )

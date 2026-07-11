@@ -27,7 +27,7 @@ def create_app():
 
     from app.auth.models import User
     from app.users.models import Profile  # noqa: F401
-    from app.resume.models import Resume  # noqa: F401
+    from app.resume.models import Resume, ResumeVersion, ResumeFile  # noqa: F401
     from app.coach.models import CoachMessage  # noqa: F401
     from app.jobs.models import Job  # noqa: F401
     from app.career.models import (  # noqa: F401
@@ -46,7 +46,6 @@ def create_app():
         UserInterest,
         UserLanguage,
         SocialLink,
-        ResumeFile,
         UserPreference,
         TimelineTag,
         TimelineAttachment,
@@ -60,7 +59,6 @@ def create_app():
         SalaryInsight,
         MarketTrend,
         InterviewPack,
-        ResumeVersionByCompany,
     )
     from app.agents.models import CareerAgent, AgentTask  # noqa: F401
     from app.intelligence.models import (  # noqa: F401

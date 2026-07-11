@@ -1,7 +1,8 @@
 import json
 import logging
 from app.extensions import db
-from app.opportunities.models import Opportunity, ResumeVersionByCompany, InterviewPack
+from app.opportunities.models import Opportunity, InterviewPack
+from app.resume.models import ResumeVersion
 from app.ai_service import generate_text
 
 logger = logging.getLogger(__name__)
@@ -18,10 +19,10 @@ def generate_optimized_resume(user_id: int, opportunity_id: int) -> dict:
         return {"error": "Opportunity or resume not found"}
 
     existing = (
-        ResumeVersionByCompany.query.filter_by(
-            user_id=user_id, opportunity_id=opportunity_id
+        ResumeVersion.query.filter_by(
+            resume_id=resume.id, opportunity_id=opportunity_id
         )
-        .order_by(ResumeVersionByCompany.created_at.desc())
+        .order_by(ResumeVersion.created_at.desc())
         .first()
     )
     if existing:
@@ -71,12 +72,13 @@ Return ONLY valid JSON."""
         logger.warning("AI resume optimization failed, using fallback: %s", e)
         result = _fallback_optimization(resume_json, description_text)
 
-    version = ResumeVersionByCompany(
+    version = ResumeVersion(
+        resume_id=resume.id,
         user_id=user_id,
         opportunity_id=opportunity_id,
         company_name=opp.company_name,
         version_name=opp.title[:100],
-        resume_json=resume_json,
+        snapshot=resume_json,
         job_description_used=description_text,
     )
     db.session.add(version)
@@ -376,7 +378,7 @@ def _fallback_interview_pack(opp: Opportunity) -> dict:
     }
 
 
-def _version_to_dict(v: ResumeVersionByCompany) -> dict:
+def _version_to_dict(v: ResumeVersion) -> dict:
     return {
         "version_id": v.id,
         "company_name": v.company_name,
