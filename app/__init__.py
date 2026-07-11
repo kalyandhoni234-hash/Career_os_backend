@@ -27,7 +27,7 @@ def create_app():
 
     from app.auth.models import User
     from app.users.models import Profile  # noqa: F401
-    from app.resume.models import Resume, ResumeVersion, ResumeFile  # noqa: F401
+    from app.resume.models import Resume, ResumeVersion  # noqa: F401
     from app.coach.models import CoachMessage  # noqa: F401
     from app.jobs.models import Job  # noqa: F401
     from app.career.models import (  # noqa: F401
@@ -49,6 +49,7 @@ def create_app():
         UserPreference,
         TimelineTag,
         TimelineAttachment,
+        ResumeFile,
     )
     from app.opportunities.models import (  # noqa: F401
         Opportunity,
