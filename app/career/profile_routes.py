@@ -82,6 +82,8 @@ def _career_info_data(user_id):
         "position": getattr(cp, "position", ""),
         "experience_years": cp.years_experience or 0,
         "employment_type": getattr(cp, "employment_type", ""),
+        "career_stage": cp.career_stage or "student",
+        "stage_meta": cp.stage_meta or {},
     }
 
 

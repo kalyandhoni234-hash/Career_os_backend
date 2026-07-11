@@ -56,29 +56,36 @@ def _get_or_create_resume(user_id):
     return resume
 
 
+STAGE_LABELS = {
+    "student": "Student",
+    "fresher": "Fresher / Recent Graduate",
+    "professional": "Working Professional",
+    "switcher": "Career Switcher",
+}
+
 STEP_LABELS = {
     0: "Welcome",
     1: "Basic Info",
-    2: "Education",
-    3: "Career",
-    4: "Skills",
-    5: "Interests",
-    6: "Goals",
-    7: "Connect",
-    8: "AI Preferences",
+    2: "Career Stage",
+    3: "Skills",
+    4: "Interests & Goals",
+    5: "Connect",
+    6: "AI Preferences",
 }
 
-TOTAL_STEPS = 8
+TOTAL_STEPS = 6
 
 
 @onboarding_bp.route("/api/onboarding/status", methods=["GET"])
 @login_required
 def get_status():
+    cp = CareerProfile.query.filter_by(user_id=current_user.id).first()
     return jsonify({
         "onboarding_completed": current_user.onboarding_completed or False,
         "onboarding_step": current_user.onboarding_step or 0,
         "total_steps": TOTAL_STEPS,
         "step_label": STEP_LABELS.get(current_user.onboarding_step or 0, "Welcome"),
+        "career_stage": cp.career_stage if cp else "student",
     }), 200
 
 
@@ -88,56 +95,63 @@ def get_step(step):
     uid = current_user.id
     data = {}
     try:
+        cp = CareerProfile.query.filter_by(user_id=uid).first()
+        stage = cp.career_stage if cp else "student"
+        stage_meta = cp.stage_meta or {} if cp else {}
+
         if step == 1:
             profile = Profile.query.filter_by(user_id=uid).first()
             resume = Resume.query.filter_by(user_id=uid).first()
             data = {
                 "full_name": resume.full_name if resume else "",
-                "preferred_name": "",
                 "date_of_birth": profile.date_of_birth if profile else "",
                 "country": profile.country if profile else "",
                 "state": profile.state if profile else "",
                 "city": profile.city if profile else "",
                 "timezone": profile.timezone if profile else "",
-                "profile_picture": profile.profile_picture if profile else "",
             }
         elif step == 2:
             edu = UserEducation.query.filter_by(user_id=uid).order_by(UserEducation.order).first()
-            if edu:
-                data = {
-                    "status": "student",
-                    "college": edu.institution,
-                    "degree": edu.degree,
-                    "branch": edu.branch or "",
-                    "grad_year": edu.graduation_year,
-                    "semester": edu.current_semester,
-                    "cgpa": edu.cgpa,
-                }
-            career_profile = CareerProfile.query.filter_by(user_id=uid).first()
-            if career_profile and career_profile.career_level:
-                data["status"] = career_profile.career_level
+            data = {
+                "career_stage": stage,
+                "college": edu.institution if edu else "",
+                "degree": edu.degree if edu else "",
+                "branch": edu.branch if edu else "",
+                "grad_year": edu.graduation_year if edu else None,
+                "current_semester": edu.current_semester if edu else None,
+                "cgpa": edu.cgpa if edu else None,
+                "internship_experience": cp.position if cp and stage == "fresher" else "",
+                "projects": stage_meta.get("projects", []),
+                "certifications": stage_meta.get("certifications", []),
+                "current_company": cp.company if cp else "",
+                "current_role": cp.position if cp else "",
+                "industry": cp.preferred_industry if cp else "",
+                "years_experience": cp.years_experience if cp else 0,
+                "current_ctc": stage_meta.get("current_ctc", ""),
+                "expected_ctc": stage_meta.get("expected_ctc", ""),
+                "notice_period": stage_meta.get("notice_period", ""),
+                "dream_role": cp.target_role if cp else "",
+                "preferred_country": cp.preferred_country if cp else "",
+                "work_preference": cp.work_preference if cp else "remote",
+                "employment_type": cp.employment_type if cp else "",
+                "preferred_internship": stage_meta.get("preferred_internship", ""),
+                "current_profession": stage_meta.get("current_profession", ""),
+                "target_profession": stage_meta.get("target_profession", ""),
+                "transferable_skills": stage_meta.get("transferable_skills", []),
+                "learning_progress": stage_meta.get("learning_progress", ""),
+                "career_goals_text": stage_meta.get("career_goals_text", ""),
+                "expected_salary": stage_meta.get("expected_salary", ""),
+                "github_url": stage_meta.get("github_url", ""),
+                "linkedin_url": stage_meta.get("linkedin_url", ""),
+            }
         elif step == 3:
-            cp = CareerProfile.query.filter_by(user_id=uid).first()
-            if cp:
-                data = {
-                    "current_role": cp.position or "",
-                    "dream_role": cp.target_role or "",
-                    "experience": cp.years_experience or 0,
-                    "industry": cp.preferred_industry or "",
-                    "employment_status": cp.employment_type or "",
-                    "salary": cp.target_salary or "",
-                    "country": cp.preferred_country or "",
-                    "work_preference": cp.work_preference or "remote",
-                }
-        elif step == 4:
             skills = UserSkill.query.filter_by(user_id=uid).order_by(UserSkill.name).all()
             data = {"skills": [{"name": s.name} for s in skills]}
-        elif step == 5:
+        elif step == 4:
             interests = UserInterest.query.filter_by(user_id=uid).all()
-            data = {"interests": [{"name": i.name} for i in interests]}
-        elif step == 6:
             goals = CareerGoal.query.filter_by(user_id=uid).all()
             data = {
+                "interests": [{"name": i.name} for i in interests],
                 "goals": [
                     {
                         "title": g.title,
@@ -148,16 +162,16 @@ def get_step(step):
                         "category": g.category or "career",
                     }
                     for g in goals
-                ]
+                ],
             }
-        elif step == 7:
+        elif step == 5:
             from app.integrations.models import Integration
             integrations = Integration.query.filter_by(user_id=uid).all()
             data = {
                 "connected": {i.provider: True for i in integrations},
                 "providers": [i.provider for i in integrations],
             }
-        elif step == 8:
+        elif step == 6:
             pref = UserPreference.query.filter_by(user_id=uid).first()
             if pref:
                 data = {
@@ -197,40 +211,84 @@ def save_step(step):
             profile.state = data.get("state", profile.state or "")
             profile.city = data.get("city", profile.city or "")
             profile.timezone = data.get("timezone", profile.timezone or "")
-            profile.profile_picture = data.get("profile_picture", profile.profile_picture or "")
 
         elif step == 2:
-            UserEducation.query.filter_by(user_id=uid).delete()
-            status = data.get("status", "student")
-            college = data.get("college", "").strip()
-            degree = data.get("degree", "").strip()
-            if college and degree:
-                edu = UserEducation(
-                    user_id=uid,
-                    institution=college,
-                    degree=degree,
-                    branch=data.get("branch", ""),
-                    graduation_year=data.get("grad_year"),
-                    current_semester=data.get("semester"),
-                    cgpa=data.get("cgpa"),
-                    order=0,
-                )
-                db.session.add(edu)
             cp = _get_or_create_career_profile(uid)
-            cp.career_level = status
+            stage = data.get("career_stage", "student")
+            cp.career_stage = stage
+
+            if stage == "student":
+                UserEducation.query.filter_by(user_id=uid).delete()
+                college = data.get("college", "").strip()
+                degree = data.get("degree", "").strip()
+                if college and degree:
+                    edu = UserEducation(
+                        user_id=uid,
+                        institution=college,
+                        degree=degree,
+                        branch=data.get("branch", ""),
+                        graduation_year=data.get("grad_year"),
+                        current_semester=data.get("current_semester"),
+                        cgpa=data.get("cgpa"),
+                        order=0,
+                    )
+                    db.session.add(edu)
+                cp.target_role = data.get("dream_role", cp.target_role or "")
+                cp.preferred_country = data.get("preferred_country", cp.preferred_country or "")
+                cp.stage_meta = {
+                    "preferred_internship": data.get("preferred_internship", ""),
+                    "github_url": data.get("github_url", ""),
+                    "linkedin_url": data.get("linkedin_url", ""),
+                }
+
+            elif stage == "fresher":
+                UserEducation.query.filter_by(user_id=uid).delete()
+                college = data.get("college", "").strip()
+                if college:
+                    edu = UserEducation(
+                        user_id=uid,
+                        institution=college,
+                        degree=data.get("degree", ""),
+                        graduation_year=data.get("grad_year"),
+                        order=0,
+                    )
+                    db.session.add(edu)
+                cp.position = data.get("internship_experience", cp.position or "")
+                cp.target_role = data.get("dream_role", cp.target_role or "")
+                cp.preferred_country = data.get("preferred_country", cp.preferred_country or "")
+                cp.stage_meta = {
+                    "projects": data.get("projects", []),
+                    "certifications": data.get("certifications", []),
+                    "expected_salary": data.get("expected_salary", ""),
+                }
+
+            elif stage == "professional":
+                cp.company = data.get("current_company", cp.company or "")
+                cp.position = data.get("current_role", cp.position or "")
+                cp.preferred_industry = data.get("industry", cp.preferred_industry or "")
+                cp.years_experience = data.get("years_experience", cp.years_experience or 0)
+                cp.target_role = data.get("dream_role", cp.target_role or "")
+                cp.preferred_country = data.get("preferred_country", cp.preferred_country or "")
+                cp.work_preference = data.get("work_preference", cp.work_preference or "remote")
+                cp.employment_type = data.get("employment_type", cp.employment_type or "")
+                cp.stage_meta = {
+                    "current_ctc": data.get("current_ctc", ""),
+                    "expected_ctc": data.get("expected_ctc", ""),
+                    "notice_period": data.get("notice_period", ""),
+                }
+
+            elif stage == "switcher":
+                cp.target_role = data.get("target_profession", cp.target_role or "")
+                cp.preferred_country = data.get("preferred_country", cp.preferred_country or "")
+                cp.stage_meta = {
+                    "current_profession": data.get("current_profession", ""),
+                    "target_profession": data.get("target_profession", ""),
+                    "transferable_skills": data.get("transferable_skills", []),
+                    "learning_progress": data.get("learning_progress", ""),
+                    "career_goals_text": data.get("career_goals_text", ""),
+                }
 
         elif step == 3:
-            cp = _get_or_create_career_profile(uid)
-            cp.position = data.get("current_role", cp.position or "")
-            cp.target_role = data.get("dream_role", cp.target_role or "")
-            cp.years_experience = data.get("experience", cp.years_experience or 0)
-            cp.preferred_industry = data.get("industry", cp.preferred_industry or "")
-            cp.employment_type = data.get("employment_status", cp.employment_type or "")
-            cp.target_salary = data.get("salary", cp.target_salary or "")
-            cp.preferred_country = data.get("country", cp.preferred_country or "")
-            cp.work_preference = data.get("work_preference", cp.work_preference or "remote")
-
-        elif step == 4:
             UserSkill.query.filter_by(user_id=uid).delete()
             skills_list = data.get("skills", [])
             for item in skills_list:
@@ -238,7 +296,7 @@ def save_step(step):
                 if name:
                     db.session.add(UserSkill(user_id=uid, name=name))
 
-        elif step == 5:
+        elif step == 4:
             UserInterest.query.filter_by(user_id=uid).delete()
             interests_list = data.get("interests", [])
             for item in interests_list:
@@ -246,7 +304,6 @@ def save_step(step):
                 if name:
                     db.session.add(UserInterest(user_id=uid, name=name, is_custom=True))
 
-        elif step == 6:
             CareerGoal.query.filter_by(user_id=uid).delete()
             goals_list = data.get("goals", [])
             for item in goals_list:
@@ -262,10 +319,10 @@ def save_step(step):
                         category=item.get("category", "career") if isinstance(item, dict) else "career",
                     ))
 
-        elif step == 7:
+        elif step == 5:
             pass
 
-        elif step == 8:
+        elif step == 6:
             pref = _get_or_create_preferences(uid)
             pref.ai_tone = data.get("ai_tone", pref.ai_tone or "professional")
             pref.reminder_freq = data.get("reminder_freq", pref.reminder_freq or "weekly")

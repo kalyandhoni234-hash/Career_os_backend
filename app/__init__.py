@@ -63,6 +63,12 @@ def create_app():
         ResumeVersionByCompany,
     )
     from app.agents.models import CareerAgent, AgentTask  # noqa: F401
+    from app.intelligence.models import (  # noqa: F401
+        CanonicalProject,
+        CanonicalExperience,
+        CanonicalCertificate,
+        CareerEvent,
+    )
     from app.recruiters.models import (  # noqa: F401
         Recruiter,
         Company,
@@ -116,6 +122,10 @@ def create_app():
     from app.onboarding.routes import onboarding_bp
 
     app.register_blueprint(onboarding_bp)
+
+    from app.intelligence.routes import intelligence_bp
+
+    app.register_blueprint(intelligence_bp)
 
     @app.after_request
     def set_security_headers(response):

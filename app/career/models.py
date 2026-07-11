@@ -21,6 +21,8 @@ class CareerProfile(db.Model):
     preferred_industry = db.Column(db.String(255), nullable=True)
     preferred_country = db.Column(db.String(255), nullable=True)
     work_preference = db.Column(db.String(50), nullable=True)
+    career_stage = db.Column(db.String(50), default="student")
+    stage_meta = db.Column(db.JSON, default=dict)
     target_joining_year = db.Column(db.Integer, nullable=True)
     preferred_roles = db.Column(db.JSON, default=list)
     preferred_locations = db.Column(db.JSON, default=list)
@@ -284,6 +286,10 @@ class UserEducation(db.Model):
     relevant_coursework = db.Column(db.JSON, default=list)
     achievements = db.Column(db.Text, nullable=True)
     order = db.Column(db.Integer, default=0)
+    source = db.Column(db.String(50), default="manual")
+    source_id = db.Column(db.String(255), nullable=True)
+    confidence = db.Column(db.Float, default=1.0)
+    last_synced_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
         db.DateTime,
@@ -308,6 +314,10 @@ class UserSkill(db.Model):
     experience_level = db.Column(db.String(50), default="beginner")
     years_of_experience = db.Column(db.Float, default=0)
     confidence_rating = db.Column(db.Integer, default=0)
+    source = db.Column(db.String(50), default="manual")
+    source_id = db.Column(db.String(255), nullable=True)
+    confidence = db.Column(db.Float, default=1.0)
+    last_synced_at = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = db.relationship("User", backref=db.backref("user_skills", lazy="dynamic"))
