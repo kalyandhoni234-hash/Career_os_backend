@@ -9,8 +9,6 @@ entry on the Render database. The actual migration file was lost from version
 control but the revision was already stamped, causing:
   ERROR [flask_migrate] Error: Can't locate revision identified by 'c2d3e4f5a6b7'
 """
-from alembic import op
-import sqlalchemy as sa
 
 
 revision = 'c2d3e4f5a6b7'

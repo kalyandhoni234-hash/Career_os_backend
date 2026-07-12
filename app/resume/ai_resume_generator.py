@@ -1,6 +1,5 @@
 import logging
 import json
-from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +9,7 @@ def _collect_profile_data(user_id):
     from app.users.models import Profile
     from app.career.models import (
         UserSkill, UserEducation, UserLanguage,
-        CareerProfile, CareerGoal
+        CareerProfile
     )
     from app.intelligence.models import (
         CanonicalExperience, CanonicalProject, CanonicalCertificate
@@ -88,8 +87,8 @@ def _collect_profile_data(user_id):
     ]
 
     languages = [
-        {"name": l.language, "proficiency": l.proficiency}
-        for l in UserLanguage.query.filter_by(user_id=user_id).all()
+        {"name": ul.language, "proficiency": ul.proficiency}
+        for ul in UserLanguage.query.filter_by(user_id=user_id).all()
     ]
 
     target_role = cp.target_role if cp else ""
@@ -164,12 +163,12 @@ def _profile_to_prompt(profile_data: dict) -> str:
         lines.append("(none)")
 
     lines.append("\n--- LANGUAGES ---")
-    for l in profile_data['languages']:
-        lines.append(f"- {l['name']} ({l['proficiency']})")
+    for lang in profile_data['languages']:
+        lines.append(f"- {lang['name']} ({lang['proficiency']})")
     if not profile_data['languages']:
         lines.append("(none)")
 
-    lines.append(f"\n--- CURRENT SUMMARY ---")
+    lines.append("\n--- CURRENT SUMMARY ---")
     lines.append(profile_data['summary'] or "(none)")
 
     return "\n".join(lines)
@@ -299,7 +298,7 @@ def _fallback_resume(profile_data):
             "url": p["url"],
         })
     certificates = [{"name": c["name"], "issuer": c["issuer"], "date": c["date"]} for c in profile_data["certificates"]]
-    languages = [{"name": l["name"], "level": l["proficiency"]} for l in profile_data["languages"]]
+    languages = [{"name": lang["name"], "level": lang["proficiency"]} for lang in profile_data["languages"]]
 
     return {
         "summary": profile_data["summary"] or "",

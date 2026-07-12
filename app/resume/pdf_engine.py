@@ -16,8 +16,7 @@ _weasyprint_error = None
 def _init_engine():
     global _weasyprint_available, _weasyprint_error
     try:
-        from weasyprint import HTML as _WeasyHTML
-        HTML = _WeasyHTML
+        import weasyprint  # noqa: F401
         _weasyprint_available = True
         _weasyprint_error = None
     except ImportError as exc:
