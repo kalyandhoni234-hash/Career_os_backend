@@ -1,0 +1,1328 @@
+diff --git a/app/__init__.py b/app/__init__.py
+index f3aecce..dca3c29 100644
+--- a/app/__init__.py
++++ b/app/__init__.py
+@@ -131,6 +131,10 @@ def create_app():
+ 
+     app.register_blueprint(intelligence_bp)
+ 
++    from app.achievements.routes import achievements_bp
++
++    app.register_blueprint(achievements_bp, url_prefix="/api/achievements")
++
+     @app.after_request
+     def set_security_headers(response):
+         response.headers["X-Content-Type-Options"] = "nosniff"
+diff --git a/app/achievements/__init__.py b/app/achievements/__init__.py
+new file mode 100644
+index 0000000..e69de29
+diff --git a/app/achievements/definitions.py b/app/achievements/definitions.py
+new file mode 100644
+index 0000000..921e278
+--- /dev/null
++++ b/app/achievements/definitions.py
+@@ -0,0 +1,135 @@
++"""Achievement definitions.
++
++Each entry is a dict with:
++  code:        stable unique id, never change once shipped (used for the DB unique constraint)
++  title:       display name
++  description: display description
++  category:    resume | projects | applications | interview | integrations | roadmap | skills
++  icon:        icon slug for the frontend
++  check(ctx):  pure function of the context dict built in service.build_context(),
++               returns True if the achievement should be awarded
++
++Keeping `check` pure and side-effect free means these can be unit tested directly
++without touching the database.
++"""
++
++ACHIEVEMENT_DEFINITIONS = [
++    {
++        "code": "first_resume",
++        "title": "First Resume",
++        "description": "Created your first resume.",
++        "category": "resume",
++        "icon": "file-text",
++        "check": lambda ctx: ctx["has_resume"],
++    },
++    {
++        "code": "first_project",
++        "title": "First Project",
++        "description": "Added your first project (manually or via GitHub sync).",
++        "category": "projects",
++        "icon": "code",
++        "check": lambda ctx: ctx["project_count"] >= 1,
++    },
++    {
++        "code": "project_builder",
++        "title": "Project Builder",
++        "description": "Tracked 5 or more projects across your profile.",
++        "category": "projects",
++        "icon": "layers",
++        "check": lambda ctx: ctx["project_count"] >= 5,
++    },
++    {
++        "code": "github_connected",
++        "title": "GitHub Explorer",
++        "description": "Connected your GitHub account.",
++        "category": "integrations",
++        "icon": "github",
++        "check": lambda ctx: ctx["github_connected"],
++    },
++    {
++        "code": "linkedin_connected",
++        "title": "Networking Explorer",
++        "description": "Connected your LinkedIn account.",
++        "category": "integrations",
++        "icon": "linkedin",
++        "check": lambda ctx: ctx["linkedin_connected"],
++    },
++    {
++        "code": "first_application",
++        "title": "First Application",
++        "description": "Submitted your first job application.",
++        "category": "applications",
++        "icon": "send",
++        "check": lambda ctx: ctx["application_count"] >= 1,
++    },
++    {
++        "code": "ten_applications",
++        "title": "Job Hunter",
++        "description": "Submitted 10 job applications.",
++        "category": "applications",
++        "icon": "briefcase",
++        "check": lambda ctx: ctx["application_count"] >= 10,
++    },
++    {
++        "code": "hundred_applications",
++        "title": "100 Applications",
++        "description": "Submitted 100 job applications. Persistence pays off.",
++        "category": "applications",
++        "icon": "target",
++        "check": lambda ctx: ctx["application_count"] >= 100,
++    },
++    {
++        "code": "first_interview",
++        "title": "Interview Ready",
++        "description": "Landed your first interview.",
++        "category": "interview",
++        "icon": "message-circle",
++        "check": lambda ctx: ctx["interview_count"] >= 1,
++    },
++    {
++        "code": "first_offer",
++        "title": "First Offer",
++        "description": "Received your first job offer.",
++        "category": "interview",
++        "icon": "award",
++        "check": lambda ctx: ctx["offer_count"] >= 1,
++    },
++    {
++        "code": "roadmap_completed",
++        "title": "Roadmap Completed",
++        "description": "Completed every step in a learning roadmap.",
++        "category": "roadmap",
++        "icon": "map",
++        "check": lambda ctx: ctx["completed_roadmap_count"] >= 1,
++    },
++    {
++        "code": "skill_collector",
++        "title": "Skill Collector",
++        "description": "Have 10 or more skills tracked across resume, GitHub, and LinkedIn.",
++        "category": "skills",
++        "icon": "star",
++        "check": lambda ctx: ctx["skill_count"] >= 10,
++    },
++    {
++        "code": "profile_complete",
++        "title": "Profile Complete",
++        "description": "Reached 80% profile completion.",
++        "category": "resume",
++        "icon": "check-circle",
++        "check": lambda ctx: ctx["completion_score"] >= 80,
++    },
++]
++
++
++def evaluate(ctx: dict) -> list[dict]:
++    """Return the list of achievement definitions whose check passes for ctx."""
++    earned = []
++    for definition in ACHIEVEMENT_DEFINITIONS:
++        try:
++            if definition["check"](ctx):
++                earned.append(definition)
++        except Exception:
++            # A malformed/missing context key should never crash the caller -
++            # just skip that achievement this round.
++            continue
++    return earned
+diff --git a/app/achievements/models.py b/app/achievements/models.py
+new file mode 100644
+index 0000000..1271fe3
+--- /dev/null
++++ b/app/achievements/models.py
+@@ -0,0 +1,26 @@
++from datetime import datetime, timezone
++from app.extensions import db
++
++
++class Achievement(db.Model):
++    """A badge awarded to a user once, when a condition in
++    app/achievements/definitions.py is first satisfied."""
++
++    __tablename__ = "achievements"
++
++    id = db.Column(db.Integer, primary_key=True)
++    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
++
++    code = db.Column(db.String(100), nullable=False)
++    title = db.Column(db.String(255), nullable=False)
++    description = db.Column(db.Text, nullable=True)
++    category = db.Column(db.String(50), default="general")
++    icon = db.Column(db.String(50), default="trophy")
++
++    awarded_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
++
++    user = db.relationship("User", backref=db.backref("achievements", lazy="dynamic"))
++
++    __table_args__ = (
++        db.UniqueConstraint("user_id", "code", name="uq_achievement_user_code"),
++    )
+diff --git a/app/achievements/routes.py b/app/achievements/routes.py
+new file mode 100644
+index 0000000..a9d3d00
+--- /dev/null
++++ b/app/achievements/routes.py
+@@ -0,0 +1,55 @@
++from flask import Blueprint, jsonify
++from flask_login import login_required, current_user
++
++from app.achievements.service import evaluate_and_award, list_achievements
++from app.achievements.definitions import ACHIEVEMENT_DEFINITIONS
++
++achievements_bp = Blueprint("achievements", __name__)
++
++
++@achievements_bp.route("/ping")
++def ping():
++    return {"blueprint": "achievements", "status": "alive"}
++
++
++@achievements_bp.route("", methods=["GET"])
++@login_required
++def get_achievements():
++    """List all achievements the user has earned, plus the full catalog so
++    the frontend can render locked/unlocked state."""
++    earned = list_achievements(current_user.id)
++    earned_codes = {a["code"] for a in earned}
++    catalog = [
++        {
++            "code": d["code"],
++            "title": d["title"],
++            "description": d["description"],
++            "category": d["category"],
++            "icon": d["icon"],
++            "unlocked": d["code"] in earned_codes,
++        }
++        for d in ACHIEVEMENT_DEFINITIONS
++    ]
++    return jsonify({"earned": earned, "catalog": catalog}), 200
++
++
++@achievements_bp.route("/evaluate", methods=["POST"])
++@login_required
++def evaluate_now():
++    """Manually re-run achievement evaluation for the current user.
++
++    Achievements are normally awarded automatically via the existing
++    integration hooks (resume/application/roadmap/profile changes); this
++    endpoint exists for backfilling users who earned something before this
++    feature existed, or for the frontend to call right after an action it
++    knows might unlock something.
++    """
++    newly_awarded = evaluate_and_award(current_user.id)
++    return jsonify(
++        {
++            "newly_awarded": [
++                {"code": d["code"], "title": d["title"], "description": d["description"]}
++                for d in newly_awarded
++            ]
++        }
++    ), 200
+diff --git a/app/achievements/service.py b/app/achievements/service.py
+new file mode 100644
+index 0000000..b4e75fe
+--- /dev/null
++++ b/app/achievements/service.py
+@@ -0,0 +1,114 @@
++import logging
++
++from app.extensions import db
++from app.achievements.definitions import evaluate
++from app.achievements.models import Achievement
++
++logger = logging.getLogger(__name__)
++
++
++def build_context(user_id: int) -> dict:
++    """Assemble the data achievement checks need, reusing the same canonical
++    sources as the coach and career score (get_unified_profile, Job, Roadmap,
++    Integration) so achievements never drift out of sync with what the rest
++    of Career OS considers true.
++    """
++    from app.intelligence.engine import get_unified_profile
++    from app.jobs.models import Job
++    from app.career.models import Roadmap
++    from app.integrations.models import Integration
++
++    profile = get_unified_profile(user_id)
++
++    jobs = Job.query.filter_by(user_id=user_id).all()
++    roadmaps = Roadmap.query.filter_by(user_id=user_id).all()
++    connected = {i.provider for i in Integration.query.filter_by(user_id=user_id).all()}
++
++    return {
++        "has_resume": bool(profile.get("basic", {}).get("full_name")) or bool(profile.get("basic", {}).get("summary")),
++        "project_count": len(profile.get("projects", [])),
++        "skill_count": len(profile.get("skills", [])),
++        "completion_score": profile.get("completion", {}).get("score", 0),
++        "github_connected": "github" in connected,
++        "linkedin_connected": "linkedin" in connected,
++        "application_count": len(jobs),
++        "interview_count": sum(1 for j in jobs if j.status in ("interview", "offer")),
++        "offer_count": sum(1 for j in jobs if j.status == "offer"),
++        "completed_roadmap_count": sum(1 for r in roadmaps if r.status == "completed"),
++    }
++
++
++def evaluate_and_award(user_id: int) -> list[dict]:
++    """Check all achievement definitions for user_id and persist any newly
++    earned ones. Returns the list of achievements newly awarded this call
++    (empty list if none, or if evaluation fails - this is a best-effort
++    enrichment, never a hard dependency for the caller).
++    """
++    try:
++        ctx = build_context(user_id)
++        earned_defs = evaluate(ctx)
++        existing_codes = {
++            a.code for a in Achievement.query.filter_by(user_id=user_id).all()
++        }
++
++        newly_awarded = []
++        for definition in earned_defs:
++            if definition["code"] in existing_codes:
++                continue
++            achievement = Achievement(
++                user_id=user_id,
++                code=definition["code"],
++                title=definition["title"],
++                description=definition["description"],
++                category=definition["category"],
++                icon=definition["icon"],
++            )
++            db.session.add(achievement)
++            newly_awarded.append(definition)
++
++        if newly_awarded:
++            db.session.commit()
++            for definition in newly_awarded:
++                _log_achievement_event(user_id, definition)
++        return newly_awarded
++    except Exception:
++        db.session.rollback()
++        logger.warning("Achievement evaluation failed for user %s", user_id, exc_info=True)
++        return []
++
++
++def _log_achievement_event(user_id: int, definition: dict) -> None:
++    """Best-effort: also surface a newly earned achievement on the main
++    timeline, reusing the existing dual-write log_event() from the
++    intelligence engine."""
++    try:
++        from app.intelligence.engine import log_event
++
++        log_event(
++            user_id,
++            "achievement",
++            f"Achievement unlocked: {definition['title']}",
++            definition["description"],
++            event_source="achievements",
++        )
++    except Exception:
++        logger.warning("Failed to log achievement event for user %s", user_id, exc_info=True)
++
++
++def list_achievements(user_id: int) -> list[dict]:
++    rows = (
++        Achievement.query.filter_by(user_id=user_id)
++        .order_by(Achievement.awarded_at.desc())
++        .all()
++    )
++    return [
++        {
++            "code": a.code,
++            "title": a.title,
++            "description": a.description,
++            "category": a.category,
++            "icon": a.icon,
++            "awarded_at": a.awarded_at.isoformat() if a.awarded_at else None,
++        }
++        for a in rows
++    ]
+diff --git a/app/career/services/career_memory_service.py b/app/career/services/career_memory_service.py
+index bf5ecc6..b32c1d9 100644
+--- a/app/career/services/career_memory_service.py
++++ b/app/career/services/career_memory_service.py
+@@ -15,14 +15,27 @@ logger = logging.getLogger(__name__)
+ 
+ 
+ def build_career_memory(user_id):
+-    """Build a structured Career Memory context from all user data sources."""
++    """Build a structured Career Memory context from all user data sources.
++
++    Skills/projects/experience are sourced from the Career Intelligence Engine
++    (app.intelligence.engine.get_unified_profile) so GitHub- and LinkedIn-synced
++    data is visible here too, instead of only the raw resume/profile fields.
++    Everything else here is additive on top of that canonical view.
++    """
++    canonical = _get_canonical_data(user_id)
++
+     memory = {
+         "profile": _get_profile_data(user_id),
+         "career_profile": _get_career_profile(user_id),
+         "resume": _get_resume_data(user_id),
+         "ats": _get_ats_data(user_id),
+         "applications": _get_application_data(user_id),
+-        "skills": _get_skill_data(user_id),
++        "skills": _get_skill_data(user_id, canonical),
++        "projects": canonical.get("projects", []),
++        "experience": canonical.get("experience", []),
++        "certificates": canonical.get("certificates", []),
++        "integrations": canonical.get("integrations", {}),
++        "profile_completion": canonical.get("completion", {}),
+         "learning": _get_learning_data(user_id),
+         "goals": _get_goal_data(user_id),
+         "roadmaps": _get_roadmap_data(user_id),
+@@ -35,6 +48,20 @@ def build_career_memory(user_id):
+     return memory
+ 
+ 
++def _get_canonical_data(user_id):
++    """Pull the canonical, source-merged view from the Career Intelligence Engine.
++
++    Falls back to an empty dict on failure so the coach still works even if the
++    engine has an issue - this is an enrichment layer, not a hard dependency.
++    """
++    try:
++        from app.intelligence.engine import get_unified_profile
++        return get_unified_profile(user_id)
++    except Exception:
++        logger.warning("Could not load unified profile for user %s", user_id, exc_info=True)
++        return {}
++
++
+ def _get_profile_data(user_id):
+     from app.users.models import Profile
+ 
+@@ -159,7 +186,7 @@ def _get_application_data(user_id):
+     }
+ 
+ 
+-def _get_skill_data(user_id):
++def _get_skill_data(user_id, canonical=None):
+     from app.resume.models import Resume
+ 
+     resume = Resume.query.filter_by(user_id=user_id).first()
+@@ -177,6 +204,14 @@ def _get_skill_data(user_id):
+                 continue
+             clean.append(s)
+     resume_skills = set(clean)
++
++    # Canonical skills come from the Career Intelligence Engine and already
++    # merge resume + GitHub + LinkedIn + manual entries, keeping the
++    # highest-confidence source per skill name.
++    canonical = canonical or {}
++    canonical_skills = canonical.get("skills", [])
++    all_skill_names = resume_skills | {s["name"] for s in canonical_skills if s.get("name")}
++
+     skill_graphs = SkillGraph.query.filter_by(user_id=user_id).all()
+     graph_data = {
+         sg.category: {"proficiency": sg.proficiency, "count": sg.skill_count}
+@@ -186,9 +221,11 @@ def _get_skill_data(user_id):
+     learning_skills = {lp.skill_name: lp.proficiency for lp in learning}
+     return {
+         "resume_skills": sorted(resume_skills),
++        "canonical_skills": canonical_skills,
++        "all_skill_names": sorted(all_skill_names),
+         "skill_graph": graph_data,
+         "learning_progress": learning_skills,
+-        "total_skills": len(resume_skills),
++        "total_skills": len(all_skill_names),
+     }
+ 
+ 
+diff --git a/app/career/services/career_score_service.py b/app/career/services/career_score_service.py
+index ef54c47..ac190f3 100644
+--- a/app/career/services/career_score_service.py
++++ b/app/career/services/career_score_service.py
+@@ -7,6 +7,8 @@ def compute_career_score(user_id):
+     from app.resume.models import Resume
+     from app.jobs.models import Job
+     from app.career.models import LearningProgress, SkillGraph, Roadmap
++    from app.intelligence.models import CanonicalProject
++    from app.integrations.models import Integration
+ 
+     resume = Resume.query.filter_by(user_id=user_id).first()
+     jobs = Job.query.filter_by(user_id=user_id).all() if user_id else []
+@@ -44,8 +46,12 @@ def compute_career_score(user_id):
+         except Exception:
+             ats_score = 0
+ 
+-    # 3. Projects Score (0-100)
+-    proj_count = len(resume.projects or []) if resume else 0
++    # 3. Projects Score (0-100) - canonical count (resume + GitHub + manual,
++    # deduplicated by the Career Intelligence Engine) rather than resume-only,
++    # so projects synced from GitHub actually move this number.
++    canonical_proj_count = CanonicalProject.query.filter_by(user_id=user_id).count()
++    resume_proj_count = len(resume.projects or []) if resume else 0
++    proj_count = max(canonical_proj_count, resume_proj_count)
+     projects_score = min(100, proj_count * 25)
+ 
+     # 4. Applications Score (0-100)
+@@ -85,15 +91,27 @@ def compute_career_score(user_id):
+         avg_progress = sum(r.progress for r in roadmaps) / len(roadmaps)
+         roadmap_bonus = int(avg_progress * 0.1)
+ 
++    # 9. Integration Score (0-100) - rewards connecting GitHub/LinkedIn, since a
++    # connected profile keeps every other score fresh automatically.
++    connected_providers = {
++        i.provider for i in Integration.query.filter_by(user_id=user_id).all()
++    }
++    integration_score = 0
++    if "github" in connected_providers:
++        integration_score += 50
++    if "linkedin" in connected_providers:
++        integration_score += 50
++
+     # Weighted overall score
+     overall = int(
+-        resume_score * 0.25
+-        + ats_score * 0.20
++        resume_score * 0.22
++        + ats_score * 0.18
+         + projects_score * 0.10
+-        + apps_score * 0.15
+-        + learning_score * 0.10
+-        + interview_score * 0.10
+-        + skill_coverage * 0.10
++        + apps_score * 0.13
++        + learning_score * 0.09
++        + interview_score * 0.09
++        + skill_coverage * 0.09
++        + integration_score * 0.10
+         + roadmap_bonus
+     )
+     overall = max(0, min(100, overall))
+@@ -106,6 +124,7 @@ def compute_career_score(user_id):
+         "learning_score": learning_score,
+         "interview_score": interview_score,
+         "skill_coverage": skill_coverage,
++        "integration_score": integration_score,
+         "roadmap_bonus": roadmap_bonus,
+     }
+ 
+diff --git a/app/career/services/roadmap_service.py b/app/career/services/roadmap_service.py
+index 09bc18a..a74c49a 100644
+--- a/app/career/services/roadmap_service.py
++++ b/app/career/services/roadmap_service.py
+@@ -622,10 +622,18 @@ ROADMAP_TEMPLATES = {
+ 
+ 
+ def generate_roadmap(user_id, category=None, target_role=None):
+-    """Generate a personalized learning roadmap for a user."""
++    """Generate a personalized learning roadmap for a user.
++
++    Nodes whose skill_tags are already fully covered by the user's known
++    skills (merged across resume, GitHub, LinkedIn, and manual entry via the
++    Career Intelligence Engine) are created pre-completed instead of pending,
++    so the roadmap doesn't ask someone to redo "Python Fundamentals" when
++    their GitHub already shows years of Python.
++    """
+     from app.career.services.career_memory_service import build_career_memory
+ 
+     memory = build_career_memory(user_id)
++    known_skills = _known_skill_set(memory)
+ 
+     # Determine the best roadmap category
+     if not category:
+@@ -650,8 +658,12 @@ def generate_roadmap(user_id, category=None, target_role=None):
+     db.session.add(roadmap)
+     db.session.flush()
+ 
+-    # Add nodes
++    # Add nodes, auto-completing ones the user already knows
+     for i, node_data in enumerate(template["nodes"]):
++        skill_tags = node_data.get("skill_tags", [])
++        already_known = bool(skill_tags) and all(
++            tag.lower() in known_skills for tag in skill_tags
++        )
+         node = RoadmapNode(
+             roadmap_id=roadmap.id,
+             title=node_data["title"],
+@@ -659,12 +671,15 @@ def generate_roadmap(user_id, category=None, target_role=None):
+             resource_type=node_data.get("resource_type", "article"),
+             order=i + 1,
+             week=node_data.get("week", 1),
+-            status="pending",
+-            skill_tags=node_data.get("skill_tags", []),
++            status="completed" if already_known else "pending",
++            completed_at=datetime.now(timezone.utc) if already_known else None,
++            skill_tags=skill_tags,
+         )
+         db.session.add(node)
+ 
+-    # Create LearningProgress entries for target skills
++    # Create LearningProgress entries for target skills - start already-known
++    # skills at a higher proficiency instead of 0, since the roadmap isn't
++    # teaching them from scratch.
+     for node_data in template["nodes"]:
+         for skill in node_data.get("skill_tags", []):
+             existing = LearningProgress.query.filter_by(
+@@ -674,16 +689,36 @@ def generate_roadmap(user_id, category=None, target_role=None):
+                 lp = LearningProgress(
+                     user_id=user_id,
+                     skill_name=skill,
+-                    proficiency=0,
++                    proficiency=60 if skill.lower() in known_skills else 0,
+                     category=category,
+                     source="roadmap",
+                 )
+                 db.session.add(lp)
+ 
++    db.session.flush()
++
++    # Recompute progress now that some nodes may already be completed
++    nodes = RoadmapNode.query.filter_by(roadmap_id=roadmap.id).all()
++    completed = sum(1 for n in nodes if n.status == "completed")
++    total = len(nodes)
++    roadmap.progress = int((completed / total) * 100) if total > 0 else 0
++
+     db.session.commit()
+     return get_roadmap_with_nodes(roadmap.id)
+ 
+ 
++def _known_skill_set(memory: dict) -> set:
++    """Build a lowercase set of every skill name the user already has,
++    combining canonical (resume + GitHub + LinkedIn + manual) skills with
++    anything already marked as learned via LearningProgress."""
++    skills_data = memory.get("skills", {}) if isinstance(memory, dict) else {}
++    names = set(n.lower() for n in skills_data.get("all_skill_names", []))
++    for skill_name, proficiency in (skills_data.get("learning_progress") or {}).items():
++        if proficiency and proficiency >= 60:
++            names.add(skill_name.lower())
++    return names
++
++
+ def get_roadmap_with_nodes(roadmap_id):
+     """Get a roadmap with all its nodes."""
+     roadmap = Roadmap.query.get(roadmap_id)
+@@ -816,11 +851,15 @@ def _infer_category(target_role, skills_data):
+     elif any(w in role_lower for w in ["product", "pm"]):
+         return "pm"
+ 
+-    # Infer from skills
+-    resume_skills = (
+-        skills_data.get("resume_skills", []) if isinstance(skills_data, dict) else []
++    # Infer from skills - prefer the canonical merged set (includes GitHub/
++    # LinkedIn skills), falling back to resume-only skills for callers that
++    # pass an older-shaped skills_data dict.
++    all_skills = (
++        skills_data.get("all_skill_names") or skills_data.get("resume_skills", [])
++        if isinstance(skills_data, dict)
++        else []
+     )
+-    skill_lower = [s.lower() for s in resume_skills]
++    skill_lower = [s.lower() for s in all_skills]
+     if any(
+         s in skill_lower
+         for s in ["react", "vue", "angular", "css", "html", "javascript"]
+diff --git a/app/coach/routes.py b/app/coach/routes.py
+index eaf6c30..f6e373f 100644
+--- a/app/coach/routes.py
++++ b/app/coach/routes.py
+@@ -58,7 +58,12 @@ Career Goal: {memory.get('career_profile', {})}
+ Resume: {memory.get('resume', {})}
+ ATS Scores: {memory.get('ats', {})}
+ Applications: {memory.get('applications', {})}
+-Skills: {memory.get('skills', {})}
++Skills (all sources merged - resume, GitHub, LinkedIn, manual): {memory.get('skills', {})}
++Projects (synced from GitHub/manual): {memory.get('projects', [])}
++Experience (synced from LinkedIn/manual): {memory.get('experience', [])}
++Certificates: {memory.get('certificates', [])}
++Connected Integrations: {memory.get('integrations', {})}
++Profile Completion: {memory.get('profile_completion', {})}
+ Learning: {memory.get('learning', [])}
+ Goals: {memory.get('goals', {})}
+ Roadmaps: {memory.get('roadmaps', [])}
+@@ -80,6 +85,10 @@ Recommendations: {memory.get('recommendations', [])}
+ 
+     system_instruction = f"""You are a friendly, direct career coach helping a student/early-career job seeker.
+ Use the complete Career OS memory context to give specific, actionable advice - not generic platitudes.
++The Skills/Projects/Experience fields already merge data synced from GitHub, LinkedIn, resume, and manual entry -
++treat a skill or project as something the user already has if it appears there, and name the specific gap
++(e.g. "you already know Python from your GitHub repos - your gap is Docker, which would raise your readiness")
++rather than suggesting things they've already demonstrated.
+ Keep responses concise (3-6 sentences unless they ask for a detailed roadmap).
+ 
+ Career Memory Context (includes profile, resume, ATS scores, applications, skills, goals, roadmaps, timeline, recommendations):
+diff --git a/app/core/integration.py b/app/core/integration.py
+index 7cfc8bc..0ea557a 100644
+--- a/app/core/integration.py
++++ b/app/core/integration.py
+@@ -18,7 +18,7 @@ def on_resume_changed(user_id: int) -> None:
+     """Recalculate all dependent data when resume is created or updated.
+ 
+     Triggers: skill-gap analysis, career-score recomputation,
+-              and AI recommendation regeneration.
++              AI recommendation regeneration, and achievement evaluation.
+     """
+     try:
+         from app.career.services.skill_graph_service import analyze_skill_gaps
+@@ -32,6 +32,8 @@ def on_resume_changed(user_id: int) -> None:
+         except Exception:
+             logger.warning("Recommendation generation skipped (AI may be unavailable)", exc_info=True)
+ 
++        _evaluate_achievements(user_id)
++
+         logger.info("Integration: resume changed for user %s — skill gaps, score, and recommendations updated", user_id)
+     except Exception as e:
+         logger.error("Integration error on_resume_changed: %s", e, exc_info=True)
+@@ -40,7 +42,8 @@ def on_resume_changed(user_id: int) -> None:
+ def on_roadmap_progress_changed(user_id: int, node_id: int) -> None:
+     """Recalculate dependent data when roadmap node progress changes.
+ 
+-    Triggers: career-score recomputation (includes roadmap bonus).
++    Triggers: career-score recomputation (includes roadmap bonus) and
++              achievement evaluation.
+     """
+     try:
+         from app.career.services.career_score_service import compute_career_score
+@@ -52,6 +55,8 @@ def on_roadmap_progress_changed(user_id: int, node_id: int) -> None:
+         except Exception:
+             logger.warning("Recommendation generation skipped", exc_info=True)
+ 
++        _evaluate_achievements(user_id)
++
+         logger.info("Integration: roadmap progress changed for user %s node %s — score updated", user_id, node_id)
+     except Exception as e:
+         logger.error("Integration error on_roadmap_progress_changed: %s", e, exc_info=True)
+@@ -60,7 +65,8 @@ def on_roadmap_progress_changed(user_id: int, node_id: int) -> None:
+ def on_application_changed(user_id: int, job_id: int) -> None:
+     """Recalculate dependent data when job application is created or updated.
+ 
+-    Triggers: career-score recomputation and timeline event logging.
++    Triggers: career-score recomputation, timeline event logging, and
++              achievement evaluation.
+     """
+     try:
+         from app.career.services.career_score_service import compute_career_score
+@@ -81,6 +87,8 @@ def on_application_changed(user_id: int, job_id: int) -> None:
+             db.session.add(event)
+             db.session.commit()
+ 
++        _evaluate_achievements(user_id)
++
+         logger.info("Integration: application changed for user %s job %s — score updated", user_id, job_id)
+     except Exception as e:
+         logger.error("Integration error on_application_changed: %s", e, exc_info=True)
+@@ -90,7 +98,8 @@ def on_profile_changed(user_id: int) -> None:
+     """Recalculate dependent data when user profile is updated.
+ 
+     Triggers: career-score recomputation, AI recommendation refresh,
+-              and personalized roadmap auto-generation.
++              personalized roadmap auto-generation, and achievement
++              evaluation.
+     """
+     try:
+         from app.career.services.career_score_service import compute_career_score
+@@ -117,6 +126,18 @@ def on_profile_changed(user_id: int) -> None:
+                 except Exception:
+                     logger.warning("Roadmap auto-generation skipped", exc_info=True)
+ 
++        _evaluate_achievements(user_id)
++
+         logger.info("Integration: profile changed for user %s — score, recommendations, roadmap updated", user_id)
+     except Exception as e:
+         logger.error("Integration error on_profile_changed: %s", e, exc_info=True)
++
++
++def _evaluate_achievements(user_id: int) -> None:
++    """Shared best-effort achievement check, called from every hook above."""
++    try:
++        from app.achievements.service import evaluate_and_award
++
++        evaluate_and_award(user_id)
++    except Exception:
++        logger.warning("Achievement evaluation skipped for user %s", user_id, exc_info=True)
+diff --git a/app/intelligence/engine.py b/app/intelligence/engine.py
+index 5d5fef3..571630b 100644
+--- a/app/intelligence/engine.py
++++ b/app/intelligence/engine.py
+@@ -498,6 +498,16 @@ def sync_experience_from_source(user_id: int, experience: list[dict], source: st
+ 
+ 
+ def log_event(user_id: int, event_type: str, title: str, description: str = "", event_source: str = "manual", source_id: str = ""):
++    """Record a career event.
++
++    Writes to both CareerEvent (this engine's own log, used by get_events /
++    the intelligence API) and CareerTimelineEvent (the main timeline used by
++    /api/timeline and the coach's memory). Historically only CareerEvent was
++    written here, so GitHub/LinkedIn sync events never appeared in the main
++    timeline UI even though every other career event (resume, roadmap,
++    applications, profile) does. Both writes are best-effort and independent
++    so a failure in one doesn't block the other.
++    """
+     try:
+         event = CareerEvent(
+             user_id=user_id,
+@@ -513,3 +523,22 @@ def log_event(user_id: int, event_type: str, title: str, description: str = "",
+     except Exception as e:
+         db.session.rollback()
+         logger.warning("Failed to log career event: %s", e)
++
++    try:
++        from app.career.models import CareerTimelineEvent
++
++        timeline_event = CareerTimelineEvent(
++            user_id=user_id,
++            event_type=event_type,
++            title=title,
++            description=description,
++            event_date=_now(),
++            importance=2,
++            status="completed",
++            metadata_json={"source": event_source, "source_id": source_id} if source_id else {"source": event_source},
++        )
++        db.session.add(timeline_event)
++        db.session.commit()
++    except Exception as e:
++        db.session.rollback()
++        logger.warning("Failed to log career timeline event: %s", e)
+diff --git a/migrations/versions/a9d1c7b3e5f2_add_achievements_table.py b/migrations/versions/a9d1c7b3e5f2_add_achievements_table.py
+new file mode 100644
+index 0000000..ecbb3e0
+--- /dev/null
++++ b/migrations/versions/a9d1c7b3e5f2_add_achievements_table.py
+@@ -0,0 +1,38 @@
++"""add achievements table
++
++Revision ID: a9d1c7b3e5f2
++Revises: 71e144b05da7
++Create Date: 2026-07-12 00:00:00.000000
++
++"""
++
++from alembic import op
++import sqlalchemy as sa
++
++
++# revision identifiers, used by Alembic.
++revision = "a9d1c7b3e5f2"
++down_revision = "71e144b05da7"
++branch_labels = None
++depends_on = None
++
++
++def upgrade():
++    op.create_table(
++        "achievements",
++        sa.Column("id", sa.Integer(), nullable=False),
++        sa.Column("user_id", sa.Integer(), nullable=False),
++        sa.Column("code", sa.String(length=100), nullable=False),
++        sa.Column("title", sa.String(length=255), nullable=False),
++        sa.Column("description", sa.Text(), nullable=True),
++        sa.Column("category", sa.String(length=50), nullable=True),
++        sa.Column("icon", sa.String(length=50), nullable=True),
++        sa.Column("awarded_at", sa.DateTime(), nullable=True),
++        sa.ForeignKeyConstraint(["user_id"], ["users.id"]),
++        sa.PrimaryKeyConstraint("id"),
++        sa.UniqueConstraint("user_id", "code", name="uq_achievement_user_code"),
++    )
++
++
++def downgrade():
++    op.drop_table("achievements")
+diff --git a/tests/test_achievements.py b/tests/test_achievements.py
+new file mode 100644
+index 0000000..544d3ce
+--- /dev/null
++++ b/tests/test_achievements.py
+@@ -0,0 +1,137 @@
++import pytest
++from sqlalchemy.pool import StaticPool
++from app import create_app
++from app.extensions import db
++
++
++@pytest.fixture
++def app():
++    app = create_app()
++    app.config.update(
++        {
++            "TESTING": True,
++            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
++            "SQLALCHEMY_ENGINE_OPTIONS": {
++                "poolclass": StaticPool,
++                "connect_args": {"check_same_thread": False},
++            },
++            "WTF_CSRF_ENABLED": False,
++        }
++    )
++    with app.app_context():
++        db.create_all()
++        yield app
++        db.session.remove()
++        db.drop_all()
++
++
++@pytest.fixture
++def client(app):
++    return app.test_client()
++
++
++@pytest.fixture
++def logged_in_client(client):
++    client.post(
++        "/api/auth/signup",
++        json={"email": "achievementuser@example.com", "password": "securepass123"},
++    )
++    client.post(
++        "/api/auth/login",
++        json={"email": "achievementuser@example.com", "password": "securepass123"},
++    )
++    return client
++
++
++def test_definitions_are_pure_and_evaluate_correctly():
++    """Achievement checks are pure functions of a context dict - no DB needed."""
++    from app.achievements.definitions import evaluate
++
++    ctx = {
++        "has_resume": True,
++        "project_count": 5,
++        "skill_count": 12,
++        "completion_score": 85,
++        "github_connected": True,
++        "linkedin_connected": False,
++        "application_count": 10,
++        "interview_count": 1,
++        "offer_count": 0,
++        "completed_roadmap_count": 0,
++    }
++    earned_codes = {d["code"] for d in evaluate(ctx)}
++    assert "first_resume" in earned_codes
++    assert "first_project" in earned_codes
++    assert "project_builder" in earned_codes
++    assert "github_connected" in earned_codes
++    assert "linkedin_connected" not in earned_codes
++    assert "ten_applications" in earned_codes
++    assert "hundred_applications" not in earned_codes
++    assert "first_interview" in earned_codes
++    assert "first_offer" not in earned_codes
++    assert "skill_collector" in earned_codes
++    assert "profile_complete" in earned_codes
++
++
++def test_evaluate_and_award_persists_once(app):
++    """Awarding the same achievement twice should not create duplicate rows,
++    and newly_awarded should only report genuinely new ones."""
++    with app.app_context():
++        from app.auth.models import User
++        from app.achievements.service import evaluate_and_award, list_achievements
++        from app.achievements.models import Achievement
++        from app.jobs.models import Job
++
++        user = User(email="scoreachieve@example.com")
++        user.password_hash = "not-a-real-hash"
++        db.session.add(user)
++        db.session.commit()
++
++        job = Job(user_id=user.id, company="Acme", role="SOC Analyst", status="applied")
++        db.session.add(job)
++        db.session.commit()
++
++        first_pass = evaluate_and_award(user.id)
++        assert any(d["code"] == "first_application" for d in first_pass)
++
++        second_pass = evaluate_and_award(user.id)
++        assert second_pass == []  # nothing new the second time
++
++        awarded = Achievement.query.filter_by(user_id=user.id, code="first_application").all()
++        assert len(awarded) == 1  # unique constraint respected, no duplicates
++
++        listed = list_achievements(user.id)
++        assert any(a["code"] == "first_application" for a in listed)
++
++
++def test_achievements_endpoint_requires_login(client):
++    response = client.get("/api/achievements")
++    assert response.status_code in (401, 302)
++
++
++def test_achievements_endpoint_lists_catalog(logged_in_client):
++    response = logged_in_client.get("/api/achievements")
++    assert response.status_code == 200
++    data = response.get_json()
++    assert "earned" in data
++    assert "catalog" in data
++    assert len(data["catalog"]) == len(
++        __import__("app.achievements.definitions", fromlist=["ACHIEVEMENT_DEFINITIONS"]).ACHIEVEMENT_DEFINITIONS
++    )
++    assert all("unlocked" in item for item in data["catalog"])
++
++
++def test_resume_creation_awards_first_resume_achievement(logged_in_client, app):
++    """Creating a resume should trigger on_resume_changed -> achievement
++    evaluation -> first_resume being earned, end to end through the real
++    integration hook, not just the service function directly."""
++    response = logged_in_client.post(
++        "/api/resume",
++        json={"full_name": "Guru Sharan", "summary": "SOC Analyst in training"},
++    )
++    assert response.status_code in (200, 201)
++
++    achievements_response = logged_in_client.get("/api/achievements")
++    data = achievements_response.get_json()
++    earned_codes = {a["code"] for a in data["earned"]}
++    assert "first_resume" in earned_codes
+diff --git a/tests/test_career_memory.py b/tests/test_career_memory.py
+new file mode 100644
+index 0000000..65a2c01
+--- /dev/null
++++ b/tests/test_career_memory.py
+@@ -0,0 +1,82 @@
++import pytest
++from sqlalchemy.pool import StaticPool
++from app import create_app
++from app.extensions import db
++
++
++@pytest.fixture
++def app():
++    app = create_app()
++    app.config.update(
++        {
++            "TESTING": True,
++            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
++            "SQLALCHEMY_ENGINE_OPTIONS": {
++                "poolclass": StaticPool,
++                "connect_args": {"check_same_thread": False},
++            },
++            "WTF_CSRF_ENABLED": False,
++        }
++    )
++    with app.app_context():
++        db.create_all()
++        yield app
++        db.session.remove()
++        db.drop_all()
++
++
++def _create_user(app, email="memoryuser@example.com"):
++    from app.auth.models import User
++
++    user = User(email=email)
++    user.password_hash = "not-a-real-hash"
++    db.session.add(user)
++    db.session.commit()
++    return user.id
++
++
++def test_build_career_memory_includes_canonical_github_skills(app):
++    """Skills synced from GitHub (via the Career Intelligence Engine) must be
++    visible to the coach's memory context, not just resume/profile skills.
++    This is the fix for the coach previously being blind to synced data."""
++    with app.app_context():
++        from app.intelligence.engine import sync_skills_from_source, sync_projects_from_source
++        from app.career.services.career_memory_service import build_career_memory
++
++        user_id = _create_user(app)
++
++        sync_skills_from_source(
++            user_id, [{"name": "Docker", "experience_level": "intermediate"}], "github"
++        )
++        sync_projects_from_source(
++            user_id, [{"name": "cyberguru-ai", "primary_language": "Python", "url": "https://github.com/x/y"}], "github"
++        )
++        db.session.commit()
++
++        memory = build_career_memory(user_id)
++
++        assert "Docker" in memory["skills"]["all_skill_names"]
++        assert any(s["name"] == "Docker" for s in memory["skills"]["canonical_skills"])
++        assert any(p["name"] == "cyberguru-ai" for p in memory["projects"])
++        assert "completion" not in memory  # renamed to profile_completion
++        assert "score" in memory["profile_completion"]
++
++
++def test_build_career_memory_survives_engine_failure(app, monkeypatch):
++    """If the intelligence engine raises, the coach should still get a usable
++    (if less complete) memory object instead of a hard failure."""
++    with app.app_context():
++        import app.career.services.career_memory_service as svc
++
++        user_id = _create_user(app, email="memoryuser2@example.com")
++
++        def boom(_user_id):
++            raise RuntimeError("engine down")
++
++        monkeypatch.setattr(
++            "app.intelligence.engine.get_unified_profile", boom
++        )
++
++        memory = svc.build_career_memory(user_id)
++        assert memory["projects"] == []
++        assert memory["skills"]["canonical_skills"] == []
+diff --git a/tests/test_career_score.py b/tests/test_career_score.py
+new file mode 100644
+index 0000000..d37fe46
+--- /dev/null
++++ b/tests/test_career_score.py
+@@ -0,0 +1,82 @@
++import pytest
++from sqlalchemy.pool import StaticPool
++from app import create_app
++from app.extensions import db
++
++
++@pytest.fixture
++def app():
++    app = create_app()
++    app.config.update(
++        {
++            "TESTING": True,
++            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
++            "SQLALCHEMY_ENGINE_OPTIONS": {
++                "poolclass": StaticPool,
++                "connect_args": {"check_same_thread": False},
++            },
++            "WTF_CSRF_ENABLED": False,
++        }
++    )
++    with app.app_context():
++        db.create_all()
++        yield app
++        db.session.remove()
++        db.drop_all()
++
++
++def _create_user(app, email):
++    from app.auth.models import User
++
++    user = User(email=email)
++    user.password_hash = "not-a-real-hash"
++    db.session.add(user)
++    db.session.commit()
++    return user.id
++
++
++def test_projects_score_counts_github_synced_projects(app):
++    """Projects synced from GitHub (via the intelligence engine) but never
++    copied into the resume's manual project list must still count toward
++    the projects_score, since they're part of the canonical picture."""
++    with app.app_context():
++        from app.intelligence.engine import sync_projects_from_source
++        from app.career.services.career_score_service import compute_career_score
++
++        user_id = _create_user(app, "scoreuser1@example.com")
++
++        # 3 GitHub-synced projects, resume has none manually entered
++        sync_projects_from_source(
++            user_id,
++            [
++                {"name": "cyberguru-ai", "url": "https://github.com/x/a"},
++                {"name": "career-os", "url": "https://github.com/x/b"},
++                {"name": "jarvis", "url": "https://github.com/x/c"},
++            ],
++            "github",
++        )
++        db.session.commit()
++
++        result = compute_career_score(user_id)
++        assert result["breakdown"]["projects_score"] == 75  # 3 * 25
++
++
++def test_integration_score_rewards_connected_providers(app):
++    """Connecting GitHub/LinkedIn should raise the integration_score component."""
++    with app.app_context():
++        from app.integrations.models import Integration
++        from app.career.services.career_score_service import compute_career_score
++
++        user_id = _create_user(app, "scoreuser2@example.com")
++
++        db.session.add(Integration(user_id=user_id, provider="github", provider_username="x"))
++        db.session.commit()
++
++        result = compute_career_score(user_id)
++        assert result["breakdown"]["integration_score"] == 50
++
++        db.session.add(Integration(user_id=user_id, provider="linkedin", provider_email="x@x.com"))
++        db.session.commit()
++
++        result = compute_career_score(user_id)
++        assert result["breakdown"]["integration_score"] == 100
+diff --git a/tests/test_event_logging.py b/tests/test_event_logging.py
+new file mode 100644
+index 0000000..8daf50b
+--- /dev/null
++++ b/tests/test_event_logging.py
+@@ -0,0 +1,66 @@
++import pytest
++from sqlalchemy.pool import StaticPool
++from app import create_app
++from app.extensions import db
++
++
++@pytest.fixture
++def app():
++    app = create_app()
++    app.config.update(
++        {
++            "TESTING": True,
++            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
++            "SQLALCHEMY_ENGINE_OPTIONS": {
++                "poolclass": StaticPool,
++                "connect_args": {"check_same_thread": False},
++            },
++            "WTF_CSRF_ENABLED": False,
++        }
++    )
++    with app.app_context():
++        db.create_all()
++        yield app
++        db.session.remove()
++        db.drop_all()
++
++
++def _create_user(app, email):
++    from app.auth.models import User
++
++    user = User(email=email)
++    user.password_hash = "not-a-real-hash"
++    db.session.add(user)
++    db.session.commit()
++    return user.id
++
++
++def test_log_event_writes_to_both_event_logs(app):
++    """A GitHub/LinkedIn sync event must appear in both CareerEvent (the
++    intelligence engine's own log) and CareerTimelineEvent (the main timeline
++    shown at /api/timeline and in the coach's memory). Previously it only
++    reached CareerEvent, so sync activity was invisible on the main timeline."""
++    with app.app_context():
++        from app.intelligence.engine import log_event, get_events
++        from app.career.models import CareerTimelineEvent
++
++        user_id = _create_user(app, "timelineuser@example.com")
++
++        log_event(
++            user_id,
++            "integration_sync",
++            "GitHub sync: 12 repos, 340 contributions",
++            "Synced profile for kalyandhoni234-hash",
++            event_source="github",
++        )
++
++        # Still present in the intelligence engine's own event log
++        events = get_events(user_id)
++        assert len(events) == 1
++        assert events[0]["title"].startswith("GitHub sync")
++
++        # Now also present in the main timeline
++        timeline_events = CareerTimelineEvent.query.filter_by(user_id=user_id).all()
++        assert len(timeline_events) == 1
++        assert timeline_events[0].title.startswith("GitHub sync")
++        assert timeline_events[0].metadata_json.get("source") == "github"
+diff --git a/tests/test_roadmap_intelligence.py b/tests/test_roadmap_intelligence.py
+new file mode 100644
+index 0000000..e1eb894
+--- /dev/null
++++ b/tests/test_roadmap_intelligence.py
+@@ -0,0 +1,76 @@
++import pytest
++from sqlalchemy.pool import StaticPool
++from app import create_app
++from app.extensions import db
++
++
++@pytest.fixture
++def app():
++    app = create_app()
++    app.config.update(
++        {
++            "TESTING": True,
++            "SQLALCHEMY_DATABASE_URI": "sqlite:///:memory:",
++            "SQLALCHEMY_ENGINE_OPTIONS": {
++                "poolclass": StaticPool,
++                "connect_args": {"check_same_thread": False},
++            },
++            "WTF_CSRF_ENABLED": False,
++        }
++    )
++    with app.app_context():
++        db.create_all()
++        yield app
++        db.session.remove()
++        db.drop_all()
++
++
++def _create_user(app, email):
++    from app.auth.models import User
++
++    user = User(email=email)
++    user.password_hash = "not-a-real-hash"
++    db.session.add(user)
++    db.session.commit()
++    return user.id
++
++
++def test_roadmap_skips_nodes_for_already_known_skills(app):
++    """A user whose GitHub-synced skills already cover 'Python Fundamentals'
++    should get that backend roadmap node auto-completed instead of pending -
++    this is the doc's 'skip beginner Python if user already knows Python'
++    requirement."""
++    with app.app_context():
++        from app.intelligence.engine import sync_skills_from_source
++        from app.career.services.roadmap_service import generate_roadmap
++
++        user_id = _create_user(app, "roadmapuser1@example.com")
++
++        # User already knows Python (synced from GitHub), but not Flask/Docker/etc.
++        sync_skills_from_source(user_id, [{"name": "Python"}], "github")
++        db.session.commit()
++
++        roadmap = generate_roadmap(user_id, category="backend")
++
++        node_by_title = {n["title"]: n for n in roadmap["nodes"]}
++        assert node_by_title["Python Fundamentals"]["status"] == "completed"
++        assert node_by_title["Python Fundamentals"]["completed_at"] is not None
++        # Docker node requires a skill they don't have yet - stays pending
++        assert node_by_title["Docker & Containerization"]["status"] == "pending"
++        assert roadmap["completed_nodes"] >= 1
++        assert roadmap["progress"] > 0
++
++
++def test_roadmap_all_pending_when_no_known_skills(app):
++    """A brand-new user with no synced skills gets a fully pending roadmap,
++    preserving old behavior."""
++    with app.app_context():
++        from app.career.services.roadmap_service import generate_roadmap
++
++        user_id = _create_user(app, "roadmapuser2@example.com")
++
++        roadmap = generate_roadmap(user_id, category="backend")
++
++        assert roadmap["completed_nodes"] == 0
++        assert roadmap["progress"] == 0
++        assert all(n["status"] == "pending" for n in roadmap["nodes"])
