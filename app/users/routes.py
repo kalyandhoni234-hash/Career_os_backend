@@ -302,6 +302,123 @@ def dashboard_summary():
     ), 200
 
 
+@users_bp.route("/notifications", methods=["GET"])
+@login_required
+def get_notification_preferences():
+    from app.career.models import UserPreference
+
+    prefs = UserPreference.query.filter_by(user_id=current_user.id).first()
+    if not prefs:
+        return jsonify({"preferences": {}}), 200
+    return jsonify({
+        "preferences": {
+            "email_notifications": prefs.email_notifications,
+            "push_notifications": True,
+            "ai_weekly_review": prefs.weekly_ai_review,
+            "career_reminders": prefs.job_alerts,
+            "interview_reminders": prefs.reminder_freq != "never",
+            "goal_reminders": prefs.weekly_reports,
+            "marketing_emails": prefs.daily_motivation,
+        }
+    }), 200
+
+
+@users_bp.route("/notifications", methods=["POST"])
+@login_required
+def save_notification_preferences():
+    from app.career.models import UserPreference
+
+    data = request.get_json(silent=True) or {}
+    prefs_in = data.get("preferences", {})
+
+    prefs = UserPreference.query.filter_by(user_id=current_user.id).first()
+    if not prefs:
+        prefs = UserPreference(user_id=current_user.id)
+        db.session.add(prefs)
+
+    if "email_notifications" in prefs_in:
+        prefs.email_notifications = bool(prefs_in["email_notifications"])
+    if "ai_weekly_review" in prefs_in:
+        prefs.weekly_ai_review = bool(prefs_in["ai_weekly_review"])
+    if "career_reminders" in prefs_in:
+        prefs.job_alerts = bool(prefs_in["career_reminders"])
+    if "goal_reminders" in prefs_in:
+        prefs.weekly_reports = bool(prefs_in["goal_reminders"])
+    if "marketing_emails" in prefs_in:
+        prefs.daily_motivation = bool(prefs_in["marketing_emails"])
+    if "interview_reminders" in prefs_in:
+        prefs.reminder_freq = "daily" if prefs_in["interview_reminders"] else "never"
+
+    db.session.commit()
+    return jsonify({"message": "Notification preferences saved"}), 200
+
+
+@users_bp.route("/ai-preferences", methods=["GET"])
+@login_required
+def get_ai_preferences():
+    from app.career.models import UserPreference
+
+    prefs = UserPreference.query.filter_by(user_id=current_user.id).first()
+    if not prefs:
+        return jsonify({"preferences": {}}), 200
+    return jsonify({
+        "preferences": {
+            "default_model": "gpt-4",
+            "response_style": "balanced",
+            "coaching_mode": prefs.ai_tone or "encouraging",
+            "interview_difficulty": "medium",
+            "roadmap_detail": "detailed",
+            "auto_suggestions": prefs.weekly_reports,
+        }
+    }), 200
+
+
+@users_bp.route("/ai-preferences", methods=["POST"])
+@login_required
+def save_ai_preferences():
+    from app.career.models import UserPreference
+
+    data = request.get_json(silent=True) or {}
+    prefs_in = data.get("preferences", {})
+
+    prefs = UserPreference.query.filter_by(user_id=current_user.id).first()
+    if not prefs:
+        prefs = UserPreference(user_id=current_user.id)
+        db.session.add(prefs)
+
+    if "coaching_mode" in prefs_in:
+        prefs.ai_tone = prefs_in["coaching_mode"]
+
+    db.session.commit()
+    return jsonify({"message": "AI preferences saved"}), 200
+
+
+@users_bp.route("/export", methods=["GET"])
+@login_required
+def export_user_data():
+    from app.career.models import UserPreference
+
+    profile = Profile.query.filter_by(user_id=current_user.id).first()
+    prefs = UserPreference.query.filter_by(user_id=current_user.id).first()
+    return jsonify({
+        "user": {"id": current_user.id, "email": current_user.email},
+        "profile": {
+            k: getattr(profile, k, None)
+            for k in [
+                "first_name", "last_name", "username", "phone_number", "country",
+                "state", "city", "skills", "experience", "education", "languages",
+                "interests", "preferred_roles", "preferred_locations",
+                "career_summary", "profile_picture",
+            ]
+        } if profile else None,
+        "preferences": {
+            "email_notifications": prefs.email_notifications,
+            "weekly_ai_review": prefs.weekly_ai_review,
+            "job_alerts": prefs.job_alerts,
+        } if prefs else {},
+    }), 200
+
+
 @users_bp.route("/career-overview", methods=["GET"])
 @login_required
 def career_overview():

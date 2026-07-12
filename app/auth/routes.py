@@ -192,6 +192,45 @@ def reset_password():
     return jsonify({"message": "Password reset successful"}), 200
 
 
+@auth_bp.route("/change-password", methods=["POST"])
+@login_required
+@limiter.limit("5 per minute")
+def change_password():
+    data = request.get_json(silent=True) or {}
+    current_password = data.get("current_password", "")
+    new_password = data.get("new_password", "")
+
+    if not current_password or not new_password:
+        return jsonify({"error": "Current and new password are required"}), 400
+
+    if len(new_password) < 8:
+        return jsonify({"error": "New password must be at least 8 characters"}), 400
+
+    if current_user.password_hash:
+        if not bcrypt.check_password_hash(current_user.password_hash, current_password):
+            return jsonify({"error": "Current password is incorrect"}), 403
+    else:
+        return jsonify({"error": "Cannot change password on OAuth-only accounts"}), 400
+
+    current_user.password_hash = bcrypt.generate_password_hash(new_password).decode("utf-8")
+    db.session.commit()
+
+    return jsonify({"message": "Password changed successfully"}), 200
+
+
+@auth_bp.route("/delete-account", methods=["POST"])
+@login_required
+def delete_account():
+    try:
+        db.session.delete(current_user)
+        db.session.commit()
+        logout_user()
+        return jsonify({"message": "Account deleted successfully"}), 200
+    except Exception as exc:
+        logger.error("Failed to delete account for user %s: %s", current_user.id, exc)
+        return jsonify({"error": "Failed to delete account"}), 500
+
+
 @auth_bp.route("/ai-test", methods=["GET"])
 @login_required
 def ai_test():
