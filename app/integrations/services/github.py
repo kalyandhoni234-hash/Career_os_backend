@@ -200,6 +200,7 @@ class GitHubService(BaseIntegrationService):
             "provider_username": login,
             "provider_email": email,
             "provider_data": {
+                "name": user_info.get("name", ""),
                 "repositories": repo_count,
                 "contributions": contrib_count,
                 "top_languages": dict(

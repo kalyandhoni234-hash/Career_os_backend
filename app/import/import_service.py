@@ -2,6 +2,7 @@ import logging
 from datetime import datetime, timezone
 from app.extensions import db
 from .models import ImportRecord
+from app.career.models import UserSkill
 from .normalizer import ImportNormalizer
 from .parsers.resume_parser import ResumeParser
 from .parsers.linkedin_parser import LinkedInParser
@@ -126,6 +127,10 @@ class ImportService:
         skills = nd.get("skills", [])
         if skills:
             profile.skills = skills
+            UserSkill.query.filter_by(user_id=self.user_id).delete()
+            for name in skills:
+                if isinstance(name, str) and name.strip():
+                    db.session.add(UserSkill(user_id=self.user_id, name=name.strip()))
 
         languages = nd.get("languages", [])
         if languages:

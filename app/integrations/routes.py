@@ -322,8 +322,25 @@ def oauth_callback(provider):
 
     try:
         sync_profile_from_integration(integration, user_id)
+        from app.career.models import CareerTimelineEvent
+        event = CareerTimelineEvent(
+            user_id=user_id,
+            event_type="integration",
+            title=f"{provider.title()} Connected",
+            description=f"{provider.title()} account linked and data synced",
+            event_date=datetime.now(timezone.utc),
+            importance=3,
+        )
+        db.session.add(event)
+        db.session.commit()
     except Exception as e:
         logger.warning("Profile sync failed after callback for %s: %s", provider, e)
+
+    try:
+        from app.core.integration import on_profile_changed
+        on_profile_changed(user_id)
+    except Exception as e:
+        logger.warning("Integration hook failed after callback: %s", e)
 
     frontend = current_app.config["FRONTEND_URL"]
     return redirect(
@@ -405,6 +422,12 @@ def sync(provider):
         except Exception as pe:
             logger.warning("Profile sync failed after sync for %s: %s", provider, pe)
 
+        try:
+            from app.core.integration import on_profile_changed
+            on_profile_changed(current_user.id)
+        except Exception as e:
+            logger.warning("Integration hook failed after sync: %s", e)
+
         return jsonify(
             {"message": "Sync completed", "integration": integration.to_dict()}
         ), 200
@@ -450,6 +473,18 @@ def linkedin_import():
     integration.provider_data = result.get("provider_data", {})
     integration.connected_at = datetime.now(timezone.utc).replace(tzinfo=None)
     integration.last_sync_at = datetime.now(timezone.utc).replace(tzinfo=None)
+    db.session.commit()
+
+    from app.career.models import CareerTimelineEvent
+    event = CareerTimelineEvent(
+        user_id=current_user.id,
+        event_type="integration",
+        title="LinkedIn Profile Imported",
+        description="Imported profile data from LinkedIn URL",
+        event_date=datetime.now(timezone.utc),
+        importance=3,
+    )
+    db.session.add(event)
     db.session.commit()
 
     return jsonify(

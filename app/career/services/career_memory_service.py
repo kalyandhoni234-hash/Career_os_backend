@@ -72,11 +72,28 @@ def _get_career_profile(user_id):
 
 
 def _get_resume_data(user_id):
-    from app.resume.models import Resume
+    from app.resume.models import Resume, ResumeVersion
 
     resume = Resume.query.filter_by(user_id=user_id).first()
     if not resume:
         return {}
+    versions = (
+        ResumeVersion.query.filter_by(resume_id=resume.id)
+        .order_by(ResumeVersion.created_at.desc())
+        .all()
+    )
+    latest_version = None
+    if versions:
+        v = versions[0]
+        latest_version = {
+            "id": v.id,
+            "version_name": v.version_name,
+            "source": v.source or "manual",
+            "target_role": v.target_role or "",
+            "ats_score": v.ats_score,
+            "notes": v.notes or "",
+            "updated_at": v.updated_at.isoformat() if v.updated_at else None,
+        }
     return {
         "full_name": resume.full_name or "",
         "title": resume.title or "",
@@ -89,6 +106,8 @@ def _get_resume_data(user_id):
         "languages": resume.languages or [],
         "has_resume": True,
         "tone": resume.tone or "professional",
+        "version_count": len(versions),
+        "latest_version": latest_version,
     }
 
 

@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from io import BytesIO
 from flask import Blueprint, request, jsonify, make_response
 from flask_login import login_required, current_user
@@ -92,10 +93,12 @@ def ping():
 @resume_bp.route("", methods=["GET"])
 @login_required
 def get_resume():
-    resume = Resume.query.filter_by(user_id=current_user.id).first()
-    if not resume:
+    from app.resume.profile_bridge import get_merged_resume as _get_merged
+
+    merged = _get_merged(current_user.id)
+    if merged is None:
         return jsonify({"resume": None}), 200
-    return jsonify({"resume": _serialize(resume)}), 200
+    return jsonify({"resume": merged}), 200
 
 
 @resume_bp.route("", methods=["POST", "PUT"])
@@ -138,10 +141,18 @@ def upsert_resume():
 
     db.session.commit()
 
+    # Propagate to canonical profile tables (single-source-of-truth)
+    from app.resume.profile_bridge import save_resume_to_canonical
+    save_resume_to_canonical(current_user.id, data)
+
     # Create a version snapshot
     version_name = data.get("version_name") or f"v{resume.versions.count() + 1}"
     version = ResumeVersion(
-        resume_id=resume.id, version_name=version_name, snapshot=_snapshot(resume)
+        resume_id=resume.id,
+        version_name=version_name,
+        target_role=data.get("target_role", data.get("title", "")),
+        source="manual",
+        snapshot=_snapshot(resume),
     )
     db.session.add(version)
     db.session.commit()
@@ -152,15 +163,8 @@ def upsert_resume():
     return jsonify({"message": "Resume saved successfully", "id": resume.id}), 200
 
 
-@resume_bp.route("/export", methods=["GET"])
-@login_required
-def export_resume():
-    from weasyprint import HTML
-
-    resume = Resume.query.filter_by(user_id=current_user.id).first()
-    if not resume:
-        return jsonify({"error": "No resume found"}), 404
-
+def _snapshot_to_html(snapshot):
+    """Convert a resume snapshot dict into a printable HTML string."""
     def esc(text):
         if not text:
             return ""
@@ -175,88 +179,90 @@ def export_resume():
 
     items_html = ""
 
-    if resume.summary:
-        items_html += f'<div class="section"><h2>Professional Summary</h2><p>{esc(resume.summary)}</p></div>'
+    if snapshot.get("summary"):
+        items_html += f'<div class="section"><h2>Professional Summary</h2><p>{esc(snapshot["summary"])}</p></div>'
 
-    if resume.experience:
-        exp_entries = ""
-        for exp in resume.experience:
-            role = esc(exp.get("role", ""))
-            company = esc(exp.get("company", ""))
-            start = esc(exp.get("start", ""))
-            end = esc(exp.get("end", ""))
-            bullets = exp.get("bullets", [])
-            if isinstance(bullets, str):
-                bullets = bullets.split("\n")
-            bullet_items = "".join(f"<li>{esc(b)}</li>" for b in bullets if b.strip())
-            tech = exp.get("technologies", "")
-            tech_str = (
-                f'<p class="tech"><strong>Technologies:</strong> {esc(", ".join(tech) if isinstance(tech, list) else tech)}</p>'
-                if tech
-                else ""
-            )
-            exp_entries += f'<div class="entry"><div class="entry-header"><strong>{role}</strong> at {company}</div><div class="date">{start} - {end}</div><ul>{bullet_items}</ul>{tech_str}</div>'
-        if exp_entries:
-            items_html += f'<div class="section"><h2>Experience</h2>{exp_entries}</div>'
+    exp_entries = ""
+    for exp in snapshot.get("experience", []) or []:
+        role = esc(exp.get("role", ""))
+        company = esc(exp.get("company", ""))
+        start = esc(exp.get("start", ""))
+        end = esc(exp.get("end", ""))
+        bullets = exp.get("bullets", [])
+        if isinstance(bullets, str):
+            bullets = bullets.split("\n")
+        bullet_items = "".join(f"<li>{esc(b)}</li>" for b in bullets if b.strip())
+        tech = exp.get("technologies", "")
+        tech_str = (
+            f'<p class="tech"><strong>Technologies:</strong> {esc(", ".join(tech) if isinstance(tech, list) else tech)}</p>'
+            if tech
+            else ""
+        )
+        exp_entries += f'<div class="entry"><div class="entry-header"><strong>{role}</strong> at {company}</div><div class="date">{start} - {end}</div><ul>{bullet_items}</ul>{tech_str}</div>'
+    if exp_entries:
+        items_html += f'<div class="section"><h2>Experience</h2>{exp_entries}</div>'
 
-    if resume.education:
-        edu_entries = ""
-        for edu in resume.education:
-            school = esc(edu.get("school", ""))
-            degree = esc(edu.get("degree", ""))
-            field = esc(edu.get("field", ""))
-            start = esc(edu.get("start", ""))
-            end = esc(edu.get("end", ""))
-            gpa = esc(edu.get("gpa", ""))
-            gpa_str = f'<span class="gpa">GPA: {gpa}</span>' if gpa else ""
-            edu_entries += f'<div class="entry"><div class="entry-header"><strong>{degree}</strong> in {field}</div><div class="entry-sub">{school}</div><div class="date">{start} - {end} {gpa_str}</div></div>'
-        if edu_entries:
-            items_html += f'<div class="section"><h2>Education</h2>{edu_entries}</div>'
+    edu_entries = ""
+    for edu in snapshot.get("education", []) or []:
+        school = esc(edu.get("school", ""))
+        degree = esc(edu.get("degree", ""))
+        field = esc(edu.get("field", ""))
+        start = esc(edu.get("start", ""))
+        end = edu.get("end", "")
+        gpa = esc(edu.get("gpa", ""))
+        gpa_str = f'<span class="gpa">GPA: {gpa}</span>' if gpa else ""
+        edu_entries += f'<div class="entry"><div class="entry-header"><strong>{degree}</strong> in {field}</div><div class="entry-sub">{school}</div><div class="date">{start} - {end} {gpa_str}</div></div>'
+    if edu_entries:
+        items_html += f'<div class="section"><h2>Education</h2>{edu_entries}</div>'
 
-    if resume.projects:
-        proj_entries = ""
-        for proj in resume.projects:
-            name = esc(proj.get("name", ""))
-            desc = esc(proj.get("description", ""))
-            tech = proj.get("technologies", "")
-            tech_str = (
-                f'<p class="tech"><strong>Technologies:</strong> {esc(", ".join(tech) if isinstance(tech, list) else tech)}</p>'
-                if tech
-                else ""
-            )
-            url = proj.get("url", "")
-            url_str = f'<p><a href="{esc(url)}">{esc(url)}</a></p>' if url else ""
-            proj_entries += f'<div class="entry"><div class="entry-header"><strong>{name}</strong></div><p>{desc}</p>{tech_str}{url_str}</div>'
-        if proj_entries:
-            items_html += f'<div class="section"><h2>Projects</h2>{proj_entries}</div>'
+    proj_entries = ""
+    for proj in snapshot.get("projects", []) or []:
+        name = esc(proj.get("name", ""))
+        desc = esc(proj.get("description", ""))
+        tech = proj.get("technologies", "")
+        tech_str = (
+            f'<p class="tech"><strong>Technologies:</strong> {esc(", ".join(tech) if isinstance(tech, list) else tech)}</p>'
+            if tech
+            else ""
+        )
+        url = proj.get("url", "")
+        url_str = f'<p><a href="{esc(url)}">{esc(url)}</a></p>' if url else ""
+        proj_entries += f'<div class="entry"><div class="entry-header"><strong>{name}</strong></div><p>{desc}</p>{tech_str}{url_str}</div>'
+    if proj_entries:
+        items_html += f'<div class="section"><h2>Projects</h2>{proj_entries}</div>'
 
-    if resume.skills:
-        skills_str = esc(", ".join(resume.skills))
+    skills = snapshot.get("skills", [])
+    if skills:
+        if isinstance(skills, list):
+            skills_str = esc(", ".join(skills))
+        else:
+            skills_str = esc(str(skills))
         items_html += f'<div class="section"><h2>Skills</h2><p>{skills_str}</p></div>'
 
     cert_html = ""
-    for cert in resume.certificates or []:
+    for cert in snapshot.get("certificates", []) or []:
         cert_html += f'<div class="entry"><strong>{esc(cert.get("name", ""))}</strong> - {esc(cert.get("issuer", ""))} ({esc(cert.get("date", ""))})</div>'
     if cert_html:
         items_html += f'<div class="section"><h2>Certificates</h2>{cert_html}</div>'
 
-    if resume.languages:
+    langs = snapshot.get("languages", [])
+    if langs:
         lang_str = esc(
             ", ".join(
                 f"{lang.get('name', '')} ({lang.get('level', '')})"
                 if isinstance(lang, dict)
                 else str(lang)
-                for lang in resume.languages
+                for lang in langs
             )
         )
         items_html += f'<div class="section"><h2>Languages</h2><p>{lang_str}</p></div>'
 
-    name = esc(resume.full_name or "Resume")
+    name = esc(snapshot.get("full_name", "Resume"))
     contact = ", ".join(
-        filter(None, [esc(resume.email), esc(resume.phone), esc(resume.location)])
+        filter(None, [esc(snapshot.get("email", "")), esc(snapshot.get("phone", "")), esc(snapshot.get("location", ""))])
     )
 
-    html_content = f"""<!DOCTYPE html>
+    return f"""<!DOCTYPE html>
 <html><head><meta charset="utf-8">
 <style>
 @page {{ margin: 40px; }}
@@ -280,28 +286,14 @@ a {{ color: #2563eb; text-decoration: none; }}
 {items_html}
 </body></html>"""
 
-    pdf_bytes = HTML(string=html_content).write_pdf()
-    response = make_response(pdf_bytes)
-    response.headers["Content-Type"] = "application/pdf"
-    response.headers["Content-Disposition"] = (
-        f"attachment; filename={resume.full_name or 'resume'}.pdf"
-    )
-    return response
 
-
-@resume_bp.route("/export/docx", methods=["GET"])
-@login_required
-def export_resume_docx():
+def _snapshot_to_docx(snapshot):
+    """Convert a resume snapshot dict into a python-docx Document."""
     from docx import Document
     from docx.shared import Pt, Inches, RGBColor
     from docx.enum.text import WD_ALIGN_PARAGRAPH
 
-    resume = Resume.query.filter_by(user_id=current_user.id).first()
-    if not resume:
-        return jsonify({"error": "No resume found"}), 404
-
     doc = Document()
-
     style = doc.styles["Normal"]
     font = style.font
     font.name = "Calibri"
@@ -326,29 +318,14 @@ def export_resume_docx():
         p_fmt.space_after = Pt(3)
         p_fmt.border_bottom = True
 
-    def add_entry_item(lines, sub=None, date=None):
-        for line in lines:
-            p = doc.add_paragraph(line)
-            p.paragraph_format.space_before = Pt(0)
-            p.paragraph_format.space_after = Pt(1)
-            p.paragraph_format.left_indent = Inches(0.2)
-        if sub:
-            p = doc.add_paragraph(sub)
-            p.paragraph_format.space_before = Pt(0)
-            p.paragraph_format.space_after = Pt(1)
-            p.paragraph_format.left_indent = Inches(0.2)
-            for run in p.runs:
-                run.font.size = Pt(9)
-                run.font.color.rgb = RGBColor(0x77, 0x77, 0x77)
-
-    name_str = resume.full_name or "Resume"
+    name_str = snapshot.get("full_name", "Resume")
     p_name = doc.add_paragraph()
     p_name.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p_name.add_run(name_str)
     run.bold = True
     run.font.size = Pt(20)
 
-    contact_str = ", ".join(filter(None, [resume.email, resume.phone, resume.location]))
+    contact_str = ", ".join(filter(None, [snapshot.get("email", ""), snapshot.get("phone", ""), snapshot.get("location", "")]))
     if contact_str:
         p_contact = doc.add_paragraph()
         p_contact.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -356,101 +333,136 @@ def export_resume_docx():
         run.font.size = Pt(10)
         run.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
 
-    if resume.summary:
+    if snapshot.get("summary"):
         add_section_heading("Professional Summary")
-        doc.add_paragraph(resume.summary)
+        doc.add_paragraph(snapshot["summary"])
 
-    if resume.experience:
+    if snapshot.get("experience"):
         add_section_heading("Experience")
-        for exp in resume.experience:
-            role = exp.get("role", "")
-            company = exp.get("company", "")
-            start = exp.get("start", "")
-            end = exp.get("end", "")
-            header = f"{role} at {company}" if company else role
-            p = doc.add_paragraph()
-            run = p.add_run(header)
-            run.bold = True
-            run.font.size = Pt(10.5)
-            if start or end:
-                p.add_run(f"    {start} - {end}")
-            bullets = exp.get("bullets", [])
-            if isinstance(bullets, str):
-                bullets = bullets.split("\n")
-            for b in bullets:
-                if b.strip():
-                    doc.add_paragraph(b.strip(), style="List Bullet")
-            tech = exp.get("technologies", "")
-            if tech:
-                t = ", ".join(tech) if isinstance(tech, list) else tech
-                p_tech = doc.add_paragraph(f"Technologies: {t}")
-                p_tech.paragraph_format.space_before = Pt(0)
+    for exp in snapshot.get("experience", []) or []:
+        role = exp.get("role", "")
+        company = exp.get("company", "")
+        start = exp.get("start", "")
+        end = exp.get("end", "")
+        header = f"{role} at {company}" if company else role
+        p = doc.add_paragraph()
+        run = p.add_run(header)
+        run.bold = True
+        run.font.size = Pt(10.5)
+        if start or end:
+            p.add_run(f"    {start} - {end}")
+        bullets = exp.get("bullets", [])
+        if isinstance(bullets, str):
+            bullets = bullets.split("\n")
+        for b in bullets:
+            if b.strip():
+                doc.add_paragraph(b.strip(), style="List Bullet")
+        tech = exp.get("technologies", "")
+        if tech:
+            t = ", ".join(tech) if isinstance(tech, list) else tech
+            p_tech = doc.add_paragraph(f"Technologies: {t}")
+            p_tech.paragraph_format.space_before = Pt(0)
 
-    if resume.education:
+    if snapshot.get("education"):
         add_section_heading("Education")
-        for edu in resume.education:
-            school = edu.get("school", "")
-            degree = edu.get("degree", "")
-            field = edu.get("field", "")
-            start = edu.get("start", "")
-            end = edu.get("end", "")
-            gpa = edu.get("gpa", "")
-            line = f"{degree} in {field}" if field else degree
-            p = doc.add_paragraph()
-            run = p.add_run(line)
-            run.bold = True
-            sub = f"{school}    {start} - {end}"
-            if gpa:
-                sub += f"    GPA: {gpa}"
-            p_sub = doc.add_paragraph(sub)
-            p_sub.paragraph_format.space_before = Pt(0)
-            p_sub.paragraph_format.space_after = Pt(2)
-            for r in p_sub.runs:
-                r.font.size = Pt(10)
-                r.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
+    for edu in snapshot.get("education", []) or []:
+        school = edu.get("school", "")
+        degree = edu.get("degree", "")
+        field = edu.get("field", "")
+        start = edu.get("start", "")
+        end = edu.get("end", "")
+        gpa = edu.get("gpa", "")
+        line = f"{degree} in {field}" if field else degree
+        p = doc.add_paragraph()
+        run = p.add_run(line)
+        run.bold = True
+        sub = f"{school}    {start} - {end}"
+        if gpa:
+            sub += f"    GPA: {gpa}"
+        p_sub = doc.add_paragraph(sub)
+        p_sub.paragraph_format.space_before = Pt(0)
+        p_sub.paragraph_format.space_after = Pt(2)
+        for r in p_sub.runs:
+            r.font.size = Pt(10)
+            r.font.color.rgb = RGBColor(0x55, 0x55, 0x55)
 
-    if resume.projects:
+    if snapshot.get("projects"):
         add_section_heading("Projects")
-        for proj in resume.projects:
-            name = proj.get("name", "")
-            desc = proj.get("description", "")
-            tech = proj.get("technologies", "")
-            url = proj.get("url", "")
-            p = doc.add_paragraph()
-            run = p.add_run(name)
-            run.bold = True
-            if desc:
-                doc.add_paragraph(desc)
-            if tech:
-                t = ", ".join(tech) if isinstance(tech, list) else tech
-                doc.add_paragraph(f"Technologies: {t}")
-            if url:
-                doc.add_paragraph(url)
+    for proj in snapshot.get("projects", []) or []:
+        name = proj.get("name", "")
+        desc = proj.get("description", "")
+        tech = proj.get("technologies", "")
+        url = proj.get("url", "")
+        p = doc.add_paragraph()
+        run = p.add_run(name)
+        run.bold = True
+        if desc:
+            doc.add_paragraph(desc)
+        if tech:
+            t = ", ".join(tech) if isinstance(tech, list) else tech
+            doc.add_paragraph(f"Technologies: {t}")
+        if url:
+            doc.add_paragraph(url)
 
-    if resume.skills:
+    skills = snapshot.get("skills", [])
+    if skills:
         add_section_heading("Skills")
-        doc.add_paragraph(", ".join(resume.skills))
+        if isinstance(skills, list):
+            doc.add_paragraph(", ".join(skills))
+        else:
+            doc.add_paragraph(str(skills))
 
-    if resume.certificates:
+    if snapshot.get("certificates"):
         add_section_heading("Certificates")
-        for cert in resume.certificates:
-            name = cert.get("name", "")
-            issuer = cert.get("issuer", "")
-            date = cert.get("date", "")
-            parts = filter(None, [name, issuer, date])
-            doc.add_paragraph(" — ".join(parts))
+    for cert in snapshot.get("certificates", []) or []:
+        name = cert.get("name", "")
+        issuer = cert.get("issuer", "")
+        date = cert.get("date", "")
+        parts = filter(None, [name, issuer, date])
+        doc.add_paragraph(" — ".join(parts))
 
-    if resume.languages:
+    if snapshot.get("languages"):
         add_section_heading("Languages")
+    langs = snapshot.get("languages", [])
+    if langs:
         lang_str = ", ".join(
             f"{lang.get('name', '')} ({lang.get('level', '')})"
             if isinstance(lang, dict)
             else str(lang)
-            for lang in resume.languages
+            for lang in langs
         )
         if lang_str:
             doc.add_paragraph(lang_str)
 
+    return doc
+
+
+@resume_bp.route("/export", methods=["GET"])
+@login_required
+def export_resume():
+    resume = Resume.query.filter_by(user_id=current_user.id).first()
+    if not resume:
+        return jsonify({"error": "No resume found"}), 404
+    html = _snapshot_to_html(_snapshot(resume))
+    from app.resume.pdf_engine import html_to_pdf
+    pdf_bytes, err = html_to_pdf(html, resume.full_name or "resume")
+    if err:
+        return jsonify({"error": err}), 503
+    response = make_response(pdf_bytes)
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = (
+        f"attachment; filename={resume.full_name or 'resume'}.pdf"
+    )
+    return response
+
+
+@resume_bp.route("/export/docx", methods=["GET"])
+@login_required
+def export_resume_docx():
+    resume = Resume.query.filter_by(user_id=current_user.id).first()
+    if not resume:
+        return jsonify({"error": "No resume found"}), 404
+    doc = _snapshot_to_docx(_snapshot(resume))
     bio = BytesIO()
     doc.save(bio)
     bio.seek(0)
@@ -462,6 +474,63 @@ def export_resume_docx():
         f"attachment; filename={resume.full_name or 'resume'}.docx"
     )
     return response
+
+
+@resume_bp.route("/versions/<int:version_id>/export", methods=["GET"])
+@login_required
+def export_version_pdf(version_id):
+    resume = Resume.query.filter_by(user_id=current_user.id).first()
+    if not resume:
+        return jsonify({"error": "No resume found"}), 404
+    version = ResumeVersion.query.filter_by(id=version_id, resume_id=resume.id).first()
+    if not version:
+        return jsonify({"error": "Version not found"}), 404
+    snapshot = version.snapshot or {}
+    html = _snapshot_to_html(snapshot)
+    from app.resume.pdf_engine import html_to_pdf
+    pdf_bytes, err = html_to_pdf(html, snapshot.get("full_name", "resume") or "resume")
+    if err:
+        return jsonify({"error": err}), 503
+    response = make_response(pdf_bytes)
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = (
+        f"attachment; filename={snapshot.get('full_name', 'resume') or 'resume'}.pdf"
+    )
+    return response
+
+
+@resume_bp.route("/versions/<int:version_id>/export/docx", methods=["GET"])
+@login_required
+def export_version_docx(version_id):
+    resume = Resume.query.filter_by(user_id=current_user.id).first()
+    if not resume:
+        return jsonify({"error": "No resume found"}), 404
+    version = ResumeVersion.query.filter_by(id=version_id, resume_id=resume.id).first()
+    if not version:
+        return jsonify({"error": "Version not found"}), 404
+    snapshot = version.snapshot or {}
+    doc = _snapshot_to_docx(snapshot)
+    bio = BytesIO()
+    doc.save(bio)
+    bio.seek(0)
+    response = make_response(bio.read())
+    response.headers["Content-Type"] = (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    )
+    response.headers["Content-Disposition"] = (
+        f"attachment; filename={snapshot.get('full_name', 'resume') or 'resume'}.docx"
+    )
+    return response
+
+
+# ── PDF Engine Health ──────────────────────────────────────
+
+
+@resume_bp.route("/pdf-health", methods=["GET"])
+def pdf_health():
+    from app.resume.pdf_engine import get_status
+
+    return jsonify(get_status()), 200
 
 
 # ── AI Resume Review ──────────────────────────────────────
@@ -603,7 +672,12 @@ def list_versions():
                 {
                     "id": v.id,
                     "version_name": v.version_name,
+                    "target_role": v.target_role or "",
+                    "source": v.source or "manual",
+                    "ats_score": v.ats_score,
+                    "notes": v.notes or "",
                     "created_at": v.created_at.isoformat() if v.created_at else None,
+                    "updated_at": v.updated_at.isoformat() if v.updated_at else None,
                 }
                 for v in versions
             ]
@@ -627,9 +701,17 @@ def get_version(version_id):
             "version": {
                 "id": version.id,
                 "version_name": version.version_name,
+                "target_role": version.target_role or "",
+                "source": version.source or "manual",
+                "ats_score": version.ats_score,
+                "ats_data": version.ats_data,
+                "notes": version.notes or "",
                 "snapshot": version.snapshot,
                 "created_at": version.created_at.isoformat()
                 if version.created_at
+                else None,
+                "updated_at": version.updated_at.isoformat()
+                if version.updated_at
                 else None,
             }
         }
@@ -660,12 +742,30 @@ def restore_version(version_id):
 
     db.session.commit()
 
+    from app.resume.profile_bridge import save_resume_to_canonical
+    save_resume_to_canonical(current_user.id, snapshot)
+
     new_version = ResumeVersion(
         resume_id=resume.id,
         version_name=f"{version.version_name} (restored)",
         snapshot=_snapshot(resume),
     )
     db.session.add(new_version)
+    db.session.commit()
+
+    from app.core.integration import on_resume_changed
+    on_resume_changed(current_user.id)
+
+    from app.career.models import CareerTimelineEvent
+    event = CareerTimelineEvent(
+        user_id=current_user.id,
+        event_type="resume",
+        title=f"Resume Restored: {version.version_name}",
+        description="Restored a previous version of your resume",
+        event_date=datetime.now(timezone.utc),
+        importance=2,
+    )
+    db.session.add(event)
     db.session.commit()
 
     return jsonify({"message": "Version restored", "resume": _serialize(resume)}), 200
@@ -685,6 +785,219 @@ def delete_version(version_id):
     db.session.delete(version)
     db.session.commit()
     return jsonify({"message": "Version deleted"}), 200
+
+
+@resume_bp.route("/versions/<int:version_id>", methods=["PUT"])
+@login_required
+def update_version(version_id):
+    resume = Resume.query.filter_by(user_id=current_user.id).first()
+    if not resume:
+        return jsonify({"error": "No resume found"}), 404
+    version = ResumeVersion.query.filter_by(id=version_id, resume_id=resume.id).first()
+    if not version:
+        return jsonify({"error": "Version not found"}), 404
+    data = request.get_json(silent=True) or {}
+    if "version_name" in data:
+        version.version_name = data["version_name"]
+    if "target_role" in data:
+        version.target_role = data["target_role"]
+    if "notes" in data:
+        version.notes = data["notes"]
+    if "snapshot" in data:
+        snapshot = data["snapshot"]
+        if isinstance(snapshot, dict):
+            version.snapshot = snapshot
+    db.session.commit()
+    return jsonify({"message": "Version updated"}), 200
+
+
+@resume_bp.route("/versions/<int:version_id>/duplicate", methods=["POST"])
+@login_required
+def duplicate_version(version_id):
+    resume = Resume.query.filter_by(user_id=current_user.id).first()
+    if not resume:
+        return jsonify({"error": "No resume found"}), 404
+    source = ResumeVersion.query.filter_by(id=version_id, resume_id=resume.id).first()
+    if not source:
+        return jsonify({"error": "Version not found"}), 404
+    data = request.get_json(silent=True) or {}
+    new_name = data.get("version_name", f"{source.version_name} (copy)")
+    dup = ResumeVersion(
+        resume_id=resume.id,
+        version_name=new_name,
+        target_role=source.target_role,
+        source="manual",
+        ats_score=source.ats_score,
+        ats_data=source.ats_data,
+        snapshot=source.snapshot,
+    )
+    db.session.add(dup)
+    db.session.commit()
+    return jsonify({"message": "Version duplicated", "id": dup.id}), 201
+
+
+@resume_bp.route("/versions/<int:version_id>/tailor", methods=["POST"])
+@login_required
+@limiter.limit("5 per minute")
+def tailor_version(version_id):
+    from app.resume.ai_resume_generator import generate_tailored_resume
+
+    resume = Resume.query.filter_by(user_id=current_user.id).first()
+    if not resume:
+        return jsonify({"error": "No resume found"}), 404
+    version = ResumeVersion.query.filter_by(id=version_id, resume_id=resume.id).first()
+    if not version:
+        return jsonify({"error": "Version not found"}), 404
+    data = request.get_json(silent=True) or {}
+    job_description = data.get("job_description", "").strip()
+    if not job_description:
+        return jsonify({"error": "job_description is required"}), 400
+
+    tailored = generate_tailored_resume(current_user.id, version.id, job_description)
+    if not tailored:
+        return jsonify({"error": "Failed to tailor resume"}), 500
+
+    version_name = data.get("version_name") or f"{version.version_name} (tailored)"
+    new_version = ResumeVersion(
+        resume_id=resume.id,
+        version_name=version_name,
+        target_role=version.target_role,
+        source="tailored",
+        tailored_for_job=job_description[:1000],
+        snapshot=tailored,
+    )
+    db.session.add(new_version)
+    db.session.commit()
+
+    from app.core.integration import on_resume_changed
+    on_resume_changed(current_user.id)
+
+    return jsonify({
+        "message": "Tailored version created",
+        "version": {
+            "id": new_version.id,
+            "version_name": new_version.version_name,
+            "source": new_version.source,
+        }
+    }), 201
+
+
+@resume_bp.route("/versions/<int:version_id>/ats-score", methods=["POST"])
+@login_required
+def score_version_ats(version_id):
+    resume = Resume.query.filter_by(user_id=current_user.id).first()
+    if not resume:
+        return jsonify({"error": "No resume found"}), 404
+    version = ResumeVersion.query.filter_by(id=version_id, resume_id=resume.id).first()
+    if not version:
+        return jsonify({"error": "Version not found"}), 404
+
+    data = request.get_json(silent=True) or {}
+    job_description = data.get("job_description", "").strip()
+    if not job_description:
+        return jsonify({"error": "job_description is required"}), 400
+
+    from app.resume.ats import score_resume as ats_score_resume
+
+    snapshot = version.snapshot or {}
+    result = ats_score_resume(_snapshot_to_resume_like(snapshot, resume.id, current_user.id), job_description)
+
+    version.ats_score = result.get("overall_score")
+    version.ats_data = result
+    version.tailored_for_job = job_description[:1000]
+    db.session.commit()
+
+    return jsonify(result), 200
+
+
+def _snapshot_to_resume_like(snapshot, resume_id, user_id):
+    """Wrap a snapshot dict in a simple object with attrs that ats.py can read."""
+    class ResumeLike:
+        pass
+    r = ResumeLike()
+    r.id = resume_id
+    r.user_id = user_id
+    r.full_name = snapshot.get("full_name", "")
+    r.email = snapshot.get("email", "")
+    r.phone = snapshot.get("phone", "")
+    r.location = snapshot.get("location", "")
+    r.summary = snapshot.get("summary", "")
+    r.title = snapshot.get("title", "")
+    r.website = snapshot.get("website", "")
+    r.linkedin = snapshot.get("linkedin", "")
+    r.github = snapshot.get("github", "")
+    r.portfolio = snapshot.get("portfolio", "")
+    r.experience = snapshot.get("experience", [])
+    r.education = snapshot.get("education", [])
+    r.projects = snapshot.get("projects", [])
+    r.skills = snapshot.get("skills", [])
+    r.certificates = snapshot.get("certificates", [])
+    r.achievements = snapshot.get("achievements", [])
+    r.languages = snapshot.get("languages", [])
+    r.publications = snapshot.get("publications", [])
+    r.tone = snapshot.get("tone", "professional")
+    r.target_job_description = ""
+    return r
+
+
+@resume_bp.route("/generate", methods=["POST"])
+@login_required
+@limiter.limit("3 per minute")
+def generate_ai_resume():
+    from app.resume.ai_resume_generator import generate_resume
+
+    data = request.get_json(silent=True) or {}
+    target_role = data.get("target_role", "")
+    job_description = data.get("job_description", "")
+
+    resume_data = generate_resume(current_user.id, target_role=target_role, job_description=job_description)
+
+    resume = Resume.query.filter_by(user_id=current_user.id).first()
+    if not resume:
+        resume = Resume(user_id=current_user.id)
+        db.session.add(resume)
+        db.session.flush()
+
+    for field in ["full_name", "email", "phone", "location", "summary", "title"]:
+        if field in resume_data:
+            setattr(resume, field, resume_data[field])
+
+    for field in ["experience", "education", "projects", "skills", "certificates", "languages"]:
+        if field in resume_data:
+            val = resume_data[field]
+            if field == "experience":
+                val = _normalize_list_field(val, ["bullets", "technologies"])
+            elif field == "projects":
+                val = _normalize_list_field(val, ["technologies"])
+            setattr(resume, field, val)
+
+    db.session.commit()
+
+    from app.resume.profile_bridge import save_resume_to_canonical
+    save_resume_to_canonical(current_user.id, resume_data)
+
+    version_name = data.get("version_name") or (f"AI: {target_role}" if target_role else "AI Generated")
+    version = ResumeVersion(
+        resume_id=resume.id,
+        version_name=version_name,
+        target_role=target_role or resume_data.get("title", ""),
+        source="ai_generated",
+        snapshot=_snapshot(resume),
+    )
+    db.session.add(version)
+    db.session.commit()
+
+    from app.core.integration import on_resume_changed
+    on_resume_changed(current_user.id)
+
+    return jsonify({
+        "message": "Resume generated",
+        "version": {
+            "id": version.id,
+            "version_name": version.version_name,
+            "source": version.source,
+        }
+    }), 201
 
 
 @resume_bp.route("/versions/compare", methods=["POST"])

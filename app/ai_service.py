@@ -1,11 +1,11 @@
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types as genai_types
 from groq import Groq
 
 
 def get_gemini_client():
-    genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
-    return genai.GenerativeModel("gemini-2.5-flash")
+    return genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
 
 
 def get_groq_client():
@@ -17,10 +17,16 @@ def generate_text(prompt, model="gemini", system_instruction=None):
     try:
         if model == "gemini":
             client = get_gemini_client()
-            full_prompt = (
-                f"{system_instruction}\n\n{prompt}" if system_instruction else prompt
+            kwargs = {}
+            if system_instruction:
+                kwargs["config"] = genai_types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                )
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=prompt,
+                **kwargs,
             )
-            response = client.generate_content(full_prompt)
             return response.text
 
         if model == "groq":

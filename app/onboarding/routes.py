@@ -340,6 +340,10 @@ def save_step(step):
             current_user.onboarding_step = step
 
         db.session.commit()
+
+        from app.core.integration import on_profile_changed
+        on_profile_changed(uid)
+
         return jsonify({
             "message": f"Step {step} saved",
             "onboarding_step": current_user.onboarding_step,
@@ -358,6 +362,8 @@ def complete_onboarding():
     current_user.onboarding_completed = True
     current_user.onboarding_step = TOTAL_STEPS
     db.session.commit()
+    from app.core.integration import on_profile_changed
+    on_profile_changed(current_user.id)
     return jsonify({"message": "Onboarding completed"}), 200
 
 

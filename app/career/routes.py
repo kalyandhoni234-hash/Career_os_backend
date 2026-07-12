@@ -87,6 +87,10 @@ def update_career_profile():
             setattr(cp, field, data[field])
 
     db.session.commit()
+
+    from app.core.integration import on_profile_changed
+    on_profile_changed(current_user.id)
+
     return jsonify({"message": "Career profile saved"}), 200
 
 
@@ -576,6 +580,8 @@ def delete_goal(goal_id):
         return jsonify({"error": "Goal not found"}), 404
     db.session.delete(goal)
     db.session.commit()
+    from app.core.integration import on_profile_changed
+    on_profile_changed(current_user.id)
     return jsonify({"message": "Goal deleted"}), 200
 
 

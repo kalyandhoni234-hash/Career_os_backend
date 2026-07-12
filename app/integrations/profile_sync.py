@@ -4,6 +4,7 @@ from app.extensions import db
 from app.integrations.models import Integration
 from app.users.models import Profile
 from app.career.models import UserEducation
+from app.resume.models import Resume
 from app.intelligence.engine import (
     sync_skills_from_source,
     sync_projects_from_source,
@@ -12,6 +13,26 @@ from app.intelligence.engine import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _format_li_date(date_dict):
+    """Format a LinkedIn date dict {year, month, day?} to 'YYYY-MM' string."""
+    if not date_dict or not isinstance(date_dict, dict):
+        return ""
+    year = date_dict.get("year", "")
+    month = date_dict.get("month", "")
+    if year and month:
+        return f"{year}-{int(month):02d}"
+    return str(year) if year else ""
+
+
+def _sync_resume_section(resume, field, value):
+    """Set a resume field only if currently empty, to preserve manual edits."""
+    if value is None:
+        return
+    current = getattr(resume, field, None)
+    if not current:
+        setattr(resume, field, value)
 
 
 def sync_profile_from_github(user_id: int, integration: Integration) -> None:
@@ -50,6 +71,41 @@ def sync_profile_from_github(user_id: int, integration: Integration) -> None:
             })
         if project_items:
             sync_projects_from_source(user_id, project_items, "github")
+
+    # --- Populate Resume table for Resume Studio ---
+    resume = Resume.query.filter_by(user_id=user_id).first()
+    if not resume:
+        resume = Resume(user_id=user_id)
+        db.session.add(resume)
+
+    _sync_resume_section(resume, "full_name", pd.get("name", ""))
+    _sync_resume_section(resume, "location", pd.get("location", ""))
+    _sync_resume_section(resume, "website", pd.get("blog", ""))
+    _sync_resume_section(resume, "summary", pd.get("bio", ""))
+
+    github_url = f"https://github.com/{integration.provider_username}" if integration.provider_username else ""
+    _sync_resume_section(resume, "github", github_url)
+
+    top_langs = pd.get("top_languages", {})
+    if top_langs and isinstance(top_langs, dict):
+        existing = set(resume.skills or [])
+        new_langs = [lang for lang in top_langs if lang and lang not in existing]
+        if new_langs:
+            resume.skills = list(existing | set(new_langs))
+
+    pinned = pd.get("pinned_repos", [])
+    if pinned and isinstance(pinned, list):
+        if not resume.projects:
+            resume.projects = [
+                {
+                    "name": r.get("name", ""),
+                    "description": r.get("description", ""),
+                    "technologies": [r.get("language", "")] if r.get("language") else [],
+                    "url": r.get("url", ""),
+                    "github": r.get("url", ""),
+                }
+                for r in pinned
+            ]
 
     log_event(
         user_id,
@@ -114,7 +170,7 @@ def sync_profile_from_linkedin(user_id: int, integration: Integration) -> None:
                         user_id=user_id,
                         institution=institution,
                         degree=degree,
-                        branch=edu.get("field", ""),
+                        branch=edu.get("fieldOfStudy", ""),
                         source="linkedin",
                         source_id=f"linkedin:edu:{institution}:{degree}",
                         confidence=0.9,
@@ -133,6 +189,65 @@ def sync_profile_from_linkedin(user_id: int, integration: Integration) -> None:
             skill_items.append({"name": skill_name, "source_id": f"linkedin:skill:{skill_name}"})
         if skill_items:
             sync_skills_from_source(user_id, skill_items, "linkedin")
+
+    # --- Populate Resume table for Resume Studio ---
+    resume = Resume.query.filter_by(user_id=user_id).first()
+    if not resume:
+        resume = Resume(user_id=user_id)
+        db.session.add(resume)
+
+    _sync_resume_section(resume, "full_name", pd.get("name", ""))
+
+    headline_text = pd.get("headline", "")
+    if headline_text and " at " in headline_text:
+        _sync_resume_section(resume, "title", headline_text.split(" at ")[0].strip())
+    elif headline_text:
+        _sync_resume_section(resume, "summary", headline_text)
+
+    vanity = pd.get("vanity_name", "")
+    if vanity:
+        _sync_resume_section(resume, "linkedin", f"https://linkedin.com/in/{vanity}")
+
+    li_skills = pd.get("skills", [])
+    if li_skills and isinstance(li_skills, list):
+        existing = set(resume.skills or [])
+        new_li = [s for s in li_skills if isinstance(s, str) and s and s not in existing]
+        if new_li:
+            resume.skills = list(existing | set(new_li))
+
+    exp_list = pd.get("experience", [])
+    if exp_list and isinstance(exp_list, list) and not resume.experience:
+        resume.experience = []
+        for e in exp_list:
+            company = e.get("companyName", "")
+            role = e.get("title", "")
+            if not company or not role:
+                continue
+            resume.experience.append({
+                "company": company,
+                "role": role,
+                "start": _format_li_date(e.get("start", {})),
+                "end": _format_li_date(e.get("end", {})),
+                "bullets": [""],
+                "technologies": [],
+            })
+
+    edu_list = pd.get("education", [])
+    if edu_list and isinstance(edu_list, list) and not resume.education:
+        resume.education = []
+        for e in edu_list:
+            inst = e.get("institution", "")
+            degree = e.get("degree", "")
+            if not inst:
+                continue
+            resume.education.append({
+                "school": inst,
+                "degree": degree,
+                "field": e.get("fieldOfStudy", ""),
+                "start": _format_li_date(e.get("start", {})),
+                "end": _format_li_date(e.get("end", {})),
+                "gpa": "",
+            })
 
     log_event(
         user_id,

@@ -124,21 +124,28 @@ SKILL_CATEGORIES = {
 
 
 def build_skill_graph(user_id):
-    """Build or rebuild the skill graph from resume skills and learning progress."""
+    """Build or rebuild the skill graph from resume skills, UserSkill records, and learning progress."""
     from app.resume.models import Resume
+    from app.career.models import UserSkill
 
     resume = Resume.query.filter_by(user_id=user_id).first()
-    if not resume:
-        return {}
-    raw_skills = resume.skills or []
-    if isinstance(raw_skills, str):
-        raw_skills = [raw_skills]
     resume_skills = []
-    for s in raw_skills:
-        if isinstance(s, str):
-            s = s.lower().strip()
-            if s and len(s) <= 50:
-                resume_skills.append(s)
+    if resume:
+        raw_skills = resume.skills or []
+        if isinstance(raw_skills, str):
+            raw_skills = [raw_skills]
+        for s in raw_skills:
+            if isinstance(s, str):
+                s = s.lower().strip()
+                if s and len(s) <= 50:
+                    resume_skills.append(s)
+
+    # Also include UserSkill records (profile wizard, import, etc.)
+    user_skills = UserSkill.query.filter_by(user_id=user_id).all()
+    for us in user_skills:
+        name = us.name.lower().strip()
+        if name and len(name) <= 50 and name not in resume_skills:
+            resume_skills.append(name)
 
     learning = LearningProgress.query.filter_by(user_id=user_id).all()
     learning_skills = {lp.skill_name.lower(): lp.proficiency for lp in learning}
@@ -196,19 +203,24 @@ def build_skill_graph(user_id):
 
 def analyze_skill_gaps(user_id, target_role=None):
     """Analyze skill gaps between current skills and a target role."""
-    from app.career.models import CareerProfile
+    from app.career.models import CareerProfile, UserSkill
 
     # Get target info
     cp = CareerProfile.query.filter_by(user_id=user_id).first()
     target = target_role or (cp.target_role if cp else None)
 
-    # Get current skills
+    # Get current skills from Resume and UserSkill tables
     from app.resume.models import Resume
 
     resume = Resume.query.filter_by(user_id=user_id).first()
     current_skills = (
         set(s.lower().strip() for s in (resume.skills or [])) if resume else set()
     )
+    user_skills = UserSkill.query.filter_by(user_id=user_id).all()
+    for us in user_skills:
+        name = us.name.lower().strip()
+        if name:
+            current_skills.add(name)
 
     # Get learning skills
     learning = LearningProgress.query.filter_by(user_id=user_id).all()

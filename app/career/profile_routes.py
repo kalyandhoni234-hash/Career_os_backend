@@ -167,6 +167,16 @@ def _preferences_data(user_id):
     }
 
 
+def _sync_resume_skills(user_id):
+    """Sync UserSkill records to Resume.skills so all services see the same data."""
+    from app.resume.models import Resume
+    skills = [s.name for s in UserSkill.query.filter_by(user_id=user_id).order_by(UserSkill.name).all()]
+    resume = Resume.query.filter_by(user_id=user_id).first()
+    if resume:
+        resume.skills = skills
+    return skills
+
+
 def _completion_pct(user_id):
     score = 0
     total = 0
@@ -291,6 +301,9 @@ def save_wizard_step(step):
                 current_user.email = data.get("email", current_user.email)
             db.session.commit()
 
+            from app.core.integration import on_profile_changed
+            on_profile_changed(uid)
+
         elif step == "career_info":
             cp = CareerProfile.query.filter_by(user_id=uid).first()
             if not cp:
@@ -304,6 +317,7 @@ def save_wizard_step(step):
                 "employment_type", getattr(cp, "employment_type", "")
             )
             db.session.commit()
+            on_profile_changed(uid)
 
         elif step == "dream_career":
             cp = CareerProfile.query.filter_by(user_id=uid).first()
@@ -326,6 +340,7 @@ def save_wizard_step(step):
                 "target_joining_year", getattr(cp, "target_joining_year", None)
             )
             db.session.commit()
+            on_profile_changed(uid)
 
         elif step == "preferences":
             pref = UserPreference.query.filter_by(user_id=uid).first()
@@ -344,6 +359,7 @@ def save_wizard_step(step):
                 if field in data:
                     setattr(pref, field, data[field])
             db.session.commit()
+            on_profile_changed(uid)
 
         else:
             return jsonify({"error": f"Unknown step: {step}"}), 400
@@ -441,6 +457,8 @@ def create_education():
         )
         db.session.add(edu)
         db.session.commit()
+        from app.core.integration import on_profile_changed
+        on_profile_changed(current_user.id)
         return jsonify(
             {
                 "id": edu.id,
@@ -479,6 +497,8 @@ def update_education(edu_id):
     if "relevant_coursework" in data and isinstance(data["relevant_coursework"], list):
         edu.relevant_coursework = data["relevant_coursework"]
     db.session.commit()
+    from app.core.integration import on_profile_changed
+    on_profile_changed(current_user.id)
     return jsonify({"message": "Education updated"}), 200
 
 
@@ -490,6 +510,8 @@ def delete_education(edu_id):
         return jsonify({"error": "Education record not found"}), 404
     db.session.delete(edu)
     db.session.commit()
+    from app.core.integration import on_profile_changed
+    on_profile_changed(current_user.id)
     return jsonify({"message": "Education deleted"}), 200
 
 
@@ -530,6 +552,9 @@ def create_skill():
     )
     db.session.add(skill)
     db.session.commit()
+    _sync_resume_skills(current_user.id)
+    from app.core.integration import on_profile_changed
+    on_profile_changed(current_user.id)
     return jsonify(
         {
             "id": skill.id,
@@ -556,6 +581,9 @@ def update_skill(skill_id):
     if "confidence_rating" in data:
         skill.confidence_rating = int(data["confidence_rating"])
     db.session.commit()
+    _sync_resume_skills(current_user.id)
+    from app.core.integration import on_profile_changed
+    on_profile_changed(current_user.id)
     return jsonify({"message": "Skill updated"}), 200
 
 
@@ -567,6 +595,9 @@ def delete_skill(skill_id):
         return jsonify({"error": "Skill not found"}), 404
     db.session.delete(skill)
     db.session.commit()
+    _sync_resume_skills(current_user.id)
+    from app.core.integration import on_profile_changed
+    on_profile_changed(current_user.id)
     return jsonify({"message": "Skill deleted"}), 200
 
 
@@ -795,6 +826,17 @@ def upload_resume():
     db.session.add(resume_file)
     db.session.commit()
 
+    _log_timeline_event(
+        current_user.id,
+        "resume",
+        "Resume Uploaded",
+        f"Uploaded {original_filename}",
+        3,
+    )
+
+    from app.core.integration import on_profile_changed
+    on_profile_changed(current_user.id)
+
     return jsonify(
         {
             "id": resume_file.id,
@@ -817,6 +859,8 @@ def delete_resume(file_id):
         return jsonify({"error": "Resume file not found"}), 404
     db.session.delete(rf)
     db.session.commit()
+    from app.core.integration import on_profile_changed
+    on_profile_changed(current_user.id)
     return jsonify({"message": "Resume deleted"}), 200
 
 

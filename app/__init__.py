@@ -149,6 +149,19 @@ def create_app():
     def not_found(error):
         return jsonify({"error": "Not found"}), 404
 
+    from app.resume.pdf_engine import get_status as _pdf_status
+
+    _pdf = _pdf_status()
+    if _pdf["available"]:
+        app.logger.info("PDF engine: WeasyPrint (native libs OK)")
+    else:
+        app.logger.warning(
+            "PDF engine: WeasyPrint unavailable (%s). "
+            "PDF export endpoints will return 503 errors. "
+            "See /api/resume/pdf-health for details.",
+            _pdf["error"],
+        )
+
     @app.route("/health")
     def health():
         return jsonify({"status": "ok"})

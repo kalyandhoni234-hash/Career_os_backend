@@ -2,8 +2,6 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.extensions import db, limiter
 from app.coach.models import CoachMessage
-from app.users.models import Profile
-from app.resume.models import Resume
 
 coach_bp = Blueprint("coach", __name__)
 
@@ -50,23 +48,23 @@ def chat():
     if len(user_message) > 2000:
         return jsonify({"error": "Message too long (max 2000 characters)"}), 400
 
-    profile = Profile.query.filter_by(user_id=current_user.id).first()
-    resume = Resume.query.filter_by(user_id=current_user.id).first()
+    from app.career.services.career_memory_service import build_career_memory
 
-    profile_context = "No profile set yet."
-    if profile:
-        profile_context = f"""
-Education: {profile.education or "not set"}
-Degree: {profile.degree or "not set"}
-Target roles: {profile.preferred_roles or "not set"}
-Skills: {profile.skills or "not set"}
-"""
+    memory = build_career_memory(current_user.id)
 
-    resume_context = "No resume created yet."
-    if resume:
-        resume_context = f"""
-Summary: {resume.summary or "not set"}
-Skills: {", ".join(resume.skills or [])}
+    memory_str = f"""
+Profile: {memory.get('profile', {})}
+Career Goal: {memory.get('career_profile', {})}
+Resume: {memory.get('resume', {})}
+ATS Scores: {memory.get('ats', {})}
+Applications: {memory.get('applications', {})}
+Skills: {memory.get('skills', {})}
+Learning: {memory.get('learning', [])}
+Goals: {memory.get('goals', {})}
+Roadmaps: {memory.get('roadmaps', [])}
+Timeline: {memory.get('timeline', [])}
+Score History: {memory.get('score_history', [])}
+Recommendations: {memory.get('recommendations', [])}
 """
 
     history = (
@@ -81,14 +79,11 @@ Skills: {", ".join(resume.skills or [])}
         history_text += f"{prefix}: {m.content}\n"
 
     system_instruction = f"""You are a friendly, direct career coach helping a student/early-career job seeker.
-Use their profile and resume context to give specific, actionable advice - not generic platitudes.
+Use the complete Career OS memory context to give specific, actionable advice - not generic platitudes.
 Keep responses concise (3-6 sentences unless they ask for a detailed roadmap).
 
-User Profile:
-{profile_context}
-
-User Resume:
-{resume_context}
+Career Memory Context (includes profile, resume, ATS scores, applications, skills, goals, roadmaps, timeline, recommendations):
+{memory_str}
 
 Conversation so far:
 {history_text}

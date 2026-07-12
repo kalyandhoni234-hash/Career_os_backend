@@ -777,6 +777,17 @@ def update_roadmap_progress(user_id, node_id, status):
     if roadmap.status == "active" and roadmap.progress == 100:
         roadmap.status = "completed"
         db.session.commit()
+        from app.career.models import CareerTimelineEvent
+        event = CareerTimelineEvent(
+            user_id=user_id,
+            event_type="roadmap",
+            title=f"Roadmap Completed: {roadmap.title}",
+            description=f"Completed all {total} steps in {roadmap.category} roadmap",
+            event_date=datetime.now(timezone.utc),
+            importance=4,
+        )
+        db.session.add(event)
+        db.session.commit()
 
     return get_roadmap_with_nodes(roadmap.id)
 

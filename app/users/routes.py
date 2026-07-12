@@ -143,7 +143,7 @@ def upsert_profile():
 @users_bp.route("/dashboard-summary", methods=["GET"])
 @login_required
 def dashboard_summary():
-    from app.resume.models import Resume
+    from app.resume.models import Resume, ResumeVersion
     from app.jobs.models import Job
     from app.coach.models import CoachMessage
     from app.users.models import Profile
@@ -152,6 +152,28 @@ def dashboard_summary():
     profile = Profile.query.filter_by(user_id=current_user.id).first()
     resume = Resume.query.filter_by(user_id=current_user.id).first()
     jobs = Job.query.filter_by(user_id=current_user.id).all()
+
+    resume_versions = []
+    resume_versions_count = 0
+    if resume:
+        versions = (
+            ResumeVersion.query.filter_by(resume_id=resume.id)
+            .order_by(ResumeVersion.created_at.desc())
+            .all()
+        )
+        resume_versions_count = len(versions)
+        if versions:
+            v = versions[0]
+            resume_versions = {
+                "count": resume_versions_count,
+                "latest": {
+                    "id": v.id,
+                    "version_name": v.version_name,
+                    "source": v.source or "manual",
+                    "ats_score": v.ats_score,
+                    "updated_at": v.updated_at.isoformat() if v.updated_at else None,
+                }
+            }
 
     active_statuses = ["applied", "oa", "interview"]
     active_applications = len([j for j in jobs if j.status in active_statuses])
@@ -263,6 +285,7 @@ def dashboard_summary():
             else current_user.email.split("@")[0],
             "has_resume": resume is not None,
             "resume_summary_set": bool(resume and resume.summary),
+            "resume_versions": resume_versions,
             "profile_completeness": profile_completeness,
             "resume_skills": resume.skills if resume and resume.skills is not None else [],
             "active_applications": active_applications,

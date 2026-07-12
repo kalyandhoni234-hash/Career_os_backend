@@ -3,16 +3,26 @@ from app.extensions import db
 
 
 class ResumeVersion(db.Model):
-    """Snapshot of a resume at a point in time for version tracking."""
+    """A resume version — can be AI-generated, tailored, or manually created."""
 
     __tablename__ = "resume_versions"
 
     id = db.Column(db.Integer, primary_key=True)
     resume_id = db.Column(db.Integer, db.ForeignKey("resumes.id"), nullable=False)
     version_name = db.Column(db.String(100), nullable=False, default="v1")
+    target_role = db.Column(db.String(255), nullable=True)
+    source = db.Column(db.String(50), default="manual")
+    ats_score = db.Column(db.Integer, nullable=True)
+    ats_data = db.Column(db.JSON, nullable=True)
+    tailored_for_job = db.Column(db.Text, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
     snapshot = db.Column(db.JSON, nullable=False)
     created_at = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc)
+    )
+    updated_at = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
 
 
