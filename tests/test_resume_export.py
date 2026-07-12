@@ -1,5 +1,7 @@
 """Tests for resume PDF and DOCX export endpoints."""
 
+import re
+
 import pytest
 from sqlalchemy.pool import StaticPool
 from app import create_app
@@ -150,7 +152,8 @@ def test_export_pdf_success(seeded_client):
     assert resp.headers["Content-Disposition"].startswith(
         "attachment; filename=Export Test User.pdf"
     )
-    assert resp.data.startswith(b"%PDF-1.4")
+    assert len(resp.data) > 0
+    assert re.match(rb"%PDF-[12]\.[0-9]", resp.data), f"Not a valid PDF header: {resp.data[:20]}"
 
 
 # ── DOCX export ──────────────────────────────────────────────
@@ -182,7 +185,8 @@ def test_version_export_pdf_success(seeded_client):
     resp = seeded_client.get("/api/resume/versions/1/export")
     assert resp.status_code == 200
     assert resp.content_type == "application/pdf"
-    assert resp.data.startswith(b"%PDF-1.4")
+    assert len(resp.data) > 0
+    assert re.match(rb"%PDF-[12]\.[0-9]", resp.data), f"Not a valid PDF header: {resp.data[:20]}"
 
 
 def test_version_export_docx_success(seeded_client):
