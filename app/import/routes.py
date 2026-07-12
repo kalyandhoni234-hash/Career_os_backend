@@ -1,7 +1,11 @@
+import logging
+
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from .models import ImportRecord
 from .import_service import ImportService
+
+logger = logging.getLogger(__name__)
 
 import_bp = Blueprint("import", __name__)
 
@@ -47,8 +51,27 @@ def import_linkedin():
     if not raw_text:
         return jsonify({"error": "raw_text is required"}), 400
 
+    if not raw_text.strip():
+        return jsonify({"error": "raw_text is empty"}), 400
+
+    logger.info("LinkedIn import requested: user=%s text_length=%d", current_user.id, len(raw_text))
+
     service = _get_service()
     record = service.process_import("linkedin", raw_text)
+
+    logger.info(
+        "LinkedIn import complete: record_id=%s status=%s pi=%s skills=%d exp=%d edu=%d",
+        record.id,
+        record.status,
+        (record.normalized_data or {}).get("personal_info", {}),
+        len((record.normalized_data or {}).get("skills", [])),
+        len((record.normalized_data or {}).get("experience", [])),
+        len((record.normalized_data or {}).get("education", [])),
+    )
+
+    if record.status == "failed":
+        logger.error("LinkedIn import failed: %s", record.error_message)
+
     return jsonify(
         {
             "record_id": record.id,
@@ -57,7 +80,7 @@ def import_linkedin():
             "confidence_scores": record.confidence_scores,
             "error_message": record.error_message,
         }
-    ), 201
+    ), 201 if record.status == "completed" else 422
 
 
 @import_bp.route("/github", methods=["POST"])

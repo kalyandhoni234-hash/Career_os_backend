@@ -28,6 +28,8 @@ class ImportService:
         self.normalizer = ImportNormalizer()
 
     def process_import(self, source: str, raw_data) -> ImportRecord:
+        logger.info("Starting import for user=%s source=%s data_length=%s", self.user_id, source, len(str(raw_data)))
+
         record = ImportRecord(
             user_id=self.user_id,
             source=source,
@@ -40,27 +42,43 @@ class ImportService:
 
         try:
             db.session.commit()
+            logger.debug("ImportRecord created: id=%s", record.id)
 
             parser_cls = PARSER_MAP.get(source)
             if not parser_cls:
                 raise ValueError(f"Unknown source: {source}")
 
             parser = parser_cls()
+            logger.debug("Using parser: %s", parser_cls.__name__)
 
             parsed = parser.parse(raw_data)
+            logger.info("Parser output: personal_info=%s, skills=%d, experience=%d, education=%d",
+                       parsed.get("personal_info", {}),
+                       len(parsed.get("skills", [])),
+                       len(parsed.get("experience", [])),
+                       len(parsed.get("education", [])))
+
             normalized = self.normalizer.normalize(parsed, source)
+            logger.info("Normalized data: personal_info=%s, skills=%d, experience=%d, education=%d",
+                       normalized.get("personal_info", {}),
+                       len(normalized.get("skills", [])),
+                       len(normalized.get("experience", [])),
+                       len(normalized.get("education", [])))
 
             confidence = self._calculate_confidence(normalized)
             record.normalized_data = normalized
             record.confidence_scores = confidence
             record.import_version = "1.0"
+            logger.debug("Confidence scores: %s", confidence)
 
             self._build_profile(record)
             self._update_resume(record)
             self._run_analyses(self.user_id)
 
             record.status = "completed"
+            logger.info("Import completed successfully: record_id=%s", record.id)
         except Exception as e:
+            logger.exception("Import failed for user=%s source=%s", self.user_id, source)
             record.status = "failed"
             record.error_message = f"{type(e).__name__}: {str(e)}"
 
