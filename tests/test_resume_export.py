@@ -132,29 +132,22 @@ def test_export_docx_404_without_resume(logged_in_client):
 # ── PDF export ───────────────────────────────────────────────
 
 
-def test_export_pdf_returns_json_error_when_unavailable(seeded_client):
-    """When WeasyPrint's native libs are missing the endpoint returns
-    a 503 JSON error instead of an HTML traceback or an OSError crash."""
+def test_export_pdf_returns_json_error_when_unavailable(seeded_client, monkeypatch):
+    """When WeasyPrint is unavailable the endpoint returns a 503 JSON error."""
+    monkeypatch.setattr("app.resume.pdf_engine._weasyprint_available", False)
     resp = seeded_client.get("/api/resume/export")
-    body = resp.get_json()
     assert resp.status_code == 503
+    body = resp.get_json()
     assert "error" in body
     assert body["error"] is not None
 
 
-def test_export_pdf_content_type_when_available(seeded_client, monkeypatch):
-    """When the PDF engine IS available the response is a PDF."""
-
-    def mock_html_to_pdf(html, name):
-        return b"%PDF-1.4 mock", None
-
-    monkeypatch.setattr("app.resume.pdf_engine.html_to_pdf", mock_html_to_pdf)
+def test_export_pdf_success(seeded_client):
+    """PDF export returns a valid PDF when WeasyPrint is available."""
     resp = seeded_client.get("/api/resume/export")
     assert resp.status_code == 200
     assert resp.content_type == "application/pdf"
     assert resp.headers["Content-Disposition"].startswith(
-        'attachment; filename=Export Test User.pdf'
-    ) or resp.headers["Content-Disposition"].startswith(
         "attachment; filename=Export Test User.pdf"
     )
     assert resp.data.startswith(b"%PDF-1.4")
@@ -184,11 +177,12 @@ def test_version_export_404_bad_version(seeded_client):
     assert resp.get_json()["error"] == "Version not found"
 
 
-def test_version_export_pdf_returns_json_error_when_unavailable(seeded_client):
-    """Version PDF export also returns a JSON error when WeasyPrint is unavailable."""
+def test_version_export_pdf_success(seeded_client):
+    """Version PDF export returns a valid PDF when WeasyPrint is available."""
     resp = seeded_client.get("/api/resume/versions/1/export")
-    assert resp.status_code == 503
-    assert "error" in resp.get_json()
+    assert resp.status_code == 200
+    assert resp.content_type == "application/pdf"
+    assert resp.data.startswith(b"%PDF-1.4")
 
 
 def test_version_export_docx_success(seeded_client):
