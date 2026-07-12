@@ -171,6 +171,26 @@ def list_integrations():
             if record and record.provider_data
             else {},
         }
+        if record and key == "linkedin":
+            pd = record.provider_data or {}
+            logger.info(
+                "LIST INTEGRATIONS linkedin: connected=%s provider_data keys=%s name=%s headline=%s vanity=%s experience=%d education=%d skills=%d",
+                entry["connected"],
+                list(pd.keys()),
+                pd.get("name", "(empty)"),
+                pd.get("headline", "(empty)"),
+                pd.get("vanity_name", "(empty)"),
+                len(pd.get("experience", [])),
+                len(pd.get("education", [])),
+                len(pd.get("skills", [])),
+            )
+            for idx, exp in enumerate(pd.get("experience", [])):
+                logger.info("LIST INTEGRATIONS linkedin experience[%d]: %s", idx, exp)
+            for idx, edu in enumerate(pd.get("education", [])):
+                logger.info("LIST INTEGRATIONS linkedin education[%d]: %s", idx, edu)
+            for idx, skill in enumerate(pd.get("skills", [])):
+                logger.info("LIST INTEGRATIONS linkedin skills[%d]: %s", idx, skill)
+
         if record:
             entry["token_health"] = _check_token_health(record)
             sync_history = (record.provider_data or {}).get("_sync_history", [])
@@ -282,6 +302,13 @@ def oauth_callback(provider):
             )
         )
 
+    logger.info(
+        "OAUTH CALLBACK: token exchange succeeded. Keys: %s, has_access_token=%s has_refresh_token=%s",
+        list(token_data.keys()),
+        "access_token" in token_data,
+        "refresh_token" in token_data,
+    )
+
     access_token = token_data.get("access_token")
     refresh_token = token_data.get("refresh_token")
     expires_in = token_data.get("expires_in")
@@ -298,6 +325,13 @@ def oauth_callback(provider):
 
     try:
         sync_result = svc.sync_data(access_token)
+        logger.info(
+            "OAUTH CALLBACK: sync_data returned. provider_user_id=%s provider_username=%s provider_email=%s provider_data_keys=%s",
+            sync_result.get("provider_user_id"),
+            sync_result.get("provider_username"),
+            sync_result.get("provider_email"),
+            list((sync_result.get("provider_data") or {}).keys()),
+        )
         if sync_result.get("provider_user_id"):
             integration.provider_user_id = sync_result["provider_user_id"]
         if sync_result.get("provider_username"):
@@ -306,9 +340,18 @@ def oauth_callback(provider):
             integration.provider_email = sync_result["provider_email"]
         if sync_result.get("provider_data"):
             existing = integration.provider_data or {}
+            logger.info(
+                "OAUTH CALLBACK: existing provider_data keys=%s values=%s",
+                list(existing.keys()),
+                {k: (v if k != "name" else "***redacted***") for k, v in existing.items()},
+            )
             if isinstance(sync_result["provider_data"], dict):
                 existing.update(sync_result["provider_data"])
             integration.provider_data = existing
+            logger.info(
+                "OAUTH CALLBACK: merged provider_data FINAL keys=%s",
+                list(integration.provider_data.keys()),
+            )
         integration.last_sync_at = datetime.now(timezone.utc).replace(tzinfo=None)
         integration.sync_status = "connected"
         _record_sync_history(integration, "success", "Initial sync completed")
@@ -317,6 +360,14 @@ def oauth_callback(provider):
         integration.sync_status = "sync_failed"
         integration.sync_error = str(e)
         _record_sync_history(integration, "failed", str(e))
+
+    logger.info(
+        "OAUTH CALLBACK: before profile_sync, integration.provider_data keys=%s experience=%d education=%d skills=%d",
+        list((integration.provider_data or {}).keys()),
+        len((integration.provider_data or {}).get("experience", [])),
+        len((integration.provider_data or {}).get("education", [])),
+        len((integration.provider_data or {}).get("skills", [])),
+    )
 
     db.session.commit()
 

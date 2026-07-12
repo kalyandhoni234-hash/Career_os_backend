@@ -121,6 +121,24 @@ def sync_profile_from_github(user_id: int, integration: Integration) -> None:
 
 def sync_profile_from_linkedin(user_id: int, integration: Integration) -> None:
     pd = integration.provider_data or {}
+    logger.info(
+        "SYNC PROFILE LINKEDIN START: user=%s provider_data_keys=%s name=%s headline=%s experience=%d education=%d skills=%d",
+        user_id,
+        list(pd.keys()),
+        pd.get("name", "(empty)"),
+        pd.get("headline", "(empty)"),
+        len(pd.get("experience", [])),
+        len(pd.get("education", [])),
+        len(pd.get("skills", [])),
+    )
+    # Log raw experience/education/skills for debugging
+    for idx, exp in enumerate(pd.get("experience", [])):
+        logger.info("SYNC PROFILE LINKEDIN experience[%d]: %s", idx, exp)
+    for idx, edu in enumerate(pd.get("education", [])):
+        logger.info("SYNC PROFILE LINKEDIN education[%d]: %s", idx, edu)
+    for idx, skill in enumerate(pd.get("skills", [])):
+        logger.info("SYNC PROFILE LINKEDIN skill[%d]: %s (type=%s)", idx, str(skill)[:200], type(skill).__name__)
+
     profile = Profile.query.filter_by(user_id=user_id).first()
     if not profile:
         profile = Profile(user_id=user_id)
@@ -153,6 +171,7 @@ def sync_profile_from_linkedin(user_id: int, integration: Integration) -> None:
                     "location": exp.get("location", ""),
                     "source_id": f"linkedin:exp:{company}:{title}",
                 })
+        logger.info("SYNC PROFILE LINKEDIN: built %d exp_items from %d raw experience entries", len(exp_items), len(experience_list))
         if exp_items:
             sync_experience_from_source(user_id, exp_items, "linkedin")
 
@@ -187,6 +206,7 @@ def sync_profile_from_linkedin(user_id: int, integration: Integration) -> None:
             if not skill_name or not isinstance(skill_name, str):
                 continue
             skill_items.append({"name": skill_name, "source_id": f"linkedin:skill:{skill_name}"})
+        logger.info("SYNC PROFILE LINKEDIN: built %d skill_items from %d raw skills", len(skill_items), len(skills_list))
         if skill_items:
             sync_skills_from_source(user_id, skill_items, "linkedin")
 
@@ -195,10 +215,12 @@ def sync_profile_from_linkedin(user_id: int, integration: Integration) -> None:
     if not resume:
         resume = Resume(user_id=user_id)
         db.session.add(resume)
+    logger.info("SYNC PROFILE LINKEDIN: resume id=%s exists=%s", resume.id if resume.id else "(new)", resume.id is not None)
 
     _sync_resume_section(resume, "full_name", pd.get("name", ""))
 
     headline_text = pd.get("headline", "")
+    logger.info("SYNC PROFILE LINKEDIN: headline_text=%s", headline_text)
     if headline_text and " at " in headline_text:
         _sync_resume_section(resume, "title", headline_text.split(" at ")[0].strip())
     elif headline_text:
