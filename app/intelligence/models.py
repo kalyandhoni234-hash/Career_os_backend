@@ -38,6 +38,23 @@ class CanonicalProject(db.Model):
         db.UniqueConstraint("user_id", "source", "source_id", name="uq_project_source"),
     )
 
+    @property
+    def technologies(self) -> list:
+        """Return technologies list from primary_language + languages.
+
+        CanonicalProject stores tech data in `primary_language` (single string)
+        and `languages` (JSON list) rather than a dedicated `technologies` column.
+        This property provides a unified view consistent with the Resume JSON
+        schema so code that expects `.technologies` works without crashing."""
+        techs: list[str] = []
+        if self.primary_language:
+            techs.append(self.primary_language)
+        if self.languages:
+            for lang in self.languages:
+                if lang not in techs:
+                    techs.append(lang)
+        return techs
+
 
 class CanonicalExperience(db.Model):
     __tablename__ = "canonical_experience"
