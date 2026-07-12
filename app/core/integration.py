@@ -89,7 +89,8 @@ def on_application_changed(user_id: int, job_id: int) -> None:
 def on_profile_changed(user_id: int) -> None:
     """Recalculate dependent data when user profile is updated.
 
-    Triggers: career-score recomputation and AI recommendation refresh.
+    Triggers: career-score recomputation, AI recommendation refresh,
+              and personalized roadmap auto-generation.
     """
     try:
         from app.career.services.career_score_service import compute_career_score
@@ -101,6 +102,21 @@ def on_profile_changed(user_id: int) -> None:
         except Exception:
             logger.warning("Recommendation generation skipped", exc_info=True)
 
-        logger.info("Integration: profile changed for user %s — score updated", user_id)
+        # Auto-generate roadmap if user has a target role and no active roadmap
+        from app.career.models import CareerProfile, Roadmap
+        cp = CareerProfile.query.filter_by(user_id=user_id).first()
+        if cp and cp.target_role:
+            active_roadmap = Roadmap.query.filter_by(
+                user_id=user_id, status="active"
+            ).first()
+            if not active_roadmap:
+                try:
+                    from app.career.services.roadmap_engine import generate_personalized_roadmap
+                    generate_personalized_roadmap(user_id, target_role=cp.target_role)
+                    logger.info("Auto-generated roadmap for user %s role=%s", user_id, cp.target_role)
+                except Exception:
+                    logger.warning("Roadmap auto-generation skipped", exc_info=True)
+
+        logger.info("Integration: profile changed for user %s — score, recommendations, roadmap updated", user_id)
     except Exception as e:
         logger.error("Integration error on_profile_changed: %s", e, exc_info=True)

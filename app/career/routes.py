@@ -26,6 +26,12 @@ from app.career.services import (
     generate_weekly_report,
     get_previous_reports,
     build_ai_profile,
+    generate_personalized_roadmap,
+    get_roadmap_with_progress,
+    update_lesson_progress,
+    get_dashboard_roadmap,
+    get_available_career_paths,
+    recommend_next_lesson,
 )
 from app.extensions import db
 
@@ -275,6 +281,99 @@ def delete_roadmap(roadmap_id):
     db.session.delete(roadmap)
     db.session.commit()
     return jsonify({"message": "Roadmap deleted"}), 200
+
+
+# ── Personalized Roadmap Engine ──────────────────────────
+
+
+@career_bp.route("/career-paths", methods=["GET"])
+@login_required
+def list_career_paths():
+    try:
+        paths = get_available_career_paths()
+        return jsonify({"paths": paths}), 200
+    except Exception as e:
+        logger.error("Failed to list career paths for user %s: %s", current_user.id, e, exc_info=True)
+        return jsonify({"error": "Failed to load career paths"}), 500
+
+
+@career_bp.route("/my-roadmap", methods=["GET"])
+@login_required
+def get_my_roadmap():
+    """Get the user's active personalized roadmap (for dashboard display)."""
+    try:
+        dashboard = get_dashboard_roadmap(current_user.id)
+        return jsonify({"roadmap": dashboard}), 200
+    except Exception as e:
+        logger.error("Failed to get dashboard roadmap for user %s: %s", current_user.id, e, exc_info=True)
+        return jsonify({"error": "Failed to load roadmap data", "roadmap": None}), 200
+
+
+@career_bp.route("/roadmaps/auto-generate", methods=["POST"])
+@login_required
+def auto_generate_personalized_roadmap():
+    """Auto-generate or refresh a personalized roadmap from onboarding data."""
+    try:
+        data = request.get_json(silent=True) or {}
+        target_role = data.get("target_role")
+        result = generate_personalized_roadmap(current_user.id, target_role=target_role)
+        if not result:
+            return jsonify({"error": "Could not generate roadmap. No target role set or no matching roadmap definition."}), 400
+        return jsonify({"roadmap": result}), 201
+    except Exception as e:
+        logger.error("Auto-generate roadmap failed for user %s: %s", current_user.id, e, exc_info=True)
+        return jsonify({"error": "Failed to generate roadmap"}), 500
+
+
+@career_bp.route("/roadmaps/<int:roadmap_id>/full", methods=["GET"])
+@login_required
+def get_full_roadmap(roadmap_id):
+    """Get a full roadmap with phases, modules, lessons and progress."""
+    try:
+        roadmap = Roadmap.query.get(roadmap_id)
+        if not roadmap or roadmap.user_id != current_user.id:
+            return jsonify({"error": "Roadmap not found"}), 404
+        result = get_roadmap_with_progress(roadmap_id)
+        if not result:
+            return jsonify({"error": "Roadmap data not available"}), 500
+        return jsonify({"roadmap": result}), 200
+    except Exception as e:
+        logger.error("Failed to get full roadmap %s for user %s: %s", roadmap_id, current_user.id, e, exc_info=True)
+        return jsonify({"error": "Failed to load roadmap details"}), 500
+
+
+@career_bp.route("/roadmaps/<int:roadmap_id>/lesson/<lesson_id>/progress", methods=["PUT"])
+@login_required
+def update_lesson_progress_endpoint(roadmap_id, lesson_id):
+    """Update progress for a specific lesson (not_started, in_progress, completed, skipped, need_revision)."""
+    try:
+        data = request.get_json(silent=True) or {}
+        status = data.get("status", "completed")
+        score = data.get("score")
+        notes = data.get("notes")
+        result = update_lesson_progress(current_user.id, roadmap_id, lesson_id, status, score, notes)
+        if not result:
+            return jsonify({"error": "Lesson or roadmap not found"}), 404
+
+        from app.core.integration import on_roadmap_progress_changed
+        on_roadmap_progress_changed(current_user.id, 0)
+
+        return jsonify({"roadmap": result}), 200
+    except Exception as e:
+        logger.error("Failed to update lesson progress for user %s: %s", current_user.id, e, exc_info=True)
+        return jsonify({"error": "Failed to update lesson progress"}), 500
+
+
+@career_bp.route("/roadmaps/<int:roadmap_id>/lesson/<lesson_id>/recommendations", methods=["GET"])
+@login_required
+def get_lesson_recommendations(roadmap_id, lesson_id):
+    """Get AI recommendations after completing a lesson."""
+    try:
+        recs = recommend_next_lesson(roadmap_id, lesson_id)
+        return jsonify(recs), 200
+    except Exception as e:
+        logger.error("Failed to get recommendations for user %s: %s", current_user.id, e, exc_info=True)
+        return jsonify({"next_lesson": None, "projects": [], "resources": []}), 200
 
 
 # ── Skill Graph ───────────────────────────────────────────

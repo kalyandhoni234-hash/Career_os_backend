@@ -1,0 +1,864 @@
+{
+  "title": "Full Stack Developer",
+  "description": "Build end-to-end web applications — frontend UI, backend APIs, databases, and deployment. This roadmap takes you from fundamentals to job-ready full stack developer.",
+  "estimated_months": 12,
+  "total_lessons": 50,
+  "phases": [
+    {
+      "id": "web-fundamentals",
+      "title": "Web Fundamentals",
+      "order": 1,
+      "modules": [
+        {
+          "id": "html-css-basics",
+          "title": "HTML & CSS Basics",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "html-structure",
+              "title": "HTML Document Structure & Elements",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": [],
+              "skills_gained": ["html", "semantic elements", "forms"],
+              "resources": [
+                {"title": "MDN HTML Basics", "url": "https://developer.mozilla.org/en-US/docs/Learn/HTML", "type": "documentation"},
+                {"title": "freeCodeCamp HTML Course", "url": "https://www.freecodecamp.org/learn/2022/responsive-web-design/", "type": "course"}
+              ],
+              "practice_labs": [
+                {"title": "Codecademy HTML Course", "url": "https://www.codecademy.com/learn/learn-html", "platform": "codecademy"}
+              ],
+              "projects": [
+                {"title": "Build a Personal Profile Page", "description": "Create a semantic HTML page with headers, navigation, sections, forms, and tables"}
+              ],
+              "quiz": [
+                {"question": "Which HTML element is used for the main navigation block?", "options": ["<div>", "<header>", "<nav>", "<section>"], "correct_index": 2, "explanation": "The <nav> element represents a section containing navigation links."}
+              ]
+            },
+            {
+              "id": "css-fundamentals",
+              "title": "CSS Selectors, Box Model & Layout",
+              "difficulty": "beginner",
+              "estimated_minutes": 90,
+              "prerequisites": ["html-structure"],
+              "skills_gained": ["css selectors", "box model", "flexbox", "grid"],
+              "resources": [
+                {"title": "MDN CSS First Steps", "url": "https://developer.mozilla.org/en-US/docs/Learn/CSS/First_steps", "type": "documentation"},
+                {"title": "CSS-Tricks Flexbox Guide", "url": "https://css-tricks.com/snippets/css/a-guide-to-flexbox/", "type": "article"},
+                {"title": "Grid Garden Game", "url": "https://cssgridgarden.com/", "type": "tool"}
+              ],
+              "practice_labs": [
+                {"title": "Codecademy CSS Course", "url": "https://www.codecademy.com/learn/learn-css", "platform": "codecademy"}
+              ],
+              "projects": [
+                {"title": "Build a Product Landing Page", "description": "Create a responsive landing page using CSS Flexbox and Grid layout"}
+              ],
+              "quiz": [
+                {"question": "What does the CSS box model property 'box-sizing: border-box' do?", "options": ["Removes padding", "Includes padding and border in the element's total width/height", "Adds a border to the box", "Removes margin"], "correct_index": 1, "explanation": "border-box makes the element's width and height include padding and border, not just the content."}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "javascript-basics",
+          "title": "JavaScript Basics",
+          "order": 2,
+          "lessons": [
+            {
+              "id": "js-variables-functions",
+              "title": "Variables, Data Types & Functions",
+              "difficulty": "beginner",
+              "estimated_minutes": 90,
+              "prerequisites": ["css-fundamentals"],
+              "skills_gained": ["javascript", "variables", "functions", "operators"],
+              "resources": [
+                {"title": "MDN JavaScript Guide", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide", "type": "documentation"},
+                {"title": "JavaScript.info", "url": "https://javascript.info/", "type": "course"}
+              ],
+              "practice_labs": [
+                {"title": "Codecademy JavaScript Course", "url": "https://www.codecademy.com/learn/introduction-to-javascript", "platform": "codecademy"},
+                {"title": "freeCodeCamp JS Algorithms", "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures-v8/", "platform": "freecodecamp"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What is the difference between 'let' and 'const'?", "options": ["No difference", "let is block-scoped, const cannot be reassigned", "const is block-scoped, let cannot be reassigned", "let is global, const is local"], "correct_index": 1, "explanation": "Both are block-scoped, but 'const' cannot be reassigned after declaration while 'let' can be."}
+              ]
+            },
+            {
+              "id": "js-arrays-objects",
+              "title": "Arrays, Objects & Control Flow",
+              "difficulty": "beginner",
+              "estimated_minutes": 90,
+              "prerequisites": ["js-variables-functions"],
+              "skills_gained": ["arrays", "objects", "loops", "conditionals"],
+              "resources": [
+                {"title": "MDN Array Reference", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array", "type": "documentation"},
+                {"title": "JavaScript.info Objects", "url": "https://javascript.info/object", "type": "course"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Build a Todo List App", "description": "Create a browser-based todo list with add, delete, and filter functionality using vanilla JS"}
+              ],
+              "quiz": [
+                {"question": "Which Array method creates a new array with elements that pass a test?", "options": ["map()", "forEach()", "filter()", "reduce()"], "correct_index": 2, "explanation": "filter() creates a new array with all elements that pass the test implemented by the provided function."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "git-version-control",
+      "title": "Git & Version Control",
+      "order": 2,
+      "modules": [
+        {
+          "id": "git-fundamentals",
+          "title": "Git Fundamentals",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "git-basics",
+              "title": "Git Init, Add, Commit & History",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": [],
+              "skills_gained": ["git", "version control", "commit history"],
+              "resources": [
+                {"title": "Git Official Documentation", "url": "https://git-scm.com/doc", "type": "documentation"},
+                {"title": "Learn Git Branching (Interactive)", "url": "https://learngitbranching.js.org/", "type": "course"}
+              ],
+              "practice_labs": [
+                {"title": "Codecademy Git Course", "url": "https://www.codecademy.com/learn/learn-git", "platform": "codecademy"}
+              ],
+              "projects": [
+                {"title": "Initialize and Track a Project", "description": "Create a project repository, make multiple commits with meaningful messages, and review history"}
+              ],
+              "quiz": [
+                {"question": "What does 'git add' do?", "options": ["Commits changes", "Stages changes for the next commit", "Creates a new branch", "Merges branches"], "correct_index": 1, "explanation": "git add stages changes, preparing them to be included in the next commit."}
+              ]
+            },
+            {
+              "id": "git-branching",
+              "title": "Branching, Merging & GitHub",
+              "difficulty": "beginner",
+              "estimated_minutes": 90,
+              "prerequisites": ["git-basics"],
+              "skills_gained": ["branching", "merging", "pull requests", "github"],
+              "resources": [
+                {"title": "GitHub Docs", "url": "https://docs.github.com/en", "type": "documentation"},
+                {"title": "Git Branching Model", "url": "https://nvie.com/posts/a-successful-git-branching-model/", "type": "article"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Collaborative Project with Pull Requests", "description": "Create a GitHub repo, set up branch protection rules, and submit a pull request from a feature branch"}
+              ],
+              "quiz": [
+                {"question": "What is the recommended way to integrate changes from one branch into another?", "options": ["git rebase", "git merge", "git clone", "git stash"], "correct_index": 1, "explanation": "git merge integrates changes from one branch into another while preserving history."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "javascript-deep-dive",
+      "title": "JavaScript Deep Dive",
+      "order": 3,
+      "modules": [
+        {
+          "id": "modern-javascript",
+          "title": "Modern JavaScript (ES6+)",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "es6-features",
+              "title": "ES6+ Features: Arrow Functions, Destructuring, Spread",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["js-arrays-objects"],
+              "skills_gained": ["es6", "arrow functions", "destructuring", "template literals"],
+              "resources": [
+                {"title": "ES6 Features Overview (MDN)", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Functions/Arrow_functions", "type": "documentation"},
+                {"title": "ES6 Tutorial (W3Schools)", "url": "https://www.w3schools.com/js/js_es6.asp", "type": "tutorial"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": [
+                {"question": "What is the key difference between an arrow function and a regular function?", "options": ["Arrow functions run faster", "Arrow functions do not have their own 'this' binding", "Arrow functions cannot take parameters", "Arrow functions are always anonymous"], "correct_index": 1, "explanation": "Arrow functions inherit 'this' from the enclosing lexical scope and do not have their own 'this' binding."}
+              ]
+            },
+            {
+              "id": "async-javascript",
+              "title": "Promises, Async/Await & Fetch API",
+              "difficulty": "intermediate",
+              "estimated_minutes": 120,
+              "prerequisites": ["es6-features"],
+              "skills_gained": ["promises", "async/await", "fetch api", "asynchronous programming"],
+              "resources": [
+                {"title": "MDN Using Promises", "url": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Using_promises", "type": "documentation"},
+                {"title": "JavaScript.info Promises", "url": "https://javascript.info/promise-basics", "type": "course"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Weather App with Fetch API", "description": "Build a weather application that fetches data from an external API and displays current conditions"}
+              ],
+              "quiz": [
+                {"question": "What does 'await' do in an async function?", "options": ["Pauses the entire program", "Pauses execution of the async function until the Promise settles", "Makes the function synchronous", "Catches errors automatically"], "correct_index": 1, "explanation": "await pauses execution of the enclosing async function until the Promise resolves, then returns the result."}
+              ]
+            },
+            {
+              "id": "dom-manipulation",
+              "title": "DOM Manipulation & Event Handling",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["es6-features"],
+              "skills_gained": ["dom", "event listeners", "event delegation", "dynamic ui"],
+              "resources": [
+                {"title": "MDN Introduction to the DOM", "url": "https://developer.mozilla.org/en-US/docs/Web/API/Document_Object_Model/Introduction", "type": "documentation"},
+                {"title": "JavaScript.info Events", "url": "https://javascript.info/introduction-browser-events", "type": "course"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Interactive Quiz App", "description": "Build a multiple-choice quiz application with score tracking and dynamic DOM updates"}
+              ],
+              "quiz": [
+                {"question": "What is event delegation?", "options": ["Removing all event listeners", "Attaching a single event listener to a parent to handle events from children", "Using setTimeout for events", "Preventing default event behavior"], "correct_index": 1, "explanation": "Event delegation uses a single event listener on a parent element to handle events from dynamically added child elements."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "frontend-frameworks",
+      "title": "Frontend Frameworks (React)",
+      "order": 4,
+      "modules": [
+        {
+          "id": "react-fundamentals",
+          "title": "React Fundamentals",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "react-setup",
+              "title": "React Setup & JSX",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": ["es6-features"],
+              "skills_gained": ["react", "jsx", "create-react-app", "vite"],
+              "resources": [
+                {"title": "React Official Tutorial", "url": "https://react.dev/learn", "type": "course"},
+                {"title": "Scrimba React Course (Free)", "url": "https://scrimba.com/learn/learnreact", "type": "course"}
+              ],
+              "practice_labs": [
+                {"title": "Codecademy React Course", "url": "https://www.codecademy.com/learn/react-101", "platform": "codecademy"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What is JSX?", "options": ["A new programming language", "A syntax extension for JavaScript that looks like HTML", "A CSS preprocessor", "A testing framework"], "correct_index": 1, "explanation": "JSX is a syntax extension for JavaScript that lets you write HTML-like code within JavaScript, which gets compiled to React.createElement calls."}
+              ]
+            },
+            {
+              "id": "react-components",
+              "title": "Components & Props",
+              "difficulty": "beginner",
+              "estimated_minutes": 90,
+              "prerequisites": ["react-setup"],
+              "skills_gained": ["components", "props", "component composition"],
+              "resources": [
+                {"title": "React Docs: Components", "url": "https://react.dev/learn/thinking-in-react", "type": "course"},
+                {"title": "freeCodeCamp React Course", "url": "https://www.freecodecamp.org/learn/front-end-development-libraries/", "type": "course"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Build a Profile Card App", "description": "Create a React app with reusable components that display user profile cards from a data array"}
+              ],
+              "quiz": [
+                {"question": "How do you pass data from a parent component to a child in React?", "options": ["Using state", "Using props", "Using global variables", "Using localStorage"], "correct_index": 1, "explanation": "Props (short for properties) are used to pass data from parent to child components in a one-way data flow."}
+              ]
+            },
+            {
+              "id": "react-hooks",
+              "title": "useState, useEffect & Custom Hooks",
+              "difficulty": "intermediate",
+              "estimated_minutes": 120,
+              "prerequisites": ["react-components"],
+              "skills_gained": ["hooks", "useState", "useEffect", "custom hooks"],
+              "resources": [
+                {"title": "React Docs: Hooks", "url": "https://react.dev/reference/react", "type": "documentation"},
+                {"title": "Kent C. Dodds: Custom Hooks", "url": "https://kentcdodds.com/blog/understanding-react-hooks", "type": "article"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Build a Search & Filter App", "description": "Create an app that fetches data from an API, supports search filtering, and manages loading/error states with hooks"}
+              ],
+              "quiz": [
+                {"question": "When does useEffect run by default?", "options": ["Before the component renders", "After every render", "Only on mount", "Only on unmount"], "correct_index": 1, "explanation": "By default, useEffect runs after every render, but you can control this with the dependency array."}
+              ]
+            },
+            {
+              "id": "react-routing",
+              "title": "React Router & Client-Side Routing",
+              "difficulty": "intermediate",
+              "estimated_minutes": 60,
+              "prerequisites": ["react-hooks"],
+              "skills_gained": ["react router", "routing", "navigation", "dynamic routes"],
+              "resources": [
+                {"title": "React Router Docs", "url": "https://reactrouter.com/en/main/start/tutorial", "type": "course"},
+                {"title": "Net Ninja React Router Tutorial", "url": "https://www.youtube.com/playlist?list=PL4cUxeGkcC9hOKAYXWQjgvvUEdojvGZqz", "type": "video"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Multi-Page Portfolio Site", "description": "Build a portfolio website with client-side routing between Home, Projects, About, and Contact pages"}
+              ],
+              "quiz": [
+                {"question": "What React Router component is used to define a route?", "options": ["<Link>", "<Route>", "<Navigate>", "<Router>"], "correct_index": 1, "explanation": "<Route> maps a URL path to a component that should be rendered when the URL matches."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "css-frameworks",
+      "title": "CSS Frameworks",
+      "order": 5,
+      "modules": [
+        {
+          "id": "tailwind-css",
+          "title": "Tailwind CSS & Responsive Design",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "tailwind-setup",
+              "title": "Tailwind CSS Fundamentals",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": ["css-fundamentals"],
+              "skills_gained": ["tailwind css", "utility classes", "responsive design"],
+              "resources": [
+                {"title": "Tailwind CSS Official Docs", "url": "https://tailwindcss.com/docs/installation", "type": "documentation"},
+                {"title": "Tailwind CSS Tutorial (Net Ninja)", "url": "https://www.youtube.com/playlist?list=PL4cUxeGkcC9gpXORlEHjc5bgnIi5HEGhw", "type": "video"}
+              ],
+              "practice_labs": [
+                {"title": "Tailwind Play", "url": "https://play.tailwindcss.com/", "platform": "tailwind"}
+              ],
+              "projects": [
+                {"title": "Responsive Dashboard UI", "description": "Build a fully responsive admin dashboard layout using Tailwind CSS utility classes"}
+              ],
+              "quiz": [
+                {"question": "How do you make an element visible only on medium screens and above in Tailwind?", "options": ["md:block", "visible-md", "show-md", "screen-md:block"], "correct_index": 0, "explanation": "Tailwind uses responsive prefixes like 'md:' to apply styles at specific breakpoints. 'md:block' applies display: block at the medium breakpoint."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "backend-fundamentals",
+      "title": "Backend Fundamentals",
+      "order": 6,
+      "modules": [
+        {
+          "id": "node-express",
+          "title": "Node.js & Express",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "node-intro",
+              "title": "Node.js Fundamentals & Modules",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": ["js-variables-functions"],
+              "skills_gained": ["node.js", "npm", "modules", "event loop"],
+              "resources": [
+                {"title": "Node.js Official Docs", "url": "https://nodejs.org/en/docs/guides", "type": "documentation"},
+                {"title": "The Net Ninja Node.js Tutorial", "url": "https://www.youtube.com/playlist?list=PL4cUxeGkcC9jszHLDg2yhVtvSzLUCUV1v", "type": "video"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": [
+                {"question": "What does npm stand for?", "options": ["Node Package Manager", "New Project Manager", "Node Program Manager", "Network Package Manager"], "correct_index": 0, "explanation": "npm stands for Node Package Manager and is the default package manager for Node.js."}
+              ]
+            },
+            {
+              "id": "express-apis",
+              "title": "Express.js & REST API Design",
+              "difficulty": "intermediate",
+              "estimated_minutes": 120,
+              "prerequisites": ["node-intro"],
+              "skills_gained": ["express", "rest api", "routing", "middleware"],
+              "resources": [
+                {"title": "Express.js Official Guide", "url": "https://expressjs.com/en/guide/routing.html", "type": "documentation"},
+                {"title": "RESTful API Design Best Practices", "url": "https://restfulapi.net/", "type": "article"}
+              ],
+              "practice_labs": [
+                {"title": "Postman Learning Center", "url": "https://learning.postman.com/", "platform": "postman"}
+              ],
+              "projects": [
+                {"title": "Build a REST API for a Blog", "description": "Create a CRUD REST API for blog posts with Express.js, including proper HTTP methods, status codes, and error handling"}
+              ],
+              "quiz": [
+                {"question": "What HTTP status code indicates a resource was successfully created?", "options": ["200", "201", "204", "301"], "correct_index": 1, "explanation": "HTTP 201 Created is returned when a new resource is successfully created as a result of a POST request."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "databases",
+      "title": "Databases",
+      "order": 7,
+      "modules": [
+        {
+          "id": "sql-fundamentals",
+          "title": "SQL & PostgreSQL",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "sql-basics",
+              "title": "SQL Queries & Database Design",
+              "difficulty": "beginner",
+              "estimated_minutes": 90,
+              "prerequisites": [],
+              "skills_gained": ["sql", "select", "insert", "update", "delete", "joins"],
+              "resources": [
+                {"title": "PostgreSQL Official Docs", "url": "https://www.postgresql.org/docs/current/tutorial.html", "type": "documentation"},
+                {"title": "SQLBolt Interactive Tutorial", "url": "https://sqlbolt.com/", "type": "course"},
+                {"title": "Mode SQL Tutorial", "url": "https://mode.com/sql-tutorial/", "type": "course"}
+              ],
+              "practice_labs": [
+                {"title": "HackerRank SQL Practice", "url": "https://www.hackerrank.com/domains/sql", "platform": "hackerrank"},
+                {"title": "SQLZoo", "url": "https://sqlzoo.net/", "platform": "web"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What SQL clause is used to combine rows from two tables?", "options": ["GROUP BY", "JOIN", "ORDER BY", "HAVING"], "correct_index": 1, "explanation": "JOIN is used to combine rows from two or more tables based on a related column between them."}
+              ]
+            },
+            {
+              "id": "prisma-orm",
+              "title": "Prisma ORM & Database Integration",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["sql-basics"],
+              "skills_gained": ["prisma", "orm", "schema design", "migrations"],
+              "resources": [
+                {"title": "Prisma Official Docs", "url": "https://www.prisma.io/docs/getting-started", "type": "documentation"},
+                {"title": "Prisma with Express Tutorial", "url": "https://www.prisma.io/docs/guides/frameworks/express", "type": "tutorial"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Blog API with Prisma", "description": "Extend the blog REST API to use PostgreSQL through Prisma ORM with proper relations, migrations, and seeding"}
+              ],
+              "quiz": [
+                {"question": "What command generates a Prisma migration?", "options": ["prisma migrate dev", "prisma db push", "prisma generate", "prisma schema"], "correct_index": 0, "explanation": "prisma migrate dev creates a migration from changes in your Prisma schema and applies it to the development database."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "auth-security",
+      "title": "Authentication & Security",
+      "order": 8,
+      "modules": [
+        {
+          "id": "authentication",
+          "title": "Authentication & Authorization",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "jwt-auth",
+              "title": "JWT Authentication & bcrypt",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["express-apis"],
+              "skills_gained": ["jwt", "authentication", "bcrypt", "password hashing"],
+              "resources": [
+                {"title": "JWT.io Introduction", "url": "https://jwt.io/introduction", "type": "documentation"},
+                {"title": "Auth0 JWT Best Practices", "url": "https://auth0.com/blog/node-js-and-express-tutorial-building-and-securing-restful-apis/", "type": "article"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "User Auth System", "description": "Build registration and login endpoints with JWT tokens, password hashing with bcrypt, and protected routes"}
+              ],
+              "quiz": [
+                {"question": "What are the three parts of a JWT token?", "options": ["Header, Payload, Signature", "Key, Value, Expiry", "User, Token, Secret", "ID, Data, Hash"], "correct_index": 0, "explanation": "A JWT consists of three parts separated by dots: Header (algorithm), Payload (claims), and Signature (verification)."}
+              ]
+            },
+            {
+              "id": "web-security",
+              "title": "Web Security Best Practices",
+              "difficulty": "intermediate",
+              "estimated_minutes": 60,
+              "prerequisites": ["jwt-auth"],
+              "skills_gained": ["cors", "helmet", "rate limiting", "xss prevention"],
+              "resources": [
+                {"title": "OWASP Top 10", "url": "https://owasp.org/www-project-top-ten/", "type": "documentation"},
+                {"title": "Helmet.js Docs", "url": "https://helmetjs.github.io/", "type": "documentation"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": [
+                {"question": "What does the CORS header 'Access-Control-Allow-Origin' control?", "options": ["Database access", "Which domains can make cross-origin requests", "File system permissions", "Cookie settings"], "correct_index": 1, "explanation": "CORS Access-Control-Allow-Origin specifies which external origins are permitted to access the resource."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "fullstack-integration",
+      "title": "Full Stack Integration",
+      "order": 9,
+      "modules": [
+        {
+          "id": "connecting-frontend-backend",
+          "title": "Connecting Frontend to Backend",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "api-integration",
+              "title": "API Integration in React",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["react-hooks", "express-apis"],
+              "skills_gained": ["api integration", "axios", "error handling", "cors"],
+              "resources": [
+                {"title": "React Data Fetching Patterns", "url": "https://react.dev/reference/react/useEffect#fetching-data", "type": "documentation"},
+                {"title": "Axios Documentation", "url": "https://axios-http.com/docs/intro", "type": "documentation"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Full Stack Task Manager", "description": "Build a task management app with a React frontend and Express backend, connected via REST API with JWT authentication"}
+              ],
+              "quiz": [
+                {"question": "Why is a CORS middleware needed on the backend when the frontend is on a different port?", "options": ["To improve performance", "To allow cross-origin HTTP requests", "To prevent SQL injection", "To compress responses"], "correct_index": 1, "explanation": "CORS (Cross-Origin Resource Sharing) middleware is needed to allow browsers to make requests to a different origin than the one that served the page."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "typescript",
+      "title": "TypeScript",
+      "order": 10,
+      "modules": [
+        {
+          "id": "typescript-fundamentals",
+          "title": "TypeScript Basics",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "ts-types",
+              "title": "Types, Interfaces & Generics",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["js-arrays-objects"],
+              "skills_gained": ["typescript", "types", "interfaces", "generics"],
+              "resources": [
+                {"title": "TypeScript Official Handbook", "url": "https://www.typescriptlang.org/docs/handbook/", "type": "documentation"},
+                {"title": "TypeScript Tutorial (freeCodeCamp)", "url": "https://www.freecodecamp.org/news/learn-typescript-beginners-guide/", "type": "article"}
+              ],
+              "practice_labs": [
+                {"title": "TypeScript Playground", "url": "https://www.typescriptlang.org/play", "platform": "typescript"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What is the difference between 'any' and 'unknown' in TypeScript?", "options": ["They are identical", "any disables type checking, unknown requires type narrowing", "unknown disables type checking", "any is for objects, unknown is for primitives"], "correct_index": 1, "explanation": "'any' bypasses type checking entirely, while 'unknown' forces you to narrow the type before using it, which is safer."}
+              ]
+            },
+            {
+              "id": "ts-react",
+              "title": "TypeScript with React",
+              "difficulty": "intermediate",
+              "estimated_minutes": 60,
+              "prerequisites": ["ts-types", "react-hooks"],
+              "skills_gained": ["typed react", "props typing", "typed hooks"],
+              "resources": [
+                {"title": "React TypeScript Cheatsheet", "url": "https://react-typescript-cheatsheet.netlify.app/", "type": "documentation"},
+                {"title": "TypeScript with React (Official)", "url": "https://react.dev/learn/typescript", "type": "course"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Convert a React Project to TypeScript", "description": "Take an existing React project and refactor it to use TypeScript with proper type definitions for props, state, and API responses"}
+              ],
+              "quiz": [
+                {"question": "How do you type props in a React function component?", "options": ["props: {name: string}", "type Props = {name: string}", "interface Props {name: string}", "All of the above work"], "correct_index": 3, "explanation": "You can use type aliases, interfaces, or inline type annotations to type props in React components."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "testing",
+      "title": "Testing",
+      "order": 11,
+      "modules": [
+        {
+          "id": "unit-integration-testing",
+          "title": "Unit & Integration Testing",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "jest-testing",
+              "title": "Jest & React Testing Library",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["react-hooks"],
+              "skills_gained": ["jest", "react testing library", "unit testing", "integration testing"],
+              "resources": [
+                {"title": "Jest Official Docs", "url": "https://jestjs.io/docs/getting-started", "type": "documentation"},
+                {"title": "React Testing Library Docs", "url": "https://testing-library.com/docs/react-testing-library/intro/", "type": "documentation"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Add Tests to React Project", "description": "Write unit and integration tests for a React application covering components, hooks, and API calls"}
+              ],
+              "quiz": [
+                {"question": "What does React Testing Library encourage?", "options": ["Testing implementation details", "Testing from the user's perspective", "Testing Redux store directly", "Testing CSS styles"], "correct_index": 1, "explanation": "React Testing Library encourages testing how the user interacts with components rather than testing implementation details."}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "e2e-testing",
+          "title": "End-to-End Testing",
+          "order": 2,
+          "lessons": [
+            {
+              "id": "cypress-testing",
+              "title": "Cypress E2E Testing",
+              "difficulty": "intermediate",
+              "estimated_minutes": 60,
+              "prerequisites": ["jest-testing"],
+              "skills_gained": ["cypress", "e2e testing", "test automation"],
+              "resources": [
+                {"title": "Cypress Official Docs", "url": "https://docs.cypress.io/guides/getting-started/installing-cypress", "type": "documentation"},
+                {"title": "Cypress Best Practices", "url": "https://docs.cypress.io/guides/references/best-practices", "type": "documentation"}
+              ],
+              "practice_labs": [
+                {"title": "Cypress Real World App Tests", "url": "https://github.com/cypress-io/cypress-realworld-app", "platform": "github"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What is the main advantage of Cypress over Selenium?", "options": ["It supports more browsers", "It runs inside the browser with time travel debugging", "It uses Java", "It requires no setup"], "correct_index": 1, "explanation": "Cypress runs inside the browser and provides time travel debugging, automatic waiting, and screenshots/videos of test runs."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "docker-deployment",
+      "title": "Docker & Deployment",
+      "order": 12,
+      "modules": [
+        {
+          "id": "docker",
+          "title": "Docker Fundamentals",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "docker-intro",
+              "title": "Docker & Containerization",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["node-intro"],
+              "skills_gained": ["docker", "containers", "dockerfile", "docker-compose"],
+              "resources": [
+                {"title": "Docker Official Getting Started", "url": "https://docs.docker.com/get-started/", "type": "documentation"},
+                {"title": "Docker for Developers (freeCodeCamp)", "url": "https://www.youtube.com/watch?v=fqMOX6JJhGo", "type": "video"}
+              ],
+              "practice_labs": [
+                {"title": "Play with Docker", "url": "https://labs.play-with-docker.com/", "platform": "docker"}
+              ],
+              "projects": [
+                {"title": "Containerize a Full Stack App", "description": "Write Dockerfiles and docker-compose.yml to containerize a React + Express + PostgreSQL application"}
+              ],
+              "quiz": [
+                {"question": "What is the difference between a Docker image and a container?", "options": ["They are the same thing", "An image is a template, a container is a running instance of an image", "A container is a template, an image is a running instance", "Images are for Linux, containers are for Windows"], "correct_index": 1, "explanation": "A Docker image is a read-only template with instructions for creating a container, while a container is a runnable instance of an image."}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cicd-deployment",
+          "title": "CI/CD & Cloud Deployment",
+          "order": 2,
+          "lessons": [
+            {
+              "id": "cicd-pipeline",
+              "title": "CI/CD Pipelines",
+              "difficulty": "intermediate",
+              "estimated_minutes": 60,
+              "prerequisites": ["docker-intro", "git-branching"],
+              "skills_gained": ["ci/cd", "github actions", "automated testing", "deployment"],
+              "resources": [
+                {"title": "GitHub Actions Docs", "url": "https://docs.github.com/en/actions", "type": "documentation"},
+                {"title": "Introduction to CI/CD (Atlassian)", "url": "https://www.atlassian.com/continuous-delivery/principles/continuous-integration-vs-delivery-vs-deployment", "type": "article"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Set Up CI/CD Pipeline", "description": "Configure a GitHub Actions workflow that runs tests, builds the Docker image, and deploys to a cloud platform on push to main"}
+              ],
+              "quiz": [
+                {"question": "What is the purpose of a CI/CD pipeline?", "options": ["To write code", "To automate building, testing, and deploying applications", "To manage databases", "To design UI"], "correct_index": 1, "explanation": "A CI/CD pipeline automates the process of building, testing, and deploying code changes to ensure reliable and fast delivery."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "advanced-topics",
+      "title": "Advanced Topics",
+      "order": 13,
+      "modules": [
+        {
+          "id": "graphql-websockets",
+          "title": "GraphQL & WebSockets",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "graphql-intro",
+              "title": "GraphQL Fundamentals",
+              "difficulty": "advanced",
+              "estimated_minutes": 90,
+              "prerequisites": ["express-apis"],
+              "skills_gained": ["graphql", "queries", "mutations", "resolvers"],
+              "resources": [
+                {"title": "GraphQL Official Docs", "url": "https://graphql.org/learn/", "type": "documentation"},
+                {"title": "Apollo Server Docs", "url": "https://www.apollographql.com/docs/apollo-server/", "type": "documentation"}
+              ],
+              "practice_labs": [
+                {"title": "GraphQL Countries API", "url": "https://countries.trevorblades.com/", "platform": "web"}
+              ],
+              "projects": [
+                {"title": "GraphQL API for a Bookstore", "description": "Build a GraphQL API with Apollo Server that supports querying books, authors, and reviews with nested resolvers"}
+              ],
+              "quiz": [
+                {"question": "What is a key advantage of GraphQL over REST?", "options": ["It's always faster", "Clients can request exactly the data they need in a single request", "It doesn't need authentication", "It uses less bandwidth by default"], "correct_index": 1, "explanation": "GraphQL allows clients to specify exactly which fields they need, eliminating over-fetching and under-fetching common with REST endpoints."}
+              ]
+            },
+            {
+              "id": "caching",
+              "title": "Redis & Caching Strategies",
+              "difficulty": "advanced",
+              "estimated_minutes": 60,
+              "prerequisites": ["express-apis"],
+              "skills_gained": ["redis", "caching", "session storage", "performance"],
+              "resources": [
+                {"title": "Redis Official Docs", "url": "https://redis.io/docs/", "type": "documentation"},
+                {"title": "Caching Strategies (AWS)", "url": "https://docs.aws.amazon.com/whitepapers/latest/caching-strategies/caching-strategies.html", "type": "article"}
+              ],
+              "practice_labs": [
+                {"title": "Redis University", "url": "https://university.redis.com/", "platform": "redis"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What is cache invalidation?", "options": ["Adding more cache", "The process of removing or updating cached data when it becomes stale", "Deleting the cache server", "Compressing cached data"], "correct_index": 1, "explanation": "Cache invalidation ensures that stale or outdated cached data is removed or updated so users see current information."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "portfolio",
+      "title": "Portfolio Project",
+      "order": 14,
+      "modules": [
+        {
+          "id": "capstone-project",
+          "title": "Full Stack Capstone Project",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "portfolio-build",
+              "title": "Build & Deploy a Full-Stack Application",
+              "difficulty": "advanced",
+              "estimated_minutes": 360,
+              "prerequisites": ["api-integration", "prisma-orm", "jwt-auth", "docker-intro"],
+              "skills_gained": ["full stack development", "system design", "deployment", "project management"],
+              "resources": [
+                {"title": "Vercel Deployment Docs", "url": "https://vercel.com/docs", "type": "documentation"},
+                {"title": "Railway Deployment Docs", "url": "https://docs.railway.app/", "type": "documentation"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Full Stack E-Commerce App", "description": "Build and deploy a complete e-commerce platform with user authentication, product catalog, shopping cart, payment integration (Stripe), order management, and an admin dashboard"},
+                {"title": "Create a Technical README", "description": "Write comprehensive documentation including architecture diagrams, setup instructions, API documentation, and deployment guide"}
+              ],
+              "quiz": [
+                {"question": "What is the recommended order for deploying a full-stack application?", "options": ["Frontend first, then database, then backend", "Database first, then backend, then frontend", "All at the same time", "Backend first, then frontend, then database"], "correct_index": 1, "explanation": "The recommended deployment order is: database first (since the backend depends on it), then backend API (since the frontend depends on it), then frontend."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "resume-interview",
+      "title": "Resume & Interview Prep",
+      "order": 15,
+      "modules": [
+        {
+          "id": "resume-portfolio",
+          "title": "Resume & Portfolio",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "resume-writing",
+              "title": "Writing a Full Stack Developer Resume",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": [],
+              "skills_gained": ["resume writing", "portfolio", "personal branding"],
+              "resources": [
+                {"title": "Full Stack Developer Resume Guide", "url": "https://www.resumebuilder.com/full-stack-developer-resume/", "type": "article"},
+                {"title": "GitHub Portfolio Best Practices", "url": "https://docs.github.com/en/account-and-profile/setting-up-and-managing-your-github-profile", "type": "documentation"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": []
+            }
+          ]
+        },
+        {
+          "id": "interview-preparation",
+          "title": "Interview Preparation",
+          "order": 2,
+          "lessons": [
+            {
+              "id": "technical-interview",
+              "title": "Full Stack Technical Interview Practice",
+              "difficulty": "intermediate",
+              "estimated_minutes": 120,
+              "prerequisites": [],
+              "skills_gained": ["technical interviews", "system design", "coding challenges"],
+              "resources": [
+                {"title": "LeetCode Full Stack Problems", "url": "https://leetcode.com/", "type": "platform"},
+                {"title": "Full Stack Interview Questions (GitHub)", "url": "https://github.com/yangshun/tech-interview-handbook", "type": "github"}
+              ],
+              "practice_labs": [
+                {"title": "LeetCode Practice", "url": "https://leetcode.com/", "platform": "leetcode"},
+                {"title": "HackerRank Practice", "url": "https://www.hackerrank.com/", "platform": "hackerrank"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What is the difference between REST and GraphQL?", "options": ["They are the same", "REST uses multiple endpoints for different resources, GraphQL uses a single endpoint", "GraphQL uses multiple endpoints, REST uses one", "REST is only for JavaScript"], "correct_index": 1, "explanation": "REST typically uses multiple endpoints for different resources (e.g., /users, /posts), while GraphQL exposes a single endpoint that handles all queries and mutations."}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

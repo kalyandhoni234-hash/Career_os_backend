@@ -1,0 +1,844 @@
+{
+  "title": "AI Engineer",
+  "description": "Design, train, deploy, and maintain machine learning models and AI systems — from classical ML to large language models and generative AI.",
+  "estimated_months": 14,
+  "total_lessons": 55,
+  "phases": [
+    {
+      "id": "python-for-ai",
+      "title": "Python for AI/ML",
+      "order": 1,
+      "modules": [
+        {
+          "id": "python-basics",
+          "title": "Python Programming Basics",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "python-syntax",
+              "title": "Python Syntax, Data Types & Control Flow",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": [],
+              "skills_gained": ["python", "variables", "loops", "conditionals"],
+              "resources": [
+                {"title": "Python.org Official Tutorial", "url": "https://docs.python.org/3/tutorial/", "type": "documentation"},
+                {"title": "Automate the Boring Stuff (Free)", "url": "https://automatetheboringstuff.com/", "type": "book"}
+              ],
+              "practice_labs": [
+                {"title": "Replit Python Playground", "url": "https://replit.com/languages/python3", "platform": "replit"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "Which data structure is ordered and mutable in Python?", "options": ["Tuple", "Set", "List", "Dictionary"], "correct_index": 2, "explanation": "Lists are ordered, mutable sequences in Python. Tuples are ordered but immutable."}
+              ]
+            },
+            {
+              "id": "python-oo-functions",
+              "title": "Functions, OOP & Modules",
+              "difficulty": "beginner",
+              "estimated_minutes": 90,
+              "prerequisites": ["python-syntax"],
+              "skills_gained": ["functions", "classes", "inheritance", "modules", "pip"],
+              "resources": [
+                {"title": "Real Python OOP Guide", "url": "https://realpython.com/python3-object-oriented-programming/", "type": "article"},
+                {"title": "Python Module of the Week", "url": "https://pymotw.com/3/", "type": "documentation"}
+              ],
+              "practice_labs": [
+                {"title": "Codecademy Python 3 Course", "url": "https://www.codecademy.com/learn/learn-python-3", "platform": "codecademy"}
+              ],
+              "projects": [
+                {"title": "CLI Calculator with OOP", "description": "Build a command-line calculator application using classes for different operations and a main interface class"}
+              ],
+              "quiz": [
+                {"question": "What does 'self' represent in a Python class method?", "options": ["The class itself", "The current instance of the class", "The parent class", "The module"], "correct_index": 1, "explanation": "'self' refers to the current instance of the class, allowing access to instance attributes and methods."}
+              ]
+            },
+            {
+              "id": "numpy-pandas",
+              "title": "NumPy & Pandas for Data",
+              "difficulty": "intermediate",
+              "estimated_minutes": 120,
+              "prerequisites": ["python-oo-functions"],
+              "skills_gained": ["numpy", "pandas", "arrays", "dataframes", "data manipulation"],
+              "resources": [
+                {"title": "NumPy Official Tutorial", "url": "https://numpy.org/doc/stable/user/quickstart.html", "type": "documentation"},
+                {"title": "Pandas Official Getting Started", "url": "https://pandas.pydata.org/docs/getting_started/index.html", "type": "documentation"},
+                {"title": "10 Minutes to Pandas", "url": "https://pandas.pydata.org/docs/user_guide/10min.html", "type": "tutorial"}
+              ],
+              "practice_labs": [
+                {"title": "Kaggle Intro to Pandas", "url": "https://www.kaggle.com/learn/pandas", "platform": "kaggle"}
+              ],
+              "projects": [
+                {"title": "Data Cleaning Pipeline", "description": "Use pandas to clean and transform a messy real-world dataset: handle missing values, standardize formats, and generate summary statistics"}
+              ],
+              "quiz": [
+                {"question": "What is the primary advantage of NumPy arrays over Python lists for numerical computation?", "options": ["They support more data types", "They use contiguous memory and vectorized operations for faster computation", "They can hold strings and numbers", "They have built-in visualization"], "correct_index": 1, "explanation": "NumPy arrays use contiguous memory blocks and vectorized operations implemented in C, making them significantly faster for numerical computations than Python lists."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "math-for-ml",
+      "title": "Mathematics for ML",
+      "order": 2,
+      "modules": [
+        {
+          "id": "linear-algebra",
+          "title": "Linear Algebra",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "vectors-matrices",
+              "title": "Vectors, Matrices & Matrix Operations",
+              "difficulty": "beginner",
+              "estimated_minutes": 90,
+              "prerequisites": [],
+              "skills_gained": ["linear algebra", "vectors", "matrices", "matrix multiplication"],
+              "resources": [
+                {"title": "3Blue1Brown Linear Algebra", "url": "https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab", "type": "video"},
+                {"title": "Khan Academy Linear Algebra", "url": "https://www.khanacademy.org/math/linear-algebra", "type": "course"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": [
+                {"question": "What operation is fundamental to how neural networks transform inputs?", "options": ["Division", "Matrix multiplication", "String concatenation", "Modulo"], "correct_index": 1, "explanation": "Matrix multiplication (dot product) is the core operation in neural network layers, transforming input vectors through learned weight matrices."}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "calculus-probability",
+          "title": "Calculus & Probability",
+          "order": 2,
+          "lessons": [
+            {
+              "id": "gradient-descent",
+              "title": "Calculus, Gradients & Gradient Descent",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["vectors-matrices"],
+              "skills_gained": ["calculus", "derivatives", "gradient descent", "backpropagation"],
+              "resources": [
+                {"title": "3Blue1Brown Calculus", "url": "https://www.youtube.com/playlist?list=PLZHQObOWTQDMsr9K-rj53DwVRMYO3t5Yr", "type": "video"},
+                {"title": "Gradient Descent Explained (StatQuest)", "url": "https://www.youtube.com/watch?v=sDv4f4s2SB8", "type": "video"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": [
+                {"question": "What does gradient descent optimize?", "options": ["Data quality", "Model parameters by minimizing a loss function", "Hyperparameters", "Dataset size"], "correct_index": 1, "explanation": "Gradient descent iteratively adjusts model parameters in the direction that minimizes the loss function, using the gradient (direction of steepest ascent) to guide updates."}
+              ]
+            },
+            {
+              "id": "probability-stats",
+              "title": "Probability & Statistics for ML",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": [],
+              "skills_gained": ["probability", "bayes theorem", "distributions", "hypothesis testing"],
+              "resources": [
+                {"title": "Khan Academy Statistics & Probability", "url": "https://www.khanacademy.org/math/statistics-probability", "type": "course"},
+                {"title": "StatQuest YouTube Channel", "url": "https://www.youtube.com/c/joshstarmer", "type": "video"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": [
+                {"question": "What does Bayes' theorem compute?", "options": ["Matrix inverses", "The probability of a hypothesis given observed evidence", "The mean of a distribution", "The gradient of a function"], "correct_index": 1, "explanation": "Bayes' theorem calculates the posterior probability of a hypothesis based on prior knowledge and observed evidence: P(H|E) = P(E|H)*P(H)/P(E)."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "machine-learning",
+      "title": "Machine Learning Fundamentals",
+      "order": 3,
+      "modules": [
+        {
+          "id": "ml-core",
+          "title": "Core ML Concepts",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "ml-overview",
+              "title": "Supervised vs Unsupervised Learning",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": ["probability-stats"],
+              "skills_gained": ["supervised learning", "unsupervised learning", "regression", "classification", "clustering"],
+              "resources": [
+                {"title": "Google ML Crash Course", "url": "https://developers.google.com/machine-learning/crash-course", "type": "course"},
+                {"title": "Stanford CS229 Lecture Notes", "url": "https://cs229.stanford.edu/", "type": "course"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": [
+                {"question": "Which is an example of unsupervised learning?", "options": ["Spam detection", "K-means clustering", "Image classification", "Sentiment analysis"], "correct_index": 1, "explanation": "K-means clustering is unsupervised because it groups data points based on similarity without using labeled training data."}
+              ]
+            },
+            {
+              "id": "sklearn-models",
+              "title": "Scikit-learn: Regression, Classification & Evaluation",
+              "difficulty": "intermediate",
+              "estimated_minutes": 120,
+              "prerequisites": ["ml-overview", "numpy-pandas"],
+              "skills_gained": ["scikit-learn", "linear regression", "logistic regression", "random forest", "cross validation", "metrics"],
+              "resources": [
+                {"title": "Scikit-learn Official Docs", "url": "https://scikit-learn.org/stable/tutorial/", "type": "documentation"},
+                {"title": "Kaggle Intro to ML", "url": "https://www.kaggle.com/learn/intro-to-machine-learning", "platform": "kaggle"},
+                {"title": "Hands-On ML with Scikit-Learn (Book)", "url": "https://www.oreilly.com/library/view/hands-on-machine-learning/9781098125974/", "type": "book"}
+              ],
+              "practice_labs": [
+                {"title": "Kaggle Intro to Machine Learning", "url": "https://www.kaggle.com/learn/intro-to-machine-learning", "platform": "kaggle"},
+                {"title": "Kaggle Intermediate ML", "url": "https://www.kaggle.com/learn/intermediate-machine-learning", "platform": "kaggle"}
+              ],
+              "projects": [
+                {"title": "Housing Price Prediction", "description": "Build a regression model to predict housing prices using linear regression, random forest, and XGBoost with proper cross-validation and hyperparameter tuning"}
+              ],
+              "quiz": [
+                {"question": "What is the purpose of cross-validation?", "options": ["To speed up training", "To get a more reliable estimate of model performance on unseen data", "To increase model complexity", "To reduce the dataset size"], "correct_index": 1, "explanation": "Cross-validation splits data into multiple folds, training and evaluating on different subsets to provide a more robust estimate of how the model generalizes to unseen data."}
+              ]
+            },
+            {
+              "id": "feature-engineering",
+              "title": "Feature Engineering & Selection",
+              "difficulty": "intermediate",
+              "estimated_minutes": 60,
+              "prerequisites": ["sklearn-models"],
+              "skills_gained": ["feature engineering", "feature selection", "normalization", "encoding", "dimensionality reduction"],
+              "resources": [
+                {"title": "Feature Engineering (Kaggle)", "url": "https://www.kaggle.com/learn/feature-engineering", "type": "course"},
+                {"title": "Feature Engineering Book (Alice Zheng)", "url": "https://www.oreilly.com/library/view/feature-engineering-for/9781491953235/", "type": "book"}
+              ],
+              "practice_labs": [
+                {"title": "Kaggle Feature Engineering", "url": "https://www.kaggle.com/learn/feature-engineering", "platform": "kaggle"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What is one-hot encoding used for?", "options": ["Scaling numerical features", "Converting categorical variables into binary columns", "Removing duplicate rows", "Handling missing values"], "correct_index": 1, "explanation": "One-hot encoding creates binary (0/1) columns for each category, allowing ML algorithms to process categorical data numerically."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data-analysis",
+      "title": "Data Analysis & Visualization",
+      "order": 4,
+      "modules": [
+        {
+          "id": "eda",
+          "title": "Exploratory Data Analysis",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "eda-techniques",
+              "title": "EDA with Pandas & Visualization",
+              "difficulty": "beginner",
+              "estimated_minutes": 90,
+              "prerequisites": ["numpy-pandas"],
+              "skills_gained": ["eda", "matplotlib", "seaborn", "data profiling"],
+              "resources": [
+                {"title": "Matplotlib Official Tutorials", "url": "https://matplotlib.org/stable/tutorials/index.html", "type": "documentation"},
+                {"title": "Seaborn Tutorial", "url": "https://seaborn.pydata.org/tutorial.html", "type": "documentation"},
+                {"title": "Python Data Science Handbook", "url": "https://jakevdp.github.io/PythonDataScienceHandbook/", "type": "book"}
+              ],
+              "practice_labs": [
+                {"title": "Kaggle Data Visualization", "url": "https://www.kaggle.com/learn/data-visualization", "platform": "kaggle"}
+              ],
+              "projects": [
+                {"title": "EDA on Titanic Dataset", "description": "Perform a full exploratory data analysis on the Titanic dataset with statistical summaries, distribution plots, correlation heatmaps, and feature relationship analysis"}
+              ],
+              "quiz": [
+                {"question": "What chart type is best for showing the relationship between two continuous variables?", "options": ["Bar chart", "Scatter plot", "Pie chart", "Line chart"], "correct_index": 1, "explanation": "A scatter plot plots individual data points along two axes, making it ideal for revealing correlations and patterns between continuous variables."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "deep-learning",
+      "title": "Deep Learning",
+      "order": 5,
+      "modules": [
+        {
+          "id": "neural-networks",
+          "title": "Neural Network Fundamentals",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "nn-fundamentals",
+              "title": "Neurons, Layers & Activation Functions",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["gradient-descent", "numpy-pandas"],
+              "skills_gained": ["neural networks", "perceptrons", "activation functions", "forward propagation"],
+              "resources": [
+                {"title": "3Blue1Brown Neural Networks", "url": "https://www.youtube.com/playlist?list=PLZHQObOWTQDNU6R1_67000Dx_ZCJB-3pi", "type": "video"},
+                {"title": "Deep Learning Book (Goodfellow)", "url": "https://www.deeplearningbook.org/", "type": "book"}
+              ],
+              "practice_labs": [
+                {"title": "TensorFlow Playground", "url": "https://playground.tensorflow.org/", "platform": "tensorflow"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What does an activation function introduce to a neural network?", "options": ["More training data", "Non-linearity so it can learn complex patterns", "Faster computation", "Better visualization"], "correct_index": 1, "explanation": "Activation functions (like ReLU, sigmoid, tanh) introduce non-linearity, allowing neural networks to learn complex, non-linear relationships in data."}
+              ]
+            },
+            {
+              "id": "pytorch-basics",
+              "title": "PyTorch: Tensors, Autograd & Building Models",
+              "difficulty": "intermediate",
+              "estimated_minutes": 120,
+              "prerequisites": ["nn-fundamentals"],
+              "skills_gained": ["pytorch", "tensors", "autograd", "nn.module", "training loops"],
+              "resources": [
+                {"title": "PyTorch Official Tutorials", "url": "https://pytorch.org/tutorials/", "type": "documentation"},
+                {"title": "PyTorch 60 Minute Blitz", "url": "https://pytorch.org/tutorials/beginner/deep_learning_60min_blitz.html", "type": "tutorial"}
+              ],
+              "practice_labs": [
+                {"title": "Kaggle Intro to Deep Learning", "url": "https://www.kaggle.com/learn/intro-to-deep-learning", "platform": "kaggle"}
+              ],
+              "projects": [
+                {"title": "Image Classifier from Scratch", "description": "Build a neural network in PyTorch to classify CIFAR-10 images, including data loading, training loop, and evaluation"}
+              ],
+              "quiz": [
+                {"question": "What is the purpose of optimizer.zero_grad() in PyTorch?", "options": ["To reset the model weights", "To clear old gradients from the previous step", "To stop training", "To evaluate the model"], "correct_index": 1, "explanation": "optimizer.zero_grad() resets the gradients of all parameters to zero before computing new gradients, preventing accumulation from previous steps."}
+              ]
+            },
+            {
+              "id": "cnn",
+              "title": "Convolutional Neural Networks (CNNs)",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["pytorch-basics"],
+              "skills_gained": ["cnn", "convolution", "pooling", "image classification"],
+              "resources": [
+                {"title": "CS231n CNNs for Visual Recognition", "url": "https://cs231n.stanford.edu/", "type": "course"},
+                {"title": "CNN Explainer (Interactive)", "url": "https://poloclub.github.io/cnn-explainer/", "type": "tool"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Build a CNN for Medical Image Classification", "description": "Implement a CNN to classify chest X-ray images as normal or pneumonia using transfer learning with ResNet"}
+              ],
+              "quiz": [
+                {"question": "What is the main advantage of CNNs over fully connected networks for images?", "options": ["They use fewer parameters through weight sharing", "They always have better accuracy", "They don't need training data", "They work on text data too"], "correct_index": 0, "explanation": "CNNs use shared filters (kernels) across spatial locations, drastically reducing parameters compared to fully connected networks while capturing spatial hierarchies."}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "recurrent-networks",
+          "title": "Recurrent Neural Networks",
+          "order": 2,
+          "lessons": [
+            {
+              "id": "rnn-lstm",
+              "title": "RNNs, LSTMs & Sequence Modeling",
+              "difficulty": "advanced",
+              "estimated_minutes": 90,
+              "prerequisites": ["pytorch-basics"],
+              "skills_gained": ["rnn", "lstm", "sequence modeling", "time series"],
+              "resources": [
+                {"title": "Understanding LSTMs (Colah's Blog)", "url": "https://colah.github.io/posts/2015-08-Understanding-LSTMs/", "type": "article"},
+                {"title": "Stanford CS224n NLP with Deep Learning", "url": "https://web.stanford.edu/class/cs224n/", "type": "course"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Time Series Prediction with LSTM", "description": "Build an LSTM model in PyTorch to predict stock prices or weather patterns using sequential data"}
+              ],
+              "quiz": [
+                {"question": "What problem do LSTMs solve that basic RNNs struggle with?", "options": ["They run faster", "Long-term dependencies and vanishing gradients", "Image processing", "Data normalization"], "correct_index": 1, "explanation": "LSTMs use gating mechanisms (forget, input, output gates) to selectively remember or forget information, addressing the vanishing gradient problem in basic RNNs."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nlp",
+      "title": "Natural Language Processing",
+      "order": 6,
+      "modules": [
+        {
+          "id": "nlp-basics",
+          "title": "NLP Fundamentals",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "tokenization-embeddings",
+              "title": "Tokenization, Embeddings & Word Vectors",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["pytorch-basics"],
+              "skills_gained": ["tokenization", "word embeddings", "word2vec", "tfidf"],
+              "resources": [
+                {"title": "Stanford CS224n NLP", "url": "https://web.stanford.edu/class/cs224n/", "type": "course"},
+                {"title": "Hugging Face NLP Course", "url": "https://huggingface.co/learn/nlp-course", "type": "course"}
+              ],
+              "practice_labs": [
+                {"title": "Hugging Face NLP Course", "url": "https://huggingface.co/learn/nlp-course", "platform": "huggingface"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What is the main advantage of word embeddings over one-hot encoding?", "options": ["They use less memory only", "They capture semantic relationships between words in a dense vector space", "They always produce better accuracy", "They don't need training"], "correct_index": 1, "explanation": "Word embeddings map words to dense vectors where similar words are close together, capturing semantic meaning (e.g., 'king' - 'man' + 'woman' ≈ 'queen')."}
+              ]
+            },
+            {
+              "id": "transformers-intro",
+              "title": "Attention Mechanism & Transformers",
+              "difficulty": "advanced",
+              "estimated_minutes": 120,
+              "prerequisites": ["tokenization-embeddings", "nn-fundamentals"],
+              "skills_gained": ["attention mechanism", "transformers", "self-attention", "positional encoding"],
+              "resources": [
+                {"title": "Attention Is All You Need (Paper)", "url": "https://arxiv.org/abs/1706.03762", "type": "article"},
+                {"title": "Illustrated Transformer (Jay Alammar)", "url": "https://jalammar.github.io/illustrated-transformer/", "type": "article"},
+                {"title": "Transformer Explainer (Interactive)", "url": "https://transformer-explainer.com/", "type": "tool"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Build a Transformer from Scratch", "description": "Implement a simplified transformer encoder in PyTorch with multi-head self-attention and positional encoding"}
+              ],
+              "quiz": [
+                {"question": "What does self-attention allow a model to do?", "options": ["Process images faster", "Relate each token in a sequence to every other token", "Reduce model size", "Generate images"], "correct_index": 1, "explanation": "Self-attention computes attention weights between all pairs of tokens in a sequence, allowing the model to capture relationships regardless of distance."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "llm",
+      "title": "Large Language Models",
+      "order": 7,
+      "modules": [
+        {
+          "id": "llm-fundamentals",
+          "title": "Understanding LLMs",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "gpt-architecture",
+              "title": "GPT, BERT & LLM Architecture",
+              "difficulty": "advanced",
+              "estimated_minutes": 90,
+              "prerequisites": ["transformers-intro"],
+              "skills_gained": ["gpt", "bert", "decoder-only", "encoder-decoder", "llm pretraining"],
+              "resources": [
+                {"title": "Language Models are Few-Shot Learners (GPT-3 Paper)", "url": "https://arxiv.org/abs/2005.14165", "type": "article"},
+                {"title": "Illustrated GPT-2 (Jay Alammar)", "url": "https://jalammar.github.io/illustrated-gpt2/", "type": "article"},
+                {"title": "Andrej Karpathy Let's Build GPT", "url": "https://www.youtube.com/watch?v=kCc8FmEb1nY", "type": "video"}
+              ],
+              "practice_labs": [
+                {"title": "Hugging Face Models Hub", "url": "https://huggingface.co/models", "platform": "huggingface"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What is the key difference between GPT and BERT?", "options": ["GPT is smaller", "GPT is decoder-only (generative), BERT is encoder-only (bidirectional understanding)", "BERT is newer", "They use different programming languages"], "correct_index": 1, "explanation": "GPT uses a decoder-only architecture trained for next-token prediction (generative), while BERT uses an encoder-only architecture trained with masked language modeling for bidirectional understanding."}
+              ]
+            },
+            {
+              "id": "fine-tuning",
+              "title": "LLM Fine-Tuning & LoRA",
+              "difficulty": "advanced",
+              "estimated_minutes": 120,
+              "prerequisites": ["gpt-architecture"],
+              "skills_gained": ["fine-tuning", "lora", "qlora", "peft", "instruction tuning"],
+              "resources": [
+                {"title": "Hugging Face Fine-Tuning Guide", "url": "https://huggingface.co/docs/transformers/training", "type": "documentation"},
+                {"title": "LoRA Paper", "url": "https://arxiv.org/abs/2106.09685", "type": "article"},
+                {"title": "PEFT Documentation", "url": "https://huggingface.co/docs/peft", "type": "documentation"}
+              ],
+              "practice_labs": [
+                {"title": "Hugging Face Fine-Tuning LLMs Course", "url": "https://huggingface.co/learn/peft-course", "platform": "huggingface"}
+              ],
+              "projects": [
+                {"title": "Fine-Tune a LLM on Custom Data", "description": "Fine-tune a small open-source LLM (e.g., Llama 2 or Mistral) on a custom dataset using LoRA with the PEFT library"}
+              ],
+              "quiz": [
+                {"question": "What is LoRA?", "options": ["A new programming language", "Low-Rank Adaptation - a parameter-efficient fine-tuning technique", "A type of neural network architecture", "A data preprocessing method"], "correct_index": 1, "explanation": "LoRA freezes pre-trained model weights and injects trainable rank decomposition matrices, dramatically reducing the number of parameters to train."}
+              ]
+            },
+            {
+              "id": "rag",
+              "title": "RAG & LangChain",
+              "difficulty": "advanced",
+              "estimated_minutes": 120,
+              "prerequisites": ["fine-tuning"],
+              "skills_gained": ["rag", "langchain", "vector databases", "embeddings", "prompt engineering"],
+              "resources": [
+                {"title": "LangChain Documentation", "url": "https://python.langchain.com/docs/get_started/introduction", "type": "documentation"},
+                {"title": "Building RAG Apps (LangChain)", "url": "https://python.langchain.com/docs/tutorials/rag/", "type": "tutorial"},
+                {"title": "Pinecone RAG Guide", "url": "https://www.pinecone.io/learn/retrieval-augmented-generation/", "type": "article"}
+              ],
+              "practice_labs": [
+                {"title": "LangChain Tutorials", "url": "https://python.langchain.com/docs/tutorials/", "platform": "web"}
+              ],
+              "projects": [
+                {"title": "Build a RAG Chatbot", "description": "Create a retrieval-augmented generation chatbot using LangChain, OpenAI embeddings, and a vector database (ChromaDB or Pinecone) that answers questions from a document collection"}
+              ],
+              "quiz": [
+                {"question": "What is the main purpose of RAG?", "options": ["To make models smaller", "To ground LLM responses in external, up-to-date knowledge", "To train models faster", "To reduce API costs"], "correct_index": 1, "explanation": "RAG retrieves relevant documents from an external knowledge base and includes them in the prompt, helping LLMs generate more accurate, factual, and up-to-date responses."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "mlops",
+      "title": "MLOps & Deployment",
+      "order": 8,
+      "modules": [
+        {
+          "id": "model-serving",
+          "title": "Model Serving & APIs",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "model-deployment",
+              "title": "Deploying ML Models with FastAPI & Docker",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["sklearn-models"],
+              "skills_gained": ["fastapi", "docker", "model serving", "api development"],
+              "resources": [
+                {"title": "FastAPI Official Docs", "url": "https://fastapi.tiangolo.com/tutorial/", "type": "documentation"},
+                {"title": "MLflow Documentation", "url": "https://mlflow.org/docs/latest/index.html", "type": "documentation"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Deploy an ML Model as an API", "description": "Package a trained ML model into a FastAPI service with Docker, including input validation, prediction endpoints, and health checks"}
+              ],
+              "quiz": [
+                {"question": "Why is FastAPI preferred for ML model serving over Flask?", "options": ["It's always faster", "It has native async support, automatic docs, and Pydantic validation", "It doesn't need Python", "It only works with TensorFlow"], "correct_index": 1, "explanation": "FastAPI provides automatic OpenAPI docs, native async support, and Pydantic-based request validation, making it ideal for production ML APIs."}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "experiment-tracking",
+          "title": "Experiment Tracking & Reproducibility",
+          "order": 2,
+          "lessons": [
+            {
+              "id": "mlflow",
+              "title": "MLflow & Experiment Tracking",
+              "difficulty": "intermediate",
+              "estimated_minutes": 60,
+              "prerequisites": ["model-deployment"],
+              "skills_gained": ["mlflow", "experiment tracking", "model registry", "reproducibility"],
+              "resources": [
+                {"title": "MLflow Official Docs", "url": "https://mlflow.org/docs/latest/index.html", "type": "documentation"},
+                {"title": "Weights & Biases Course", "url": "https://www.wandb.courses/", "type": "course"}
+              ],
+              "practice_labs": [
+                {"title": "MLflow Quickstart", "url": "https://mlflow.org/docs/latest/quickstart.html", "platform": "web"}
+              ],
+              "projects": [
+                {"title": "Track Experiments with MLflow", "description": "Set up MLflow to track experiments, log parameters/metrics, register model versions, and compare runs for an ML project"}
+              ],
+              "quiz": [
+                {"question": "What does an MLflow Model Registry manage?", "options": ["Raw training data only", "Model versions, stages (staging/production), and transitions", "GPU resources", "Code repositories"], "correct_index": 1, "explanation": "The MLflow Model Registry tracks model versions through their lifecycle stages (None → Staging → Production → Archived) with metadata and lineage."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "data-engineering",
+      "title": "Data Engineering",
+      "order": 9,
+      "modules": [
+        {
+          "id": "etl-pipelines",
+          "title": "ETL & Data Pipelines",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "data-pipelines",
+              "title": "ETL Pipelines & Feature Stores",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["numpy-pandas"],
+              "skills_gained": ["etl", "data pipelines", "feature stores", "data validation"],
+              "resources": [
+                {"title": "Great Expectations Docs", "url": "https://docs.greatexpectations.io/", "type": "documentation"},
+                {"title": "Feature Store Concepts (Feast)", "url": "https://docs.feast.dev/", "type": "documentation"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Build an ETL Pipeline", "description": "Create an ETL pipeline that extracts data from multiple sources, validates it with Great Expectations, transforms it, and loads it into a feature store"}
+              ],
+              "quiz": [
+                {"question": "What is the purpose of a feature store in ML?", "options": ["To store raw data only", "To store precomputed features for training and serving consistency", "To replace databases", "To store model weights"], "correct_index": 1, "explanation": "A feature store centralizes feature computation, storage, and serving, ensuring consistency between training and production inference features."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "computer-vision",
+      "title": "Computer Vision",
+      "order": 10,
+      "modules": [
+        {
+          "id": "cv-fundamentals",
+          "title": "Computer Vision Applications",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "image-classification",
+              "title": "Image Classification & Transfer Learning",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["cnn"],
+              "skills_gained": ["transfer learning", "image classification", "fine-tuning pretrained models"],
+              "resources": [
+                {"title": "PyTorch Transfer Learning Tutorial", "url": "https://pytorch.org/tutorials/beginner/transfer_learning_tutorial.html", "type": "tutorial"},
+                {"title": "Papers With Code - Image Classification", "url": "https://paperswithcode.com/task/image-classification", "type": "reference"}
+              ],
+              "practice_labs": [
+                {"title": "Kaggle Image Classification", "url": "https://www.kaggle.com/competitions/dogs-vs-cats", "platform": "kaggle"}
+              ],
+              "projects": [
+                {"title": "Transfer Learning for Medical Imaging", "description": "Use a pretrained ResNet model to classify medical images (X-rays) with fine-tuning on a custom dataset"}
+              ],
+              "quiz": [
+                {"question": "What is transfer learning?", "options": ["Training a model from scratch", "Using a pretrained model as a starting point for a new task", "Moving data between servers", "Converting model formats"], "correct_index": 1, "explanation": "Transfer learning leverages knowledge from a model pretrained on a large dataset and adapts it to a new, often smaller, dataset for a related task."}
+              ]
+            },
+            {
+              "id": "object-detection",
+              "title": "Object Detection with YOLO",
+              "difficulty": "advanced",
+              "estimated_minutes": 120,
+              "prerequisites": ["image-classification"],
+              "skills_gained": ["object detection", "yolo", "bounding boxes", "real-time inference"],
+              "resources": [
+                {"title": "Ultralytics YOLO Docs", "url": "https://docs.ultralytics.com/", "type": "documentation"},
+                {"title": "YOLOv8 Paper", "url": "https://arxiv.org/abs/2304.00501", "type": "article"}
+              ],
+              "practice_labs": [
+                {"title": "Roboflow Universe", "url": "https://universe.roboflow.com/", "platform": "roboflow"}
+              ],
+              "projects": [
+                {"title": "Real-Time Object Detection App", "description": "Build a real-time object detection application using YOLOv8 that processes webcam feed and identifies objects with bounding boxes and labels"}
+              ],
+              "quiz": [
+                {"question": "What makes YOLO suitable for real-time detection?", "options": ["It uses the largest models", "It processes the entire image in a single forward pass", "It requires a GPU only", "It only detects one object per image"], "correct_index": 1, "explanation": "YOLO (You Only Look Once) treats detection as a single regression problem, predicting bounding boxes and classes in one pass, making it extremely fast."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "generative-ai",
+      "title": "Generative AI",
+      "order": 11,
+      "modules": [
+        {
+          "id": "generative-models",
+          "title": "Generative AI Models",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "diffusion-models",
+              "title": "Diffusion Models & Image Generation",
+              "difficulty": "advanced",
+              "estimated_minutes": 90,
+              "prerequisites": ["nn-fundamentals"],
+              "skills_gained": ["diffusion models", "stable diffusion", "text-to-image", "noise schedules"],
+              "resources": [
+                {"title": "What are Diffusion Models? (Lil'Log)", "url": "https://lilianweng.github.io/posts/2021-07-11-diffusion-models/", "type": "article"},
+                {"title": "Hugging Face Diffusers Library", "url": "https://huggingface.co/docs/diffusers/index", "type": "documentation"}
+              ],
+              "practice_labs": [
+                {"title": "Hugging Face Diffusers Tutorials", "url": "https://huggingface.co/docs/diffusers/tutorials/tutorial_overview", "platform": "huggingface"}
+              ],
+              "projects": [
+                {"title": "Text-to-Image Generation Pipeline", "description": "Build a text-to-image application using Stable Diffusion with the Hugging Face diffusers library, including prompt engineering and image post-processing"}
+              ],
+              "quiz": [
+                {"question": "How do diffusion models generate images?", "options": ["By copying training images", "By gradually denoising random noise guided by learned patterns", "By compositing existing images", "By drawing pixels one at a time"], "correct_index": 1, "explanation": "Diffusion models learn to reverse a gradual noising process, starting from pure noise and iteratively denoising to generate new images conditioned on text or class labels."}
+              ]
+            },
+            {
+              "id": "gans",
+              "title": "GANs (Generative Adversarial Networks)",
+              "difficulty": "advanced",
+              "estimated_minutes": 90,
+              "prerequisites": ["nn-fundamentals"],
+              "skills_gained": ["gans", "adversarial training", "generator", "discriminator"],
+              "resources": [
+                {"title": "GAN Lab (Interactive)", "url": "https://poloclub.github.io/ganlab/", "type": "tool"},
+                {"title": "Original GAN Paper", "url": "https://arxiv.org/abs/1406.2661", "type": "article"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Train a GAN to Generate Faces", "description": "Implement and train a DCGAN to generate human face images using the CelebA dataset with proper training stabilization techniques"}
+              ],
+              "quiz": [
+                {"question": "In a GAN, what is the role of the discriminator?", "options": ["Generate fake images", "Classify images as real or fake", "Train the generator directly", "Store training data"], "correct_index": 1, "explanation": "The discriminator acts as a binary classifier that distinguishes real images from generated (fake) images, providing feedback to improve the generator."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ml-at-scale",
+      "title": "ML at Scale",
+      "order": 12,
+      "modules": [
+        {
+          "id": "distributed-training",
+          "title": "Distributed Training & Optimization",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "model-optimization",
+              "title": "Model Optimization & Quantization",
+              "difficulty": "advanced",
+              "estimated_minutes": 90,
+              "prerequisites": ["pytorch-basics"],
+              "skills_gained": ["model optimization", "quantization", "pruning", "knowledge distillation", "onnx"],
+              "resources": [
+                {"title": "PyTorch Quantization Docs", "url": "https://pytorch.org/docs/stable/quantization.html", "type": "documentation"},
+                {"title": "ONNX Runtime Docs", "url": "https://onnxruntime.ai/", "type": "documentation"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Optimize a Model for Edge Deployment", "description": "Take a trained model, apply quantization and pruning, convert to ONNX format, and benchmark inference speed vs accuracy tradeoffs"}
+              ],
+              "quiz": [
+                {"question": "What does INT8 quantization do to a model?", "options": ["Increases model size", "Reduces weight precision from 32-bit to 8-bit integers, making inference faster with small accuracy loss", "Adds more layers", "Trains the model faster"], "correct_index": 1, "explanation": "Quantization reduces the numerical precision of model weights and activations (e.g., float32 to int8), decreasing model size and speeding up inference with typically minor accuracy degradation."}
+              ]
+            },
+            {
+              "id": "cloud-ml",
+              "title": "Cloud ML Platforms (AWS SageMaker, GCP Vertex AI)",
+              "difficulty": "advanced",
+              "estimated_minutes": 60,
+              "prerequisites": ["model-optimization"],
+              "skills_gained": ["aws sagemaker", "cloud ml", "gpu training", "model hosting"],
+              "resources": [
+                {"title": "AWS SageMaker Docs", "url": "https://docs.aws.amazon.com/sagemaker/", "type": "documentation"},
+                {"title": "GCP Vertex AI Docs", "url": "https://cloud.google.com/vertex-ai/docs", "type": "documentation"}
+              ],
+              "practice_labs": [
+                {"title": "AWS SageMaker Studio Lab", "url": "https://studiolab.sagemaker.aws/", "platform": "aws"}
+              ],
+              "projects": [
+                {"title": "Train on Cloud GPU", "description": "Set up and run a distributed training job on AWS SageMaker with GPU instances, including data upload, training script, and model export"}
+              ],
+              "quiz": [
+                {"question": "What is a key benefit of using managed ML platforms like SageMaker?", "options": ["They make models more accurate", "They handle infrastructure provisioning, scaling, and monitoring for ML workflows", "They replace the need for Python", "They only work with TensorFlow"], "correct_index": 1, "explanation": "Managed ML platforms abstract away infrastructure management, providing pre-built environments, auto-scaling, experiment tracking, and one-click deployment."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "portfolio",
+      "title": "Portfolio Project",
+      "order": 13,
+      "modules": [
+        {
+          "id": "capstone-project",
+          "title": "End-to-End ML System",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "portfolio-build",
+              "title": "Build & Deploy an End-to-End ML System",
+              "difficulty": "advanced",
+              "estimated_minutes": 360,
+              "prerequisites": ["fine-tuning", "rag", "model-deployment"],
+              "skills_gained": ["end-to-end ml", "system design", "deployment", "project management"],
+              "resources": [
+                {"title": "Made With ML (Full Course)", "url": "https://madewithml.com/", "type": "course"},
+                {"title": "Full Stack Deep Learning", "url": "https://fullstackdeeplearning.com/", "type": "course"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "AI-Powered Application with RAG", "description": "Build and deploy a production-ready AI application that combines RAG for knowledge retrieval, fine-tuned LLM for domain-specific responses, with a web UI, monitoring, and proper MLOps practices"},
+                {"title": "ML System Design Document", "description": "Write a comprehensive ML system design document covering data pipelines, model architecture, training infrastructure, serving, monitoring, and failure modes"}
+              ],
+              "quiz": [
+                {"question": "What should an ML monitoring system track in production?", "options": ["Only GPU usage", "Data drift, model performance metrics, latency, and error rates", "Just the number of API calls", "Only training loss"], "correct_index": 1, "explanation": "Production ML monitoring should track data distribution changes (drift), model prediction quality, serving latency, resource utilization, and error rates to detect degradation."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "resume-interview",
+      "title": "Resume & Interview Prep",
+      "order": 14,
+      "modules": [
+        {
+          "id": "resume-portfolio",
+          "title": "Resume & Portfolio",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "resume-writing",
+              "title": "Writing an AI/ML Engineer Resume",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": [],
+              "skills_gained": ["resume writing", "portfolio", "personal branding"],
+              "resources": [
+                {"title": "ML Engineer Resume Guide", "url": "https://www.springboard.com/blog/data-science/machine-learning-engineer-resume/", "type": "article"},
+                {"title": "AI Portfolio Projects (GitHub)", "url": "https://github.com/topics/machine-learning-projects", "type": "github"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": []
+            }
+          ]
+        },
+        {
+          "id": "interview-preparation",
+          "title": "Interview Preparation",
+          "order": 2,
+          "lessons": [
+            {
+              "id": "ml-interview",
+              "title": "ML System Design & Technical Interview",
+              "difficulty": "intermediate",
+              "estimated_minutes": 120,
+              "prerequisites": [],
+              "skills_gained": ["ml interviews", "system design", "coding challenges", "statistical reasoning"],
+              "resources": [
+                {"title": "ML Interview Book (Chip Huyen)", "url": "https://www.oreilly.com/library/view/machine-learning-interviews/9781098107956/", "type": "book"},
+                {"title": "Ace the Data Science Interview (Book)", "url": "https://www.acethedatascienceinterview.com/", "type": "book"},
+                {"title": "LeetCode ML Problems", "url": "https://leetcode.com/", "type": "platform"}
+              ],
+              "practice_labs": [
+                {"title": "Kaggle Competitions", "url": "https://www.kaggle.com/competitions", "platform": "kaggle"},
+                {"title": "LeetCode Practice", "url": "https://leetcode.com/", "platform": "leetcode"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "When designing an ML system, what should you consider FIRST?", "options": ["Which model to use", "The business problem and success metrics", "Which cloud provider to use", "The programming language"], "correct_index": 1, "explanation": "Always start by understanding the business problem, defining success metrics, and clarifying constraints before selecting models or infrastructure."}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -75,6 +75,14 @@ class Roadmap(db.Model):
     progress = db.Column(db.Integer, default=0)
     status = db.Column(db.String(50), default="active")
     source = db.Column(db.String(50), default="ai_generated")
+    definition = db.Column(db.JSON, nullable=True)
+    current_phase_id = db.Column(db.String(100), nullable=True)
+    current_module_id = db.Column(db.String(100), nullable=True)
+    current_lesson_id = db.Column(db.String(100), nullable=True)
+    streak = db.Column(db.Integer, default=0)
+    weekly_hours = db.Column(db.Float, default=0.0)
+    last_activity_at = db.Column(db.DateTime, nullable=True)
+    started_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
         db.DateTime,
@@ -89,6 +97,40 @@ class Roadmap(db.Model):
         lazy="dynamic",
         cascade="all, delete-orphan",
         order_by="RoadmapNode.order",
+    )
+    lesson_progress = db.relationship(
+        "LessonProgress",
+        backref="roadmap",
+        lazy="dynamic",
+        cascade="all, delete-orphan",
+    )
+
+
+class LessonProgress(db.Model):
+    __tablename__ = "lesson_progress"
+
+    id = db.Column(db.Integer, primary_key=True)
+    roadmap_id = db.Column(db.Integer, db.ForeignKey("roadmaps.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    lesson_id = db.Column(db.String(100), nullable=False)
+    phase_id = db.Column(db.String(100), nullable=False)
+    module_id = db.Column(db.String(100), nullable=False)
+    status = db.Column(db.String(50), default="not_started")
+    score = db.Column(db.Integer, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
+    started_at = db.Column(db.DateTime, nullable=True)
+    completed_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+
+    user = db.relationship("User", backref=db.backref("lesson_progress", lazy="dynamic"))
+
+    __table_args__ = (
+        db.UniqueConstraint("roadmap_id", "lesson_id", name="uq_roadmap_lesson"),
     )
 
 

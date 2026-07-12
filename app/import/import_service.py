@@ -222,7 +222,7 @@ class ImportService:
             logger.warning("Failed to build skill graph: %s", e)
 
         try:
-            from app.opportunities.services.skill_gap_service import analyze_skill_gaps
+            from app.career.services.skill_graph_service import analyze_skill_gaps
 
             analyze_skill_gaps(user_id)
         except Exception as e:

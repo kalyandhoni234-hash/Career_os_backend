@@ -1,0 +1,831 @@
+{
+  "title": "Ethical Hacker",
+  "description": "Master offensive security — from computer fundamentals to professional penetration testing. This roadmap takes you from zero to job-ready ethical hacker with hands-on labs, CTF challenges, and real-world projects.",
+  "estimated_months": 14,
+  "total_lessons": 65,
+  "phases": [
+    {
+      "id": "computer-fundamentals",
+      "title": "Computer Fundamentals",
+      "order": 1,
+      "modules": [
+        {
+          "id": "how-computers-work",
+          "title": "How Computers Work",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "cpu-architecture",
+              "title": "CPU Architecture & Memory",
+              "difficulty": "beginner",
+              "estimated_minutes": 45,
+              "prerequisites": [],
+              "skills_gained": ["computer architecture", "memory management"],
+              "resources": [
+                {"title": "Crash Course Computer Science #1", "url": "https://youtube.com/playlist?list=PL8dPuuaLjXtNlUrzyH5r6jN9ulIgZBpdo", "type": "video"},
+                {"title": "How CPUs Work (Code.org)", "url": "https://youtu.be/Fk02TW6reiA", "type": "video"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": [
+                {"question": "What does the CPU do?", "options": ["Stores data permanently", "Executes instructions", "Manages network traffic", "Renders graphics"], "correct_index": 1, "explanation": "The CPU (Central Processing Unit) executes instructions from programs by performing arithmetic, logic, control, and I/O operations."},
+                {"question": "What is RAM used for?", "options": ["Permanent file storage", "Temporary data storage while running", "Network communication", "Power management"], "correct_index": 1, "explanation": "RAM (Random Access Memory) provides temporary storage that the CPU can access quickly while running programs."}
+              ]
+            },
+            {
+              "id": "operating-systems",
+              "title": "Operating System Fundamentals",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": ["cpu-architecture"],
+              "skills_gained": ["operating systems", "process management"],
+              "resources": [
+                {"title": "Operating Systems: Crash Course Computer Science", "url": "https://youtu.be/26QPDBe-NB8", "type": "video"},
+                {"title": "OS Basics (TutorialsPoint)", "url": "https://www.tutorialspoint.com/operating_system/index.htm", "type": "article"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": [
+                {"question": "Which of these is an operating system?", "options": ["Microsoft Word", "Linux", "Google Chrome", "Python"], "correct_index": 1, "explanation": "Linux is an operating system kernel that manages hardware resources and provides services for applications."}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "binary-and-logic",
+          "title": "Binary, Logic & Data Representation",
+          "order": 2,
+          "lessons": [
+            {
+              "id": "binary-hex",
+              "title": "Binary, Hexadecimal & Data Representation",
+              "difficulty": "beginner",
+              "estimated_minutes": 45,
+              "prerequisites": [],
+              "skills_gained": ["binary", "hexadecimal", "data representation"],
+              "resources": [
+                {"title": "Binary Numbers (Khan Academy)", "url": "https://www.khanacademy.org/computing/computers-and-internet/xcae6f4a7ff015e7d:digital-information", "type": "course"}
+              ],
+              "practice_labs": [
+                {"title": "Binary Game (Cisco)", "url": "https://learningnetwork.cisco.com/sites/default/files/binary_game/BinaryGame.html", "platform": "cisco"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What is the decimal value of binary 1101?", "options": ["10", "11", "13", "15"], "correct_index": 2, "explanation": "1101 in binary = 1*8 + 1*4 + 0*2 + 1*1 = 13"}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "linux",
+      "title": "Linux Fundamentals",
+      "order": 2,
+      "modules": [
+        {
+          "id": "linux-basics",
+          "title": "Linux Basics",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "linux-install",
+              "title": "Installing & Setting Up Linux",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": ["operating-systems"],
+              "skills_gained": ["linux installation", "vm setup"],
+              "resources": [
+                {"title": "Installing Ubuntu (Official Guide)", "url": "https://ubuntu.com/tutorials/install-ubuntu-desktop", "type": "tutorial"},
+                {"title": "VirtualBox Setup Guide", "url": "https://www.virtualbox.org/manual/ch01.html", "type": "documentation"}
+              ],
+              "practice_labs": [
+                {"title": "Install Ubuntu in VirtualBox", "url": "", "platform": "local"}
+              ],
+              "projects": [
+                {"title": "Set up a Kali Linux VM", "description": "Install Kali Linux in VirtualBox with guest additions, shared folders, and network configuration"}
+              ],
+              "quiz": [],
+              "skills_gained": ["kali linux", "virtualbox"]
+            },
+            {
+              "id": "linux-cli",
+              "title": "Linux Command Line Basics",
+              "difficulty": "beginner",
+              "estimated_minutes": 90,
+              "prerequisites": ["linux-install"],
+              "skills_gained": ["bash", "linux commands", "file system"],
+              "resources": [
+                {"title": "Linux Journey - Command Line", "url": "https://linuxjourney.com/lesson/the-shell", "type": "course"},
+                {"title": "OverTheWire Bandit (Levels 0-10)", "url": "https://overthewire.org/wargames/bandit/", "type": "practice"}
+              ],
+              "practice_labs": [
+                {"title": "OverTheWire Bandit 0-10", "url": "https://overthewire.org/wargames/bandit/", "platform": "overthewire"}
+              ],
+              "projects": [
+                {"title": "Linux Survival Script", "description": "Create a bash script that navigates the file system, reads files, and writes logs"}
+              ],
+              "quiz": [
+                {"question": "What command lists files in a directory?", "options": ["cd", "ls", "cat", "pwd"], "correct_index": 1, "explanation": "ls lists the contents of a directory."},
+                {"question": "What command changes directory?", "options": ["ls", "mv", "cd", "cp"], "correct_index": 2, "explanation": "cd (change directory) moves you to a different directory in the file system."}
+              ]
+            },
+            {
+              "id": "linux-permissions",
+              "title": "Linux File Permissions & Ownership",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": ["linux-cli"],
+              "skills_gained": ["linux permissions", "chmod", "chown", "sudo"],
+              "resources": [
+                {"title": "Linux File Permissions (Linux Journey)", "url": "https://linuxjourney.com/lesson/file-permissions", "type": "course"},
+                {"title": "Sudo Explained", "url": "https://www.sudo.ws/docs/man/sudoers.man/", "type": "documentation"}
+              ],
+              "practice_labs": [
+                {"title": "OverTheWire Bandit 11-20", "url": "https://overthewire.org/wargames/bandit/", "platform": "overthewire"}
+              ],
+              "projects": [
+                {"title": "Permission Hardening Lab", "description": "Configure user accounts, groups, and file permissions on a Linux system following security best practices"}
+              ],
+              "quiz": [
+                {"question": "What permission value grants read, write, and execute to the owner?", "options": ["644", "755", "700", "777"], "correct_index": 2, "explanation": "700 gives the owner read (4), write (2), and execute (1) = 7, and nothing to group/others."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "networking",
+      "title": "Networking",
+      "order": 3,
+      "modules": [
+        {
+          "id": "network-fundamentals",
+          "title": "Network Fundamentals",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "tcp-ip",
+              "title": "TCP/IP & OSI Model",
+              "difficulty": "beginner",
+              "estimated_minutes": 90,
+              "prerequisites": ["binary-hex"],
+              "skills_gained": ["tcp/ip", "osi model", "networking"],
+              "resources": [
+                {"title": "Professor Messer Network+ (Free)", "url": "https://www.professormesser.com/network-plus/n10-008/", "type": "video"},
+                {"title": "TCP/IP Guide", "url": "https://www.tcpipguide.com/free/", "type": "documentation"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": [
+                {"question": "Which layer of the OSI model handles routing?", "options": ["Data Link", "Network", "Transport", "Application"], "correct_index": 1, "explanation": "Layer 3 (Network) handles routing and forwarding packets between networks."}
+              ]
+            },
+            {
+              "id": "dns-http",
+              "title": "DNS, HTTP/HTTPS & Protocols",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": ["tcp-ip"],
+              "skills_gained": ["dns", "http", "https", "protocols"],
+              "resources": [
+                {"title": "How DNS Works", "url": "https://howdns.works/", "type": "tutorial"},
+                {"title": "HTTP Status Codes (MDN)", "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Status", "type": "documentation"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": [
+                {"question": "What port does HTTPS use?", "options": ["80", "443", "22", "53"], "correct_index": 1, "explanation": "HTTPS uses port 443 by default for encrypted web traffic."}
+              ]
+            },
+            {
+              "id": "subnetting",
+              "title": "Subnetting & CIDR",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["tcp-ip"],
+              "skills_gained": ["subnetting", "cidr", "ip addressing"],
+              "resources": [
+                {"title": "IP Subnetting (Professor Messer)", "url": "https://www.professormesser.com/network-plus/n10-008/", "type": "video"},
+                {"title": "Subnet Calculator", "url": "https://www.subnet-calculator.com/", "type": "tool"}
+              ],
+              "practice_labs": [
+                {"title": "Subnetting Practice", "url": "https://subnettingpractice.com/", "platform": "web"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "How many usable hosts in a /24 network?", "options": ["254", "256", "255", "252"], "correct_index": 0, "explanation": "A /24 network has 256 addresses minus network and broadcast = 254 usable hosts."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "python",
+      "title": "Python for Security",
+      "order": 4,
+      "modules": [
+        {
+          "id": "python-basics",
+          "title": "Python Programming Basics",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "python-syntax",
+              "title": "Python Syntax & Data Types",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": [],
+              "skills_gained": ["python", "programming"],
+              "resources": [
+                {"title": "Automate the Boring Stuff (Free)", "url": "https://automatetheboringstuff.com/", "type": "book"},
+                {"title": "Python.org Official Tutorial", "url": "https://docs.python.org/3/tutorial/", "type": "documentation"}
+              ],
+              "practice_labs": [
+                {"title": "Python Playground (Replit)", "url": "https://replit.com/languages/python3", "platform": "replit"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "Which data type is immutable in Python?", "options": ["List", "Tuple", "Dictionary", "Set"], "correct_index": 1, "explanation": "Tuples are immutable — their elements cannot be changed after creation."}
+              ]
+            },
+            {
+              "id": "python-networking",
+              "title": "Python for Network Scripting",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["python-syntax"],
+              "skills_gained": ["python networking", "sockets", "requests"],
+              "resources": [
+                {"title": "Black Hat Python (Book)", "url": "https://nostarch.com/blackhatpython", "type": "book"},
+                {"title": "Python Socket Programming", "url": "https://docs.python.org/3/howto/sockets.html", "type": "documentation"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Port Scanner in Python", "description": "Write a TCP port scanner using Python sockets that can scan common ports on a target host"}
+              ],
+              "quiz": [
+                {"question": "Which Python module is used for low-level networking?", "options": ["http", "socket", "requests", "urllib"], "correct_index": 1, "explanation": "The socket module provides low-level networking interfaces for TCP/UDP communication."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "bash",
+      "title": "Bash Scripting",
+      "order": 5,
+      "modules": [
+        {
+          "id": "bash-automation",
+          "title": "Bash Automation",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "bash-scripting",
+              "title": "Bash Scripting for Pentesters",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["linux-cli"],
+              "skills_gained": ["bash scripting", "automation"],
+              "resources": [
+                {"title": "Shell Scripting Tutorial", "url": "https://www.shellscript.sh/", "type": "tutorial"},
+                {"title": "Bash Reference Manual", "url": "https://www.gnu.org/software/bash/manual/", "type": "documentation"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Recon Automation Script", "description": "Create a bash script that automates subdomain enumeration, port scanning, and service discovery"}
+              ],
+              "quiz": [
+                {"question": "What does '#!/bin/bash' do?", "options": ["Comments the script", "Specifies the interpreter", "Sets permissions", "Creates a variable"], "correct_index": 1, "explanation": "The shebang (#!) specifies the interpreter path to execute the script."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "web-technologies",
+      "title": "Web Technologies",
+      "order": 6,
+      "modules": [
+        {
+          "id": "web-fundamentals",
+          "title": "Web Fundamentals",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "how-web-works",
+              "title": "How the Web Works (HTTP, Cookies, Sessions)",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": ["dns-http"],
+              "skills_gained": ["http", "cookies", "sessions", "web"],
+              "resources": [
+                {"title": "MDN HTTP Guide", "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP", "type": "documentation"},
+                {"title": "How the Internet Works (YouTube)", "url": "https://youtu.be/x3c1ih2GJEc", "type": "video"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": [
+                {"question": "What is a session cookie?", "options": ["Persists across browser restarts", "Deleted when browser closes", "Stored on the server", "Encrypted by default"], "correct_index": 1, "explanation": "Session cookies are temporary and deleted when the browser is closed."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "owasp-top-10",
+      "title": "OWASP Top 10",
+      "order": 7,
+      "modules": [
+        {
+          "id": "web-vulnerabilities",
+          "title": "Web Application Vulnerabilities",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "sql-injection",
+              "title": "SQL Injection (SQLi)",
+              "difficulty": "intermediate",
+              "estimated_minutes": 120,
+              "prerequisites": ["how-web-works"],
+              "skills_gained": ["sql injection", "database exploitation"],
+              "resources": [
+                {"title": "PortSwigger SQL Injection", "url": "https://portswigger.net/web-security/sql-injection", "type": "course"},
+                {"title": "SQL Injection Cheat Sheet", "url": "https://portswigger.net/web-security/sql-injection/cheat-sheet", "type": "cheatsheet"}
+              ],
+              "practice_labs": [
+                {"title": "PortSwigger SQLi Labs (All)", "url": "https://portswigger.net/web-security/all-labs", "platform": "portswigger"}
+              ],
+              "projects": [
+                {"title": "Automated SQLi Script", "description": "Write a Python script that detects and exploits SQL injection vulnerabilities using blind boolean-based techniques"}
+              ],
+              "quiz": [
+                {"question": "What SQLi technique extracts data one character at a time?", "options": ["Union-based", "Blind boolean", "Error-based", "Out-of-band"], "correct_index": 1, "explanation": "Blind boolean SQLi infers data by asking true/false questions and observing differences in responses."}
+              ]
+            },
+            {
+              "id": "xss",
+              "title": "Cross-Site Scripting (XSS)",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["how-web-works"],
+              "skills_gained": ["xss", "client-side attacks"],
+              "resources": [
+                {"title": "PortSwigger XSS", "url": "https://portswigger.net/web-security/cross-site-scripting", "type": "course"},
+                {"title": "MDN XSS Prevention", "url": "https://developer.mozilla.org/en-US/docs/Web/Security/Types_of_attacks", "type": "documentation"}
+              ],
+              "practice_labs": [
+                {"title": "PortSwigger XSS Labs", "url": "https://portswigger.net/web-security/all-labs", "platform": "portswigger"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "Which XSS type is the most dangerous?", "options": ["Reflected", "Stored", "DOM-based", "Self"], "correct_index": 1, "explanation": "Stored XSS persists on the server and affects every user who views the compromised page."}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "advanced-vulns",
+          "title": "Advanced Web Attacks",
+          "order": 2,
+          "lessons": [
+            {
+              "id": "csrf-ssrf",
+              "title": "CSRF, SSRF & Other Top 10",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["how-web-works"],
+              "skills_gained": ["csrf", "ssrf", "web security"],
+              "resources": [
+                {"title": "PortSwigger CSRF", "url": "https://portswigger.net/web-security/csrf", "type": "course"},
+                {"title": "PortSwigger SSRF", "url": "https://portswigger.net/web-security/ssrf", "type": "course"}
+              ],
+              "practice_labs": [
+                {"title": "PortSwigger CSRF + SSRF Labs", "url": "https://portswigger.net/web-security/all-labs", "platform": "portswigger"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What does CSRF exploit?", "options": ["Server-side code", "Trust between browser and server", "Database queries", "DNS config"], "correct_index": 1, "explanation": "CSRF exploits the trust a server has in a user's browser by forging authenticated requests."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "burp-suite",
+      "title": "Burp Suite",
+      "order": 8,
+      "modules": [
+        {
+          "id": "burp-basics",
+          "title": "Burp Suite Fundamentals",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "burp-proxy",
+              "title": "Setting Up Burp Suite Proxy",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": ["web-vulnerabilities"],
+              "skills_gained": ["burp suite", "web proxy"],
+              "resources": [
+                {"title": "Burp Suite Documentation", "url": "https://portswigger.net/burp/documentation", "type": "documentation"},
+                {"title": "Burp Suite Tutorial (PortSwigger)", "url": "https://portswigger.net/burp/suite", "type": "course"}
+              ],
+              "practice_labs": [
+                {"title": "Burp Suite Professional Labs", "url": "https://portswigger.net/web-security/all-labs", "platform": "portswigger"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What is the default proxy listener port for Burp Suite?", "options": ["8080", "80", "443", "8888"], "correct_index": 0, "explanation": "Burp Suite's proxy listener defaults to port 8080 on localhost."}
+              ]
+            },
+            {
+              "id": "burp-repeater",
+              "title": "Burp Repeater & Intruder",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["burp-proxy"],
+              "skills_gained": ["burp repeater", "burp intruder", "fuzzing"],
+              "resources": [
+                {"title": "Using Burp Repeater", "url": "https://portswigger.net/burp/documentation/desktop/tools/repeater", "type": "documentation"},
+                {"title": "Using Burp Intruder", "url": "https://portswigger.net/burp/documentation/desktop/tools/intruder", "type": "documentation"}
+              ],
+              "practice_labs": [
+                {"title": "Burp Repeater + Intruder Labs", "url": "https://portswigger.net/web-security/all-labs", "platform": "portswigger"}
+              ],
+              "projects": [],
+              "quiz": [
+                {"question": "What is Burp Intruder used for?", "options": ["Scanning ports", "Brute-forcing and fuzzing", "Decrypting traffic", "Editing source code"], "correct_index": 1, "explanation": "Burp Intruder automates custom payload attacks for brute-forcing, fuzzing, and parameter testing."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nmap",
+      "title": "Nmap",
+      "order": 9,
+      "modules": [
+        {
+          "id": "nmap-scanning",
+          "title": "Network Scanning with Nmap",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "nmap-basics",
+              "title": "Nmap Fundamentals",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": ["subnetting", "tcp-ip"],
+              "skills_gained": ["nmap", "port scanning", "service discovery"],
+              "resources": [
+                {"title": "Nmap Official Guide", "url": "https://nmap.org/docs.html", "type": "documentation"},
+                {"title": "Nmap Network Scanning (Book)", "url": "https://nmap.org/book/", "type": "book"}
+              ],
+              "practice_labs": [
+                {"title": "Nmap Scanning Lab (TryHackMe)", "url": "https://tryhackme.com/room/nmap", "platform": "tryhackme"}
+              ],
+              "projects": [
+                {"title": "Network Discovery Script", "description": "Use Nmap to scan a home network, identify all hosts, open ports, and running services"}
+              ],
+              "quiz": [
+                {"question": "Which Nmap flag performs a SYN scan?", "options": ["-sT", "-sS", "-sU", "-sP"], "correct_index": 1, "explanation": "-sS performs a TCP SYN scan, which is fast and stealthy as it doesn't complete the TCP handshake."}
+              ]
+            },
+            {
+              "id": "nmap-scripts",
+              "title": "Nmap Scripting Engine (NSE)",
+              "difficulty": "intermediate",
+              "estimated_minutes": 60,
+              "prerequisites": ["nmap-basics"],
+              "skills_gained": ["nse", "vulnerability scanning"],
+              "resources": [
+                {"title": "NSE Documentation", "url": "https://nmap.org/book/nse.html", "type": "documentation"},
+                {"title": "NSE Script Categories", "url": "https://nmap.org/nsedoc/categories.html", "type": "documentation"}
+              ],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Vulnerability Scan with NSE", "description": "Run vulnerability detection scripts against a target to identify CVEs and misconfigurations"}
+              ],
+              "quiz": [
+                {"question": "What NSE category detects vulnerabilities?", "options": ["discovery", "safe", "vuln", "intrusive"], "correct_index": 2, "explanation": "The 'vuln' category runs scripts that check for specific known vulnerabilities."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "active-directory",
+      "title": "Active Directory",
+      "order": 10,
+      "modules": [
+        {
+          "id": "ad-basics",
+          "title": "Active Directory Basics",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "ad-concepts",
+              "title": "Active Directory Concepts",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": ["networking"],
+              "skills_gained": ["active directory", "windows domain", "ldap"],
+              "resources": [
+                {"title": "Active Directory Security (ADSecurity.org)", "url": "https://adsecurity.org/", "type": "blog"},
+                {"title": "Active Directory Basics (TryHackMe)", "url": "https://tryhackme.com/room/activedirectorybasics", "type": "course"}
+              ],
+              "practice_labs": [
+                {"title": "AD Lab Setup (TryHackMe)", "url": "https://tryhackme.com/room/activedirectorybasics", "platform": "tryhackme"}
+              ],
+              "projects": [
+                {"title": "Set up AD Lab", "description": "Create a home lab with Windows Server as Domain Controller, join Windows clients, configure users and groups"}
+              ],
+              "quiz": [
+                {"question": "What protocol does Active Directory primarily use?", "options": ["HTTP", "LDAP", "FTP", "SNMP"], "correct_index": 1, "explanation": "Active Directory uses LDAP (Lightweight Directory Access Protocol) for directory queries and modifications."}
+              ]
+            },
+            {
+              "id": "ad-attacks",
+              "title": "AD Attack Techniques (Kerberoasting, AS-REP Roasting)",
+              "difficulty": "advanced",
+              "estimated_minutes": 120,
+              "prerequisites": ["ad-concepts"],
+              "skills_gained": ["kerberoasting", "ad attacks", "kerberos"],
+              "resources": [
+                {"title": "Kerberoasting Explained", "url": "https://www.ired.team/offensive-security-experiments/active-directory-kerberos-abuse/t1208-kerberoasting", "type": "tutorial"},
+                {"title": "AS-REP Roasting", "url": "https://www.ired.team/offensive-security-experiments/active-directory-kerberos-abuse/as-rep-roasting-using-rubeus-and-hashcat", "type": "tutorial"}
+              ],
+              "practice_labs": [
+                {"title": "AD Attacks Lab (TryHackMe)", "url": "https://tryhackme.com/room/attackingkerberos", "platform": "tryhackme"}
+              ],
+              "projects": [
+                {"title": "Full AD Pentest", "description": "Perform a complete Active Directory penetration test: recon → enumeration → exploitation → privilege escalation → persistence"}
+              ],
+              "quiz": [
+                {"question": "What is Kerberoasting?", "options": ["Physical server attack", "Requesting TGS tickets to crack offline", "DDoS on AD", "DNS poisoning"], "correct_index": 1, "explanation": "Kerberoasting requests TGS tickets for service accounts and cracks them offline to recover plaintext passwords."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "privilege-escalation",
+      "title": "Privilege Escalation",
+      "order": 11,
+      "modules": [
+        {
+          "id": "pe-linux",
+          "title": "Linux Privilege Escalation",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "pe-linux-basics",
+              "title": "Linux Privilege Escalation Techniques",
+              "difficulty": "intermediate",
+              "estimated_minutes": 120,
+              "prerequisites": ["linux-permissions"],
+              "skills_gained": ["privilege escalation", "linux exploitation"],
+              "resources": [
+                {"title": "GTFOBins", "url": "https://gtfobins.github.io/", "type": "tool"},
+                {"title": "Linux Privesc (TryHackMe)", "url": "https://tryhackme.com/room/linuxprivesc", "type": "course"}
+              ],
+              "practice_labs": [
+                {"title": "Linux Privesc Lab (TryHackMe)", "url": "https://tryhackme.com/room/linuxprivesc", "platform": "tryhackme"}
+              ],
+              "projects": [
+                {"title": "Privilege Escalation Automation", "description": "Write an automated Linux enumeration script that identifies misconfigurations, SUID binaries, and kernel exploits"}
+              ],
+              "quiz": [
+                {"question": "What command finds SUID binaries?", "options": ["find / -perm -4000", "ls -la /bin", "cat /etc/passwd", "ps aux"], "correct_index": 0, "explanation": "The find command with -perm -4000 searches for files with the SUID bit set, a common privilege escalation vector."}
+              ]
+            }
+          ]
+        },
+        {
+          "id": "pe-windows",
+          "title": "Windows Privilege Escalation",
+          "order": 2,
+          "lessons": [
+            {
+              "id": "pe-windows-basics",
+              "title": "Windows Privilege Escalation Techniques",
+              "difficulty": "advanced",
+              "estimated_minutes": 120,
+              "prerequisites": ["ad-concepts"],
+              "skills_gained": ["windows exploitation", "privilege escalation"],
+              "resources": [
+                {"title": "Windows Privesc (TryHackMe)", "url": "https://tryhackme.com/room/windowsprivesc20", "type": "course"},
+                {"title": "LOLBAS Project", "url": "https://lolbas-project.github.io/", "type": "tool"}
+              ],
+              "practice_labs": [
+                {"title": "Windows Privesc Lab (TryHackMe)", "url": "https://tryhackme.com/room/windowsprivesc20", "platform": "tryhackme"}
+              ],
+              "projects": [
+                {"title": "Windows Enumeration Script", "description": "Create a PowerShell script that enumerates Windows privilege escalation vectors"}
+              ],
+              "quiz": [
+                {"question": "What is the Windows kernel usually targeted for PE?", "options": ["ntoskrnl.exe", "winlogon.exe", "cmd.exe", "explorer.exe"], "correct_index": 0, "explanation": "ntoskrnl.exe is the Windows NT kernel, and kernel exploits target it to gain SYSTEM-level privileges."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cloud-security",
+      "title": "Cloud Security",
+      "order": 12,
+      "modules": [
+        {
+          "id": "cloud-sec-basics",
+          "title": "Cloud Security Fundamentals",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "aws-security",
+              "title": "AWS Security & IAM Exploitation",
+              "difficulty": "advanced",
+              "estimated_minutes": 90,
+              "prerequisites": ["networking"],
+              "skills_gained": ["aws security", "iam", "cloud pentesting"],
+              "resources": [
+                {"title": "Rhino Security Labs AWS Pentesting", "url": "https://rhinosecuritylabs.com/", "type": "blog"},
+                {"title": "Pacu - AWS Exploitation Framework", "url": "https://github.com/RhinoSecurityLabs/pacu", "type": "tool"}
+              ],
+              "practice_labs": [
+                {"title": "Flaws.cloud", "url": "http://flaws.cloud/", "platform": "web"},
+                {"title": "CloudGOAT", "url": "https://github.com/ine-labs/cloudgoat", "platform": "github"}
+              ],
+              "projects": [
+                {"title": "Cloud Security Audit", "description": "Use Prowler or ScoutSuite to audit an AWS account for the 20 most common security misconfigurations"}
+              ],
+              "quiz": [
+                {"question": "What is a common cloud security misconfiguration?", "options": ["MFA enabled", "S3 bucket public access", "Encrypted EBS", "VPC flow logs"], "correct_index": 1, "explanation": "Publicly accessible S3 buckets are one of the most common cloud security misconfigurations."}
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ctfs",
+      "title": "CTF Challenges",
+      "order": 13,
+      "modules": [
+        {
+          "id": "ctf-practice",
+          "title": "CTF Practice",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "ctf-intro",
+              "title": "CTF Platforms & Strategy",
+              "difficulty": "beginner",
+              "estimated_minutes": 45,
+              "prerequisites": ["owasp-top-10", "burp-suite", "nmap"],
+              "skills_gained": ["ctf", "problem solving"],
+              "resources": [
+                {"title": "HackTheBox Academy", "url": "https://academy.hackthebox.com/", "type": "course"},
+                {"title": "TryHackMe", "url": "https://tryhackme.com/", "type": "platform"}
+              ],
+              "practice_labs": [
+                {"title": "HackTheBox Starting Point", "url": "https://www.hackthebox.com/", "platform": "hackthebox"},
+                {"title": "TryHackMe Complete Beginner Path", "url": "https://tryhackme.com/", "platform": "tryhackme"}
+              ],
+              "projects": [],
+              "quiz": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "portfolio",
+      "title": "Portfolio Building",
+      "order": 14,
+      "modules": [
+        {
+          "id": "portfolio-projects",
+          "title": "Security Portfolio Projects",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "portfolio-lab",
+              "title": "Build a Security Home Lab",
+              "difficulty": "intermediate",
+              "estimated_minutes": 180,
+              "prerequisites": ["active-directory", "privilege-escalation"],
+              "skills_gained": ["home lab", "documentation"],
+              "resources": [],
+              "practice_labs": [],
+              "projects": [
+                {"title": "Build a Complete Security Home Lab", "description": "Set up a fully functional security lab with pfSense firewall, Kali Linux attack box, Windows AD domain, Ubuntu web server, and SIEM monitoring"},
+                {"title": "Write a Penetration Testing Report", "description": "Document a full penetration test with executive summary, methodology, findings, and remediation recommendations"}
+              ],
+              "quiz": []
+            },
+            {
+              "id": "github-portfolio",
+              "title": "GitHub Security Portfolio",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": [],
+              "skills_gained": ["github", "portfolio"],
+              "resources": [
+                {"title": "Creating a Security Portfolio (Guide)", "url": "https://www.cyberseek.org/", "type": "article"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "resume",
+      "title": "Resume & Job Preparation",
+      "order": 15,
+      "modules": [
+        {
+          "id": "security-resume",
+          "title": "Security Resume Writing",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "resume-writing",
+              "title": "Writing a Penetration Testing Resume",
+              "difficulty": "beginner",
+              "estimated_minutes": 60,
+              "prerequisites": [],
+              "skills_gained": ["resume writing", "job search"],
+              "resources": [
+                {"title": "Cybersecurity Resume Examples", "url": "https://www.cyberseek.org/", "type": "article"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": []
+            },
+            {
+              "id": "certifications",
+              "title": "Security Certifications Guide (OSCP, CEH, PNPT)",
+              "difficulty": "intermediate",
+              "estimated_minutes": 45,
+              "prerequisites": [],
+              "skills_gained": ["certifications"],
+              "resources": [
+                {"title": "OSCP Guide (OffSec)", "url": "https://www.offsec.com/courses/pen-200/", "type": "course"},
+                {"title": "PNPT (TCM Security)", "url": "https://certifications.tcm-sec.com/pnpt/", "type": "course"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "interview-prep",
+      "title": "Interview Preparation",
+      "order": 16,
+      "modules": [
+        {
+          "id": "interview-skills",
+          "title": "Interview Preparation",
+          "order": 1,
+          "lessons": [
+            {
+              "id": "technical-interview",
+              "title": "Technical Interview Practice",
+              "difficulty": "intermediate",
+              "estimated_minutes": 90,
+              "prerequisites": [],
+              "skills_gained": ["interview skills"],
+              "resources": [
+                {"title": "Common Security Interview Questions", "url": "https://github.com/tadwhitaker/Security_Engineer_Interview_Questions", "type": "github"}
+              ],
+              "practice_labs": [],
+              "projects": [],
+              "quiz": [
+                {"question": "What is the difference between a vulnerability assessment and a penetration test?", "options": ["They are the same", "VA identifies vulnerabilities, PT exploits them", "PT is automated, VA is manual", "VA is a type of PT"], "correct_index": 1, "explanation": "A Vulnerability Assessment identifies and catalogues vulnerabilities, while a Penetration Test attempts to exploit them to demonstrate real-world impact."}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

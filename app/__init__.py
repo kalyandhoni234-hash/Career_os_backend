@@ -35,6 +35,7 @@ def create_app():
         CareerGoal,
         Roadmap,
         RoadmapNode,
+        LessonProgress,
         LearningProgress,
         SkillGraph,
         CareerReport,
