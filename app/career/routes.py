@@ -40,6 +40,25 @@ logger = logging.getLogger(__name__)
 career_bp = Blueprint("career", __name__)
 
 
+def _safe(fn):
+    """Decorator that wraps a route handler with try/except and logging."""
+    from functools import wraps
+
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            logger.error("Error in %s: %s", fn.__name__, e, exc_info=True)
+            return jsonify({
+                "error": str(e),
+                "code": f"{fn.__name__.upper()}_FAILED",
+                "message": "An error occurred while processing your request",
+                "details": {},
+            }), 500
+    return wrapper
+
+
 # ── Health ────────────────────────────────────────────────
 
 
@@ -105,6 +124,7 @@ def update_career_profile():
 
 @career_bp.route("/score", methods=["GET"])
 @login_required
+@_safe
 def get_career_score():
     score = compute_career_score(current_user.id)
     history = [
@@ -126,6 +146,7 @@ def get_career_score():
 
 @career_bp.route("/action-center", methods=["GET"])
 @login_required
+@_safe
 def get_action_center_endpoint():
     plan = get_action_center(current_user.id)
     if not plan:
@@ -139,6 +160,7 @@ def get_action_center_endpoint():
 
 @career_bp.route("/recommendations", methods=["GET"])
 @login_required
+@_safe
 def get_recommendations():
     force = request.args.get("force", "false").lower() == "true"
     recs = generate_recommendations(current_user.id, force=force)
@@ -246,6 +268,7 @@ def create_roadmap():
 
 @career_bp.route("/roadmaps/<int:roadmap_id>", methods=["GET"])
 @login_required
+@_safe
 def get_roadmap(roadmap_id):
     roadmap = get_roadmap_with_nodes(roadmap_id)
     if not roadmap:
@@ -381,6 +404,7 @@ def get_lesson_recommendations(roadmap_id, lesson_id):
 
 @career_bp.route("/skill-graph", methods=["GET"])
 @login_required
+@_safe
 def get_skill_graph():
     graph = build_skill_graph(current_user.id)
     return jsonify({"graph": graph}), 200
@@ -391,6 +415,7 @@ def get_skill_graph():
 
 @career_bp.route("/skill-gaps", methods=["GET"])
 @login_required
+@_safe
 def get_skill_gaps():
     target_role = request.args.get("target_role")
     analysis = analyze_skill_gaps(current_user.id, target_role=target_role)
@@ -422,6 +447,7 @@ def get_project_recommendations():
 
 @career_bp.route("/timeline", methods=["GET"])
 @login_required
+@_safe
 def get_timeline():
     from app.resume.models import Resume
     from app.jobs.models import Job
@@ -565,6 +591,7 @@ def get_timeline():
 
 @career_bp.route("/goals", methods=["GET"])
 @login_required
+@_safe
 def list_goals():
     goals = (
         CareerGoal.query.filter_by(user_id=current_user.id)
@@ -595,6 +622,7 @@ def list_goals():
 
 @career_bp.route("/goals", methods=["POST"])
 @login_required
+@_safe
 def create_goal():
     data = request.get_json(silent=True) or {}
     if not data.get("title"):

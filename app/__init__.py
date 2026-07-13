@@ -1,3 +1,4 @@
+import traceback
 from flask import Flask, jsonify
 from flask_cors import CORS
 from config import Config
@@ -140,15 +141,25 @@ def create_app():
 
     @app.errorhandler(401)
     def unauthorized(error):
-        return jsonify({"error": "Unauthorized — please log in again"}), 401
+        app.logger.warning("401 Unauthorized: %s", error)
+        return jsonify({"error": "Unauthorized — please log in again", "code": "UNAUTHORIZED", "message": "Authentication required", "details": {}}), 401
 
     @app.errorhandler(500)
-    def internal_error(_error):
-        return jsonify({"error": "Internal server error"}), 500
+    def internal_error(error):
+        tb = traceback.format_exc()
+        app.logger.error("500 Internal Server Error: %s\n%s", error, tb)
+        debug = app.config.get("DEBUG", False) or app.config.get("ENV") == "development"
+        return jsonify({
+            "error": "Internal server error",
+            "code": "INTERNAL_ERROR",
+            "message": "An unexpected error occurred",
+            "details": {"traceback": tb} if debug else {},
+        }), 500
 
     @app.errorhandler(404)
     def not_found(error):
-        return jsonify({"error": "Not found"}), 404
+        app.logger.warning("404 Not Found: %s", error)
+        return jsonify({"error": "Not found", "code": "NOT_FOUND", "message": "The requested resource was not found", "details": {}}), 404
 
     from app.resume.pdf_engine import get_status as _pdf_status
 
@@ -166,5 +177,9 @@ def create_app():
     @app.route("/health")
     def health():
         return jsonify({"status": "ok"})
+
+    @app.route("/api/system/version")
+    def system_version():
+        return jsonify({"version": "0.1.0", "build": "", "name": "Career OS"})
 
     return app
