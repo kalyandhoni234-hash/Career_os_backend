@@ -6,6 +6,8 @@ from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 
 from app.extensions import db
+from app.core.session import safe_commit
+from app.validation import validate_email_format
 from app.career.models import (
     UserEducation,
     UserSkill,
@@ -297,9 +299,12 @@ def save_wizard_step(step):
             profile.profile_picture = data.get(
                 "profile_picture", getattr(profile, "profile_picture", "")
             )
-            if current_user.email != data.get("email", current_user.email):
-                current_user.email = data.get("email", current_user.email)
-            db.session.commit()
+            new_email = data.get("email", current_user.email)
+            if current_user.email != new_email:
+                if not isinstance(new_email, str) or not validate_email_format(new_email):
+                    return jsonify({"error": "Invalid email format"}), 400
+                current_user.email = new_email
+            safe_commit()
 
             from app.core.integration import on_profile_changed
             on_profile_changed(uid)
@@ -316,7 +321,7 @@ def save_wizard_step(step):
             cp.employment_type = data.get(
                 "employment_type", getattr(cp, "employment_type", "")
             )
-            db.session.commit()
+            safe_commit()
             on_profile_changed(uid)
 
         elif step == "dream_career":
@@ -339,7 +344,7 @@ def save_wizard_step(step):
             cp.target_joining_year = data.get(
                 "target_joining_year", getattr(cp, "target_joining_year", None)
             )
-            db.session.commit()
+            safe_commit()
             on_profile_changed(uid)
 
         elif step == "preferences":
@@ -358,7 +363,7 @@ def save_wizard_step(step):
             for field in ["resume_visibility", "theme_preference"]:
                 if field in data:
                     setattr(pref, field, data[field])
-            db.session.commit()
+            safe_commit()
             on_profile_changed(uid)
 
         else:
@@ -377,7 +382,7 @@ def save_wizard_step(step):
             str(e),
             exc_info=True,
         )
-        return jsonify({"error": f"Failed to save {step}", "reason": str(e)}), 500
+        return jsonify({"error": f"Failed to save {step}"}), 500
 
 
 # ── Profile Dashboard ─────────────────────────────────────
@@ -422,7 +427,7 @@ def profile_dashboard():
             "Profile dashboard failed for user %s: %s", uid, str(e), exc_info=True
         )
         return jsonify(
-            {"error": "Failed to load profile dashboard", "reason": str(e)}
+            {"error": "Failed to load profile dashboard"}
         ), 500
 
 
@@ -456,7 +461,7 @@ def create_education():
             order=max_order + 1,
         )
         db.session.add(edu)
-        db.session.commit()
+        safe_commit()
         from app.core.integration import on_profile_changed
         on_profile_changed(current_user.id)
         return jsonify(
@@ -476,7 +481,8 @@ def create_education():
         ), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        logger.error("Failed to create education: %s", str(e), exc_info=True)
+        return jsonify({"error": "Failed to create education record"}), 500
 
 
 @profile_bp.route("/api/profile/education/<int:edu_id>", methods=["PUT"])
@@ -496,7 +502,7 @@ def update_education(edu_id):
         edu.cgpa = float(data["cgpa"]) if data["cgpa"] else None
     if "relevant_coursework" in data and isinstance(data["relevant_coursework"], list):
         edu.relevant_coursework = data["relevant_coursework"]
-    db.session.commit()
+    safe_commit()
     from app.core.integration import on_profile_changed
     on_profile_changed(current_user.id)
     return jsonify({"message": "Education updated"}), 200
@@ -509,7 +515,7 @@ def delete_education(edu_id):
     if not edu:
         return jsonify({"error": "Education record not found"}), 404
     db.session.delete(edu)
-    db.session.commit()
+    safe_commit()
     from app.core.integration import on_profile_changed
     on_profile_changed(current_user.id)
     return jsonify({"message": "Education deleted"}), 200
@@ -526,7 +532,7 @@ def reorder_education():
         ).first()
         if edu:
             edu.order = order
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Reordered"}), 200
 
 
@@ -551,7 +557,7 @@ def create_skill():
         confidence_rating=data.get("confidence_rating", 0),
     )
     db.session.add(skill)
-    db.session.commit()
+    safe_commit()
     _sync_resume_skills(current_user.id)
     from app.core.integration import on_profile_changed
     on_profile_changed(current_user.id)
@@ -580,7 +586,7 @@ def update_skill(skill_id):
         skill.years_of_experience = float(data["years_of_experience"])
     if "confidence_rating" in data:
         skill.confidence_rating = int(data["confidence_rating"])
-    db.session.commit()
+    safe_commit()
     _sync_resume_skills(current_user.id)
     from app.core.integration import on_profile_changed
     on_profile_changed(current_user.id)
@@ -594,7 +600,7 @@ def delete_skill(skill_id):
     if not skill:
         return jsonify({"error": "Skill not found"}), 404
     db.session.delete(skill)
-    db.session.commit()
+    safe_commit()
     _sync_resume_skills(current_user.id)
     from app.core.integration import on_profile_changed
     on_profile_changed(current_user.id)
@@ -620,7 +626,7 @@ def create_interest():
         is_custom=data.get("is_custom", False),
     )
     db.session.add(interest)
-    db.session.commit()
+    safe_commit()
     return jsonify(
         {"id": interest.id, "name": interest.name, "is_custom": interest.is_custom}
     ), 201
@@ -641,7 +647,7 @@ def batch_interests():
                 user_id=current_user.id, name=name.strip(), is_custom=is_custom
             )
         )
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Interests updated"}), 200
 
 
@@ -678,7 +684,7 @@ def delete_interest(interest_id):
     if not interest:
         return jsonify({"error": "Interest not found"}), 404
     db.session.delete(interest)
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Interest deleted"}), 200
 
 
@@ -703,7 +709,7 @@ def create_language():
         proficiency=data.get("proficiency", "intermediate"),
     )
     db.session.add(lang)
-    db.session.commit()
+    safe_commit()
     return jsonify(
         {"id": lang.id, "language": lang.language, "proficiency": lang.proficiency}
     ), 201
@@ -720,7 +726,7 @@ def update_language(lang_id):
         lang.language = data["language"]
     if "proficiency" in data:
         lang.proficiency = data["proficiency"]
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Language updated"}), 200
 
 
@@ -731,7 +737,7 @@ def delete_language(lang_id):
     if not lang:
         return jsonify({"error": "Language not found"}), 404
     db.session.delete(lang)
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Language deleted"}), 200
 
 
@@ -751,11 +757,11 @@ def create_social_link():
     ).first()
     if existing:
         existing.url = url
-        db.session.commit()
+        safe_commit()
         return jsonify({"message": "Social link updated", "id": existing.id}), 200
     link = SocialLink(user_id=current_user.id, platform=platform, url=url)
     db.session.add(link)
-    db.session.commit()
+    safe_commit()
     return jsonify({"id": link.id, "platform": link.platform, "url": link.url}), 201
 
 
@@ -770,7 +776,7 @@ def update_social_link(link_id):
         link.url = data["url"]
     if "platform" in data:
         link.platform = data["platform"]
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Social link updated"}), 200
 
 
@@ -781,7 +787,7 @@ def delete_social_link(link_id):
     if not link:
         return jsonify({"error": "Social link not found"}), 404
     db.session.delete(link)
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Social link deleted"}), 200
 
 
@@ -824,7 +830,7 @@ def upload_resume():
         is_active=True,
     )
     db.session.add(resume_file)
-    db.session.commit()
+    safe_commit()
 
     _log_timeline_event(
         current_user.id,
@@ -858,7 +864,7 @@ def delete_resume(file_id):
     if not rf:
         return jsonify({"error": "Resume file not found"}), 404
     db.session.delete(rf)
-    db.session.commit()
+    safe_commit()
     from app.core.integration import on_profile_changed
     on_profile_changed(current_user.id)
     return jsonify({"message": "Resume deleted"}), 200
@@ -882,6 +888,8 @@ def update_profile():
                 db.session.add(profile)
             for key, val in fields.items():
                 if key == "email":
+                    if not isinstance(val, str) or not validate_email_format(val):
+                        return jsonify({"error": "Invalid email format"}), 400
                     current_user.email = val
                 else:
                     setattr(profile, key, val)
@@ -924,7 +932,7 @@ def update_profile():
         else:
             return jsonify({"error": f"Unknown section: {section}"}), 400
 
-        db.session.commit()
+        safe_commit()
 
         from app.core.integration import on_profile_changed
         on_profile_changed(uid)
@@ -934,7 +942,8 @@ def update_profile():
         ), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        logger.error("Failed to update profile: %s", str(e), exc_info=True)
+        return jsonify({"error": "Failed to update profile"}), 500
 
 
 # ── Auto Timeline Event Logger ─────────────────────────────
@@ -957,7 +966,7 @@ def _log_timeline_event(user_id, event_type, title, description="", importance=1
             status="completed",
         )
         db.session.add(event)
-        db.session.commit()
+        safe_commit()
     except Exception as e:
         db.session.rollback()
         logger.warning("Failed to log timeline event: %s", e)
@@ -1120,7 +1129,8 @@ def career_readiness_score():
             }
         ), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.error("Failed to compute readiness score: %s", str(e), exc_info=True)
+        return jsonify({"error": "Failed to compute readiness score"}), 500
 
 
 # ── AI Career Summary ──────────────────────────────────────
@@ -1192,7 +1202,8 @@ def career_summary():
             }
         ), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.error("Failed to get career summary: %s", str(e), exc_info=True)
+        return jsonify({"error": "Failed to get career summary"}), 500
 
 
 @profile_bp.route("/api/profile/career-summary", methods=["PUT"])
@@ -1206,7 +1217,7 @@ def save_career_summary():
         profile = Profile(user_id=uid)
         db.session.add(profile)
     profile.career_summary = summary
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Summary saved"}), 200
 
 

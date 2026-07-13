@@ -4,6 +4,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from .models import ImportRecord
 from .import_service import ImportService
+from app.core.session import safe_commit
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +238,7 @@ def confirm_import(record_id):
     record.updated_at = datetime.now(timezone.utc)
     from app.extensions import db
 
-    db.session.commit()
+    safe_commit()
 
     return jsonify(
         {"message": "Import confirmed and saved", "record_id": record.id}

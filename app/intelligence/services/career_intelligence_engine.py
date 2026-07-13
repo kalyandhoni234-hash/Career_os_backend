@@ -9,6 +9,7 @@ import logging
 from typing import Any
 
 from app.extensions import db
+from app.core.session import safe_commit
 from app.intelligence.services.event_bus import Events, register, emit
 
 logger = logging.getLogger(__name__)
@@ -88,7 +89,7 @@ def _init_unified_profile(user_id: int) -> Any:
     from app.intelligence.models import UnifiedProfile
     profile = UnifiedProfile(user_id=user_id)
     db.session.add(profile)
-    db.session.commit()
+    safe_commit()
     return profile
 
 
@@ -177,7 +178,7 @@ def _update_counts(user_id: int) -> None:
     profile.resume_ready = resume is not None
     profile.resume_has_summary = bool(resume and resume.summary)
 
-    db.session.commit()
+    safe_commit()
 
 
 # ── Event handlers ────────────────────────────────────────
@@ -256,7 +257,7 @@ def _on_achievement_unlocked(user_id: int, event_data: dict | None = None) -> No
     if profile:
         from app.intelligence.models import CareerAchievement
         profile.achievements_count = CareerAchievement.query.filter_by(user_id=user_id).count()
-        db.session.commit()
+        safe_commit()
 
 
 # ── GitHub skill import ──────────────────────────────────

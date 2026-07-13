@@ -1,4 +1,5 @@
 from app.extensions import db
+from app.core.session import safe_commit
 from app.career.models import CareerScoreSnapshot
 
 
@@ -123,7 +124,7 @@ def compute_career_score(user_id):
         breakdown=breakdown,
     )
     db.session.add(snapshot)
-    db.session.commit()
+    safe_commit()
 
     return {
         "overall_score": overall,

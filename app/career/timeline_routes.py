@@ -4,6 +4,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 
 from app.extensions import db
+from app.core.session import safe_commit
 from app.career.models import CareerTimelineEvent
 
 logger = logging.getLogger(__name__)
@@ -203,11 +204,12 @@ def create_event():
     )
     try:
         db.session.add(event)
-        db.session.commit()
+        safe_commit()
         return jsonify({"event": _event_to_dict(event)}), 201
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        logger.error("Failed to create timeline event: %s", str(e), exc_info=True)
+        return jsonify({"error": "Failed to create timeline event"}), 500
 
 
 # ── Update Event ───────────────────────────────────────────
@@ -249,7 +251,7 @@ def update_event(event_id):
         event.metadata_json = data["metadata"]
     if "related_goal_id" in data:
         event.related_goal_id = data["related_goal_id"]
-    db.session.commit()
+    safe_commit()
     return jsonify({"event": _event_to_dict(event)}), 200
 
 
@@ -265,7 +267,7 @@ def delete_event(event_id):
     if not event:
         return jsonify({"error": "Event not found"}), 404
     db.session.delete(event)
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Event deleted"}), 200
 
 
@@ -302,7 +304,7 @@ def duplicate_event(event_id):
         metadata_json=original.metadata_json or {},
     )
     db.session.add(event)
-    db.session.commit()
+    safe_commit()
     return jsonify({"event": _event_to_dict(event)}), 201
 
 
@@ -318,7 +320,7 @@ def toggle_pin(event_id):
     if not event:
         return jsonify({"error": "Event not found"}), 404
     event.is_pinned = not event.is_pinned
-    db.session.commit()
+    safe_commit()
     return jsonify({"is_pinned": event.is_pinned}), 200
 
 
@@ -331,7 +333,7 @@ def toggle_favorite(event_id):
     if not event:
         return jsonify({"error": "Event not found"}), 404
     event.is_favorite = not event.is_favorite
-    db.session.commit()
+    safe_commit()
     return jsonify({"is_favorite": event.is_favorite}), 200
 
 
@@ -346,7 +348,7 @@ def reorder_events():
         ).first()
         if event:
             event.sort_order = order
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Reordered"}), 200
 
 

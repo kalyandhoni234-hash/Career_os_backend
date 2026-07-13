@@ -67,5 +67,5 @@ class Config:
         GOOGLE_REDIRECT_URI = _strip_trailing_slash(_explicit_google_redirect)
     else:
         GOOGLE_REDIRECT_URI = _strip_trailing_slash(
-            FRONTEND_URL + "/api/auth/google/callback"
+            BACKEND_URL + "/api/auth/google/callback"
         )

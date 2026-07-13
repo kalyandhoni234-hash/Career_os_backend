@@ -1,6 +1,7 @@
 import json
 import logging
 from app.extensions import db
+from app.core.session import safe_commit
 from app.opportunities.models import Opportunity, InterviewPack, ResumeVersionByCompany
 from app.ai_service import generate_text
 
@@ -79,7 +80,7 @@ Return ONLY valid JSON."""
         job_description_used=description_text,
     )
     db.session.add(version)
-    db.session.commit()
+    safe_commit()
 
     return {
         "version_id": version.id,
@@ -292,7 +293,7 @@ Generate at least 5 items in each array where possible. Return ONLY valid JSON."
         learning_resources=result.get("learning_resources", []),
     )
     db.session.add(pack)
-    db.session.commit()
+    safe_commit()
 
     return _interview_pack_to_dict(pack)
 

@@ -34,6 +34,7 @@ from app.career.services import (
     recommend_next_lesson,
 )
 from app.extensions import db
+from app.core.session import safe_commit
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ career_bp = Blueprint("career", __name__)
 
 
 def _safe(fn):
-    """Decorator that wraps a route handler with try/except and logging."""
+    """Decorator that wraps a route handler with try/except, rollback, and logging."""
     from functools import wraps
 
     @wraps(fn)
@@ -49,9 +50,10 @@ def _safe(fn):
         try:
             return fn(*args, **kwargs)
         except Exception as e:
+            db.session.rollback()
             logger.error("Error in %s: %s", fn.__name__, e, exc_info=True)
             return jsonify({
-                "error": str(e),
+                "error": "Internal server error",
                 "code": f"{fn.__name__.upper()}_FAILED",
                 "message": "An error occurred while processing your request",
                 "details": {},
@@ -111,7 +113,7 @@ def update_career_profile():
         if field in data and isinstance(data[field], list):
             setattr(cp, field, data[field])
 
-    db.session.commit()
+    safe_commit()
 
     from app.core.integration import on_profile_changed
     on_profile_changed(current_user.id)
@@ -174,7 +176,7 @@ def dismiss_recommendation(rec_id):
     if not rec:
         return jsonify({"error": "Recommendation not found"}), 404
     rec.is_dismissed = True
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Recommendation dismissed"}), 200
 
 
@@ -185,7 +187,7 @@ def complete_recommendation(rec_id):
     if not rec:
         return jsonify({"error": "Recommendation not found"}), 404
     rec.is_completed = True
-    db.session.commit()
+    safe_commit()
 
     # Log as timeline event
     event = CareerTimelineEvent(
@@ -197,7 +199,7 @@ def complete_recommendation(rec_id):
         importance=rec.priority,
     )
     db.session.add(event)
-    db.session.commit()
+    safe_commit()
 
     return jsonify({"message": "Recommendation completed"}), 200
 
@@ -255,7 +257,7 @@ def create_roadmap():
         logger.error(
             "Roadmap generation failed for user %s: %s", user_id, str(e), exc_info=True
         )
-        return jsonify({"error": "Failed to generate roadmap", "reason": str(e)}), 500
+        return jsonify({"error": "Failed to generate roadmap"}), 500
     if not roadmap:
         return jsonify(
             {
@@ -270,13 +272,12 @@ def create_roadmap():
 @login_required
 @_safe
 def get_roadmap(roadmap_id):
+    r = Roadmap.query.filter_by(id=roadmap_id, user_id=current_user.id).first()
+    if not r:
+        return jsonify({"error": "Roadmap not found"}), 404
     roadmap = get_roadmap_with_nodes(roadmap_id)
     if not roadmap:
         return jsonify({"error": "Roadmap not found"}), 404
-    # Verify ownership
-    r = Roadmap.query.get(roadmap_id)
-    if r and r.user_id != current_user.id:
-        return jsonify({"error": "Not found"}), 404
     return jsonify({"roadmap": roadmap}), 200
 
 
@@ -302,7 +303,7 @@ def delete_roadmap(roadmap_id):
     if not roadmap:
         return jsonify({"error": "Roadmap not found"}), 404
     db.session.delete(roadmap)
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Roadmap deleted"}), 200
 
 
@@ -353,8 +354,8 @@ def auto_generate_personalized_roadmap():
 def get_full_roadmap(roadmap_id):
     """Get a full roadmap with phases, modules, lessons and progress."""
     try:
-        roadmap = Roadmap.query.get(roadmap_id)
-        if not roadmap or roadmap.user_id != current_user.id:
+        roadmap = Roadmap.query.filter_by(id=roadmap_id, user_id=current_user.id).first()
+        if not roadmap:
             return jsonify({"error": "Roadmap not found"}), 404
         result = get_roadmap_with_progress(roadmap_id)
         if not result:
@@ -640,7 +641,6 @@ def create_goal():
         category=data.get("category", "career"),
     )
     db.session.add(goal)
-    db.session.flush()
 
     # Log timeline event
     event = CareerTimelineEvent(
@@ -652,7 +652,7 @@ def create_goal():
         importance=goal.priority,
     )
     db.session.add(event)
-    db.session.commit()
+    safe_commit()
 
     return jsonify(
         {
@@ -695,7 +695,7 @@ def update_goal(goal_id):
             setattr(goal, field, data[field])
     if data.get("target_date"):
         goal.target_date = datetime.strptime(data["target_date"], "%Y-%m-%d").date()
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Goal updated"}), 200
 
 
@@ -706,7 +706,7 @@ def delete_goal(goal_id):
     if not goal:
         return jsonify({"error": "Goal not found"}), 404
     db.session.delete(goal)
-    db.session.commit()
+    safe_commit()
     from app.core.integration import on_profile_changed
     on_profile_changed(current_user.id)
     return jsonify({"message": "Goal deleted"}), 200
@@ -780,7 +780,7 @@ def get_dashboard():
             exc_info=True,
         )
         return jsonify(
-            {"error": "Failed to build dashboard data", "reason": str(e)}
+            {"error": "Failed to build dashboard data"}
         ), 500
 
     try:
@@ -815,7 +815,7 @@ def get_dashboard():
             str(e),
             exc_info=True,
         )
-        return jsonify({"error": "Dashboard database error", "reason": str(e)}), 500
+        return jsonify({"error": "Dashboard database error"}), 500
 
     return jsonify(
         {

@@ -1,8 +1,10 @@
 import logging
+from datetime import datetime, timezone
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 
 from app.extensions import db
+from app.core.session import safe_commit
 from app.opportunities.models import (
     Opportunity,
     SavedOpportunity,
@@ -24,11 +26,37 @@ from app.opportunities.services import (
     generate_email,
     generate_linkedin_message,
     generate_interview_questions,
+    generate_prioritized_actions,
+    generate_ai_career_advice,
+    compute_application_health,
+    compute_predictive_analytics,
 )
 
 logger = logging.getLogger(__name__)
 
 opportunities_bp = Blueprint("opportunities", __name__)
+
+
+@opportunities_bp.route("/parse-url", methods=["POST"])
+@login_required
+def parse_job_url_endpoint():
+    data = request.get_json(silent=True) or {}
+    url = (data.get("url") or "").strip()
+    if not url:
+        return jsonify({"error": "url is required"}), 400
+    if not url.startswith(("http://", "https://")):
+        return jsonify({"error": "Invalid URL"}), 400
+
+    from app.opportunities.services.job_parser import parse_job_url as _parse
+
+    try:
+        result = _parse(url)
+        if result.get("error"):
+            return jsonify({"error": result["error"]}), 422
+        return jsonify({"parsed": result}), 200
+    except Exception as exc:
+        logger.error("Failed to parse URL %s: %s", url, exc)
+        return jsonify({"error": "Failed to parse job URL"}), 500
 
 
 @opportunities_bp.route("/ping")
@@ -203,7 +231,7 @@ def save_opportunity(opportunity_id):
         notes=data.get("notes"),
     )
     db.session.add(saved)
-    db.session.commit()
+    safe_commit()
 
     return jsonify({"message": "Opportunity saved", "saved_id": saved.id}), 201
 
@@ -218,11 +246,13 @@ def update_saved_opportunity(opportunity_id):
         return jsonify({"error": "Not saved"}), 404
 
     data = request.get_json(silent=True) or {}
+    if data.get("applied"):
+        data["applied_at"] = datetime.now(timezone.utc).isoformat()
     for field in ("list_type", "tags", "notes", "applied_at", "application_status"):
         if field in data:
             setattr(saved, field, data[field])
 
-    db.session.commit()
+    safe_commit()
 
     return jsonify({"message": "Updated"}), 200
 
@@ -236,7 +266,7 @@ def unsave_opportunity(opportunity_id):
     if not saved:
         return jsonify({"error": "Not saved"}), 404
     db.session.delete(saved)
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Removed"}), 200
 
 
@@ -547,6 +577,69 @@ def application_readiness(opportunity_id):
             }
         }
     ), 200
+
+
+# ── AI Career Agent ────────────────────────────────────────
+
+
+@opportunities_bp.route("/agent/actions", methods=["GET"])
+@login_required
+def career_agent_actions():
+    opportunity_id = request.args.get("opportunity_id", type=int)
+    result = generate_prioritized_actions(current_user.id, opportunity_id)
+    return jsonify({"agent": result}), 200
+
+
+@opportunities_bp.route("/<int:opportunity_id>/advice", methods=["GET"])
+@login_required
+def career_advice(opportunity_id):
+    result = generate_ai_career_advice(current_user.id, opportunity_id)
+    return jsonify(result), 200
+
+
+# ── Application Health Score ───────────────────────────────
+
+
+@opportunities_bp.route("/<int:opportunity_id>/health", methods=["GET"])
+@login_required
+def application_health(opportunity_id):
+    result = compute_application_health(current_user.id, opportunity_id)
+    return jsonify({"health": result}), 200
+
+
+@opportunities_bp.route("/health/all", methods=["GET"])
+@login_required
+def all_health_scores():
+    from app.opportunities.services.health_score_service import (
+        compute_health_for_all_saved,
+    )
+
+    result = compute_health_for_all_saved(current_user.id)
+    return jsonify({"health_scores": result}), 200
+
+
+# ── Predictive Analytics ───────────────────────────────────
+
+
+@opportunities_bp.route("/analytics", methods=["GET"])
+@login_required
+def predictive_analytics():
+    result = compute_predictive_analytics(current_user.id)
+    return jsonify({"analytics": result}), 200
+
+
+# ── Opportunity Intelligence ───────────────────────────────
+
+
+@opportunities_bp.route("/intelligence", methods=["GET"])
+@login_required
+def opportunity_intelligence():
+    from app.opportunities.services.opportunity_intelligence_service import (
+        compute_opportunity_intelligence,
+    )
+
+    result = compute_opportunity_intelligence(current_user.id)
+    return jsonify({"intelligence": result}), 200
 
 
 # ── Recommendations ────────────────────────────────────────

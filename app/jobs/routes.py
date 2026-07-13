@@ -2,6 +2,7 @@ from datetime import datetime
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.extensions import db
+from app.core.session import safe_commit
 from app.jobs.models import Job
 
 jobs_bp = Blueprint("jobs", __name__)
@@ -111,7 +112,7 @@ def create_job():
         location=data.get("location"),
     )
     db.session.add(job)
-    db.session.commit()
+    safe_commit()
 
     from app.core.integration import on_application_changed
     on_application_changed(current_user.id, job.id)
@@ -194,7 +195,7 @@ def update_job(job_id):
         else:
             job.deadline = None
 
-    db.session.commit()
+    safe_commit()
 
     from app.core.integration import on_application_changed
     on_application_changed(current_user.id, job.id)
@@ -210,7 +211,7 @@ def delete_job(job_id):
         return jsonify({"error": "Job not found"}), 404
 
     db.session.delete(job)
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Job deleted"}), 200
 
 

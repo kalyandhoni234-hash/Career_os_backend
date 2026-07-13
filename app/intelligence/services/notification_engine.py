@@ -8,6 +8,7 @@ import logging
 from datetime import datetime, timezone
 
 from app.extensions import db
+from app.core.session import safe_commit
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ def create_notification(
         metadata_json=metadata_json or {},
     )
     db.session.add(notification)
-    db.session.commit()
+    safe_commit()
 
     return {
         "id": notification.id,
@@ -90,7 +91,7 @@ def mark_read(notification_id: int, user_id: int) -> bool:
         return False
     notification.is_read = True
     notification.read_at = datetime.now(timezone.utc)
-    db.session.commit()
+    safe_commit()
     return True
 
 
@@ -101,7 +102,7 @@ def mark_all_read(user_id: int) -> int:
     count = Notification.query.filter_by(user_id=user_id, is_read=False).update(
         {"is_read": True, "read_at": datetime.now(timezone.utc)}
     )
-    db.session.commit()
+    safe_commit()
     return count
 
 

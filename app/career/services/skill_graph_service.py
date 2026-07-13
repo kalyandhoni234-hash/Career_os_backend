@@ -1,6 +1,7 @@
 import logging
 
 from app.extensions import db
+from app.core.session import safe_commit
 from app.career.models import SkillGraph, LearningProgress
 from app.career.services.skill_maps import get_role_skill_map
 
@@ -196,7 +197,7 @@ def build_skill_graph(user_id):
                 skill_count=data["skill_count"],
             )
             db.session.add(sg)
-    db.session.commit()
+    safe_commit()
 
     return category_data
 

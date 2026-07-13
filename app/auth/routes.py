@@ -4,7 +4,11 @@ from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, redirect, current_app, session
 from flask_login import login_user, logout_user, login_required, current_user
 from app.extensions import db, bcrypt, oauth, limiter
+from app.core.session import safe_commit
+from app import csrf
 from app.auth.models import User
+from app.email_service import send_reset_email
+from app.validation import validate_email_format
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +20,16 @@ def ping():
     return {"blueprint": "auth", "status": "alive"}
 
 
+@auth_bp.route("/csrf-token", methods=["GET"])
+@csrf.exempt
+def csrf_token():
+    from app.csrf import _generate_token
+    token = _generate_token()
+    return jsonify({"csrf_token": token}), 200
+
+
 @auth_bp.route("/signup", methods=["POST"])
+@csrf.exempt
 @limiter.limit("5 per minute")
 def signup():
     data = request.get_json(silent=True) or {}
@@ -26,7 +39,7 @@ def signup():
     if not email or not password:
         return jsonify({"error": "Email and password are required"}), 400
 
-    if "@" not in email or "." not in email:
+    if not validate_email_format(email):
         return jsonify({"error": "Invalid email format"}), 400
 
     if len(password) < 8:
@@ -39,12 +52,13 @@ def signup():
     password_hash = bcrypt.generate_password_hash(password).decode("utf-8")
     user = User(email=email, password_hash=password_hash)
     db.session.add(user)
-    db.session.commit()
+    safe_commit()
 
     return jsonify({"message": "Signup successful", "user_id": user.id}), 201
 
 
 @auth_bp.route("/login", methods=["POST"])
+@csrf.exempt
 @limiter.limit("5 per minute")
 def login():
     data = request.get_json(silent=True) or {}
@@ -135,7 +149,7 @@ def google_callback():
     if not user:
         user = User(email=email, oauth_provider="google")
         db.session.add(user)
-        db.session.commit()
+        safe_commit()
 
     session.permanent = True
     login_user(user, remember=True)
@@ -144,26 +158,35 @@ def google_callback():
 
 
 @auth_bp.route("/forgot-password", methods=["POST"])
+@csrf.exempt
 @limiter.limit("3 per minute")
 def forgot_password():
     data = request.get_json(silent=True) or {}
     email = data.get("email", "").strip().lower()
 
-    user = User.query.filter_by(email=email).first()
-    if not user:
+    if not email:
         return jsonify(
             {"message": "If that email exists, a reset link has been sent"}
         ), 200
 
-    token = secrets.token_urlsafe(32)
-    user.reset_token = token
-    user.reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
-    db.session.commit()
+    if not validate_email_format(email):
+        return jsonify(
+            {"message": "If that email exists, a reset link has been sent"}
+        ), 200
 
-    return jsonify({"message": "Reset token generated", "reset_token": token}), 200
+    user = User.query.filter_by(email=email).first()
+    if user:
+        token = secrets.token_urlsafe(32)
+        user.reset_token = token
+        user.reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
+        safe_commit()
+        send_reset_email(email, token)
+
+    return jsonify({"message": "If that email exists, a reset link has been sent"}), 200
 
 
 @auth_bp.route("/reset-password", methods=["POST"])
+@csrf.exempt
 @limiter.limit("5 per minute")
 def reset_password():
     data = request.get_json(silent=True) or {}
@@ -187,7 +210,7 @@ def reset_password():
     user.password_hash = bcrypt.generate_password_hash(new_password).decode("utf-8")
     user.reset_token = None
     user.reset_token_expiry = None
-    db.session.commit()
+    safe_commit()
 
     return jsonify({"message": "Password reset successful"}), 200
 
@@ -213,7 +236,7 @@ def change_password():
         return jsonify({"error": "Cannot change password on OAuth-only accounts"}), 400
 
     current_user.password_hash = bcrypt.generate_password_hash(new_password).decode("utf-8")
-    db.session.commit()
+    safe_commit()
 
     return jsonify({"message": "Password changed successfully"}), 200
 
@@ -223,7 +246,7 @@ def change_password():
 def delete_account():
     try:
         db.session.delete(current_user)
-        db.session.commit()
+        safe_commit()
         logout_user()
         return jsonify({"message": "Account deleted successfully"}), 200
     except Exception as exc:
@@ -234,6 +257,8 @@ def delete_account():
 @auth_bp.route("/ai-test", methods=["GET"])
 @login_required
 def ai_test():
+    if not current_app.config.get("DEBUG", False):
+        return jsonify({"error": "Not available"}), 404
     from app.ai_service import generate_text
 
     result = generate_text("Say hello in one short sentence.", model="gemini")

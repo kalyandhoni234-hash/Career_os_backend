@@ -8,6 +8,7 @@ the unified career profile while storing only resume-specific overrides.
 from datetime import datetime, timezone
 
 from app.extensions import db
+from app.core.session import safe_commit
 from app.users.models import Profile
 from app.career.models import (
     UserSkill,
@@ -432,4 +433,4 @@ def save_resume_to_canonical(user_id, resume_data):
             elif proficiency:
                 existing.proficiency = proficiency
 
-    db.session.commit()
+    safe_commit()

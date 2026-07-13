@@ -9,6 +9,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from app.extensions import db
+from app.core.session import safe_commit
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +98,7 @@ def analyze_project(project_id: int) -> dict[str, Any] | None:
     # Check for README
     pi.has_readme = bool(project.readme_url or project.description)
 
-    db.session.commit()
+    safe_commit()
 
     return _serialize(pi)
 

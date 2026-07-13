@@ -1,5 +1,6 @@
 import logging
 from app.extensions import db
+from app.core.session import safe_commit
 from app.opportunities.models import Opportunity, OpportunitySkillGap
 
 logger = logging.getLogger(__name__)
@@ -79,7 +80,7 @@ def analyze_opportunity_skill_gaps(
             priority=priority,
         )
         db.session.add(existing)
-    db.session.commit()
+    safe_commit()
 
     return _gap_to_dict(existing)
 

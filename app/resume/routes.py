@@ -3,6 +3,7 @@ from datetime import datetime, timezone
 from io import BytesIO
 from flask import Blueprint, request, jsonify, make_response
 from flask_login import login_required, current_user
+from app.core.session import safe_commit
 from app.extensions import db, limiter
 from app.resume.models import Resume, ResumeVersion
 from app.resume.ats import score_resume
@@ -139,7 +140,7 @@ def upsert_resume():
                 value = _normalize_list_field(value, ["technologies"])
             setattr(resume, field, value)
 
-    db.session.commit()
+    safe_commit()
 
     # Propagate to canonical profile tables (single-source-of-truth)
     from app.resume.profile_bridge import save_resume_to_canonical
@@ -155,7 +156,7 @@ def upsert_resume():
         snapshot=_snapshot(resume),
     )
     db.session.add(version)
-    db.session.commit()
+    safe_commit()
 
     from app.core.integration import on_resume_changed
     on_resume_changed(current_user.id)
@@ -645,7 +646,7 @@ def ats_score():
         return jsonify({"error": "No resume found"}), 404
 
     resume.target_job_description = job_description
-    db.session.commit()
+    safe_commit()
 
     result = score_resume(resume, job_description)
     return jsonify(result), 200
@@ -740,7 +741,7 @@ def restore_version(version_id):
             value = _normalize_list_field(value, ["technologies"])
         setattr(resume, key, value)
 
-    db.session.commit()
+    safe_commit()
 
     from app.resume.profile_bridge import save_resume_to_canonical
     save_resume_to_canonical(current_user.id, snapshot)
@@ -751,7 +752,7 @@ def restore_version(version_id):
         snapshot=_snapshot(resume),
     )
     db.session.add(new_version)
-    db.session.commit()
+    safe_commit()
 
     from app.core.integration import on_resume_changed
     on_resume_changed(current_user.id)
@@ -766,7 +767,7 @@ def restore_version(version_id):
         importance=2,
     )
     db.session.add(event)
-    db.session.commit()
+    safe_commit()
 
     return jsonify({"message": "Version restored", "resume": _serialize(resume)}), 200
 
@@ -783,7 +784,7 @@ def delete_version(version_id):
         return jsonify({"error": "Version not found"}), 404
 
     db.session.delete(version)
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Version deleted"}), 200
 
 
@@ -807,7 +808,7 @@ def update_version(version_id):
         snapshot = data["snapshot"]
         if isinstance(snapshot, dict):
             version.snapshot = snapshot
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Version updated"}), 200
 
 
@@ -832,7 +833,7 @@ def duplicate_version(version_id):
         snapshot=source.snapshot,
     )
     db.session.add(dup)
-    db.session.commit()
+    safe_commit()
     return jsonify({"message": "Version duplicated", "id": dup.id}), 201
 
 
@@ -867,7 +868,7 @@ def tailor_version(version_id):
         snapshot=tailored,
     )
     db.session.add(new_version)
-    db.session.commit()
+    safe_commit()
 
     from app.core.integration import on_resume_changed
     on_resume_changed(current_user.id)
@@ -905,7 +906,7 @@ def score_version_ats(version_id):
     version.ats_score = result.get("overall_score")
     version.ats_data = result
     version.tailored_for_job = job_description[:1000]
-    db.session.commit()
+    safe_commit()
 
     return jsonify(result), 200
 
@@ -971,7 +972,7 @@ def generate_ai_resume():
                 val = _normalize_list_field(val, ["technologies"])
             setattr(resume, field, val)
 
-    db.session.commit()
+    safe_commit()
 
     from app.resume.profile_bridge import save_resume_to_canonical
     save_resume_to_canonical(current_user.id, resume_data)
@@ -985,7 +986,7 @@ def generate_ai_resume():
         snapshot=_snapshot(resume),
     )
     db.session.add(version)
-    db.session.commit()
+    safe_commit()
 
     from app.core.integration import on_resume_changed
     on_resume_changed(current_user.id)

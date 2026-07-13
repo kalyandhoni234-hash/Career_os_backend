@@ -3,6 +3,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 
 from app.extensions import db
+from app.core.session import safe_commit
 from app.intelligence.engine import (
     get_unified_profile,
     get_skills,
@@ -32,7 +33,7 @@ def unified_profile():
         return jsonify(profile), 200
     except Exception as e:
         logger.error("Failed to get unified profile: %s", e, exc_info=True)
-        return jsonify({"error": "Failed to load profile", "reason": str(e)}), 500
+        return jsonify({"error": "Failed to load profile"}), 500
 
 
 @intelligence_bp.route("/profile/<section>", methods=["GET"])
@@ -54,7 +55,8 @@ def profile_section(section):
     try:
         return jsonify({section: fn(current_user.id)}), 200
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.error("Failed to get profile section: %s", str(e), exc_info=True)
+        return jsonify({"error": "Failed to load section"}), 500
 
 
 @intelligence_bp.route("/completion", methods=["GET"])
@@ -111,10 +113,10 @@ def import_data():
             return jsonify({"error": f"Unknown section: {section}"}), 400
 
         log_event(current_user.id, "import", msg, event_source=source)
-        db.session.commit()
+        safe_commit()
         return jsonify({"message": msg, "ids": ids}), 200
 
     except Exception as e:
         db.session.rollback()
         logger.error("Import failed: %s", e, exc_info=True)
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "Import failed"}), 500

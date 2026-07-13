@@ -4,6 +4,7 @@ from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 
 from app.extensions import db
+from app.core.session import safe_commit
 from app.users.models import Profile
 from app.career.models import (
     UserEducation,
@@ -186,7 +187,7 @@ def get_step(step):
 
     except Exception as e:
         logger.error("Failed to load step %s: %s", step, str(e), exc_info=True)
-        return jsonify({"error": f"Failed to load step {step}", "reason": str(e)}), 500
+        return jsonify({"error": f"Failed to load step {step}"}), 500
 
 
 @onboarding_bp.route("/api/onboarding/step/<int:step>", methods=["POST"])
@@ -339,7 +340,7 @@ def save_step(step):
         if step > (current_user.onboarding_step or 0) and step <= TOTAL_STEPS:
             current_user.onboarding_step = step
 
-        db.session.commit()
+        safe_commit()
 
         from app.core.integration import on_profile_changed
         on_profile_changed(uid)
@@ -353,7 +354,7 @@ def save_step(step):
     except Exception as e:
         db.session.rollback()
         logger.error("Failed to save step %s: %s", step, str(e), exc_info=True)
-        return jsonify({"error": f"Failed to save step {step}", "reason": str(e)}), 500
+        return jsonify({"error": f"Failed to save step {step}"}), 500
 
 
 @onboarding_bp.route("/api/onboarding/complete", methods=["POST"])
@@ -361,7 +362,7 @@ def save_step(step):
 def complete_onboarding():
     current_user.onboarding_completed = True
     current_user.onboarding_step = TOTAL_STEPS
-    db.session.commit()
+    safe_commit()
     from app.core.integration import on_profile_changed
     on_profile_changed(current_user.id)
     return jsonify({"message": "Onboarding completed"}), 200
@@ -373,8 +374,9 @@ def reset_onboarding():
     try:
         current_user.onboarding_completed = False
         current_user.onboarding_step = 0
-        db.session.commit()
+        safe_commit()
         return jsonify({"message": "Onboarding reset"}), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        logger.error("Failed to reset onboarding: %s", str(e), exc_info=True)
+        return jsonify({"error": "Failed to reset onboarding"}), 500

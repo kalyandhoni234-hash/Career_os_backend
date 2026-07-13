@@ -8,6 +8,7 @@ and notification system with context-aware suggestions.
 import logging
 
 from app.extensions import db
+from app.core.session import safe_commit
 
 logger = logging.getLogger(__name__)
 
@@ -414,7 +415,7 @@ def _persist_insights(user_id: int, insights: list[dict]) -> None:
         )
         db.session.add(insight)
 
-    db.session.commit()
+    safe_commit()
 
 
 def get_insights(user_id: int, limit: int = 20) -> list[dict]:

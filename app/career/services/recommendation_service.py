@@ -1,6 +1,10 @@
+import logging
 from app.extensions import db
+from app.core.session import safe_commit
 from app.career.models import AIRecommendation
 from app.career.services.career_memory_service import build_career_memory
+
+logger = logging.getLogger(__name__)
 
 
 def generate_recommendations(user_id, force=False):
@@ -20,7 +24,7 @@ def generate_recommendations(user_id, force=False):
         ).all()
         for r in old:
             r.is_dismissed = True
-        db.session.commit()
+        safe_commit()
 
     # Build context for AI
     context_parts = []
@@ -86,7 +90,24 @@ Example:
     else:
         recs_data = _generate_fallback_recs(memory)
 
-    # Persist recommendations
+    existing_recs = AIRecommendation.query.filter_by(
+        user_id=user_id, is_dismissed=False, is_completed=False
+    ).all()
+    if existing_recs:
+        return [
+            {
+                "id": r.id,
+                "rec_type": r.rec_type,
+                "title": r.title,
+                "description": r.description,
+                "priority": r.priority,
+                "impact_score": r.impact_score,
+                "category": r.category,
+                "action_link": r.action_link,
+            }
+            for r in existing_recs
+        ]
+
     saved = []
     for r_data in recs_data:
         rec = AIRecommendation(
@@ -99,8 +120,13 @@ Example:
             category=r_data.get("category", ""),
             action_link=r_data.get("action_link", ""),
         )
-        db.session.add(rec)
-        db.session.flush()
+        try:
+            db.session.add(rec)
+            db.session.flush()
+        except Exception:
+            db.session.rollback()
+            logger.error("Failed to flush recommendation for user %s", user_id, exc_info=True)
+            break
         saved.append(
             {
                 "id": rec.id,
@@ -113,7 +139,7 @@ Example:
                 "action_link": rec.action_link,
             }
         )
-    db.session.commit()
+    safe_commit()
     return saved
 
 

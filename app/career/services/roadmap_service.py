@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from app.extensions import db
+from app.core.session import safe_commit
 from app.career.models import Roadmap, RoadmapNode, LearningProgress
 
 
@@ -680,7 +681,7 @@ def generate_roadmap(user_id, category=None, target_role=None):
                 )
                 db.session.add(lp)
 
-    db.session.commit()
+    safe_commit()
     return get_roadmap_with_nodes(roadmap.id)
 
 
@@ -772,11 +773,11 @@ def update_roadmap_progress(user_id, node_id, status):
                 )
                 db.session.add(lp)
 
-    db.session.commit()
+    safe_commit()
 
     if roadmap.status == "active" and roadmap.progress == 100:
         roadmap.status = "completed"
-        db.session.commit()
+        safe_commit()
         from app.career.models import CareerTimelineEvent
         event = CareerTimelineEvent(
             user_id=user_id,
@@ -787,7 +788,7 @@ def update_roadmap_progress(user_id, node_id, status):
             importance=4,
         )
         db.session.add(event)
-        db.session.commit()
+        safe_commit()
 
     return get_roadmap_with_nodes(roadmap.id)
 

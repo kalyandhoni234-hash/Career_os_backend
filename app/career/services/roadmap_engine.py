@@ -4,6 +4,7 @@ import os
 from datetime import datetime, timezone
 
 from app.extensions import db
+from app.core.session import safe_commit
 from app.career.models import Roadmap, LessonProgress
 
 logger = logging.getLogger(__name__)
@@ -72,6 +73,27 @@ def get_available_career_paths() -> list[dict]:
     return paths
 
 
+_ROLE_SYNONYMS = {
+    "software engineer": "developer",
+    "software developer": "developer",
+    "web developer": "developer",
+    "full stack": "developer",
+    "fullstack": "developer",
+    "backend developer": "developer",
+    "frontend developer": "developer",
+    "sre": "devops",
+    "site reliability": "devops",
+    "devops engineer": "devops",
+    "penetration tester": "hacker",
+    "security analyst": "hacker",
+    "infosec": "hacker",
+    "ml engineer": "ai",
+    "machine learning": "ai",
+    "data scientist": "ai",
+    "ai developer": "ai",
+}
+
+
 def find_roadmap_def(target_role: str | None) -> dict | None:
     """Find the best-matching roadmap definition for a target role."""
     if not target_role:
@@ -86,6 +108,13 @@ def find_roadmap_def(target_role: str | None) -> dict | None:
         title = data.get("title", "").lower()
         if key in title or title in key:
             return data
+
+    synonym_key = _ROLE_SYNONYMS.get(key)
+    if synonym_key:
+        for k, data in defs.items():
+            title = data.get("title", "").lower()
+            if synonym_key in title:
+                return data
 
     return None
 
@@ -170,7 +199,7 @@ def generate_personalized_roadmap(user_id: int, target_role: str | None = None) 
         roadmap.status = "completed"
         roadmap.progress = 100
 
-    db.session.commit()
+    safe_commit()
 
     # Log timeline event
     from app.career.models import CareerTimelineEvent
@@ -183,7 +212,7 @@ def generate_personalized_roadmap(user_id: int, target_role: str | None = None) 
         importance=4,
     )
     db.session.add(event)
-    db.session.commit()
+    safe_commit()
 
     return get_roadmap_with_progress(roadmap.id)
 
@@ -215,7 +244,7 @@ def get_roadmap_with_progress(roadmap_id: int) -> dict | None:
     # Compute progress if not set
     if total > 0:
         roadmap.progress = int((completed / total) * 100)
-        db.session.commit()
+        safe_commit()
 
     # Build enriched phases with progress
     phases = []
@@ -274,7 +303,7 @@ def get_roadmap_with_progress(roadmap_id: int) -> dict | None:
                         roadmap.current_lesson_id = les["id"]
                         roadmap.current_module_id = mod["id"]
                         roadmap.current_phase_id = ph["id"]
-                        db.session.commit()
+                        safe_commit()
                         break
                 if current_lesson:
                     break
@@ -401,7 +430,7 @@ def update_lesson_progress(
         )
         db.session.add(event)
 
-    db.session.commit()
+    safe_commit()
     return get_roadmap_with_progress(roadmap_id)
 
 

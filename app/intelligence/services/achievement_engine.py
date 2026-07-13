@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 from typing import Callable
 
 from app.extensions import db
+from app.core.session import safe_commit
 
 logger = logging.getLogger(__name__)
 
@@ -230,7 +231,7 @@ def check_achievements(user_id: int) -> list[dict]:
             })
 
     if newly_unlocked:
-        db.session.commit()
+        safe_commit()
 
     return newly_unlocked
 
