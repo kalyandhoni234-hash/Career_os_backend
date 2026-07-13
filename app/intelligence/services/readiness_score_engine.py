@@ -10,7 +10,6 @@ from datetime import datetime, timezone
 from typing import Any
 
 from app.extensions import db
-from app.core.session import safe_commit
 
 logger = logging.getLogger(__name__)
 
@@ -371,7 +370,7 @@ def _persist_readiness(user_id: int, scores: dict[str, Any]) -> None:
 
     profile.last_recalculated_at = datetime.now(timezone.utc)
 
-    safe_commit()
+    db.session.commit()
 
 
 def _snapshot_score(user_id: int, scores: dict[str, Any]) -> None:
@@ -409,7 +408,7 @@ def _snapshot_score(user_id: int, scores: dict[str, Any]) -> None:
         breakdown=breakdown,
     )
     db.session.add(snapshot)
-    safe_commit()
+    db.session.commit()
 
 
 def get_readiness_history(user_id: int, limit: int = 30) -> list[dict]:

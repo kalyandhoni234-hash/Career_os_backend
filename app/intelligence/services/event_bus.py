@@ -9,7 +9,6 @@ from datetime import datetime, timezone
 from typing import Any, Callable
 
 from flask import has_app_context
-from app.core.session import safe_commit
 
 logger = logging.getLogger(__name__)
 
@@ -130,7 +129,7 @@ def emit(event_type: str, user_id: int, data: dict[str, Any] | None = None) -> N
             metadata_json=payload,
         )
         db.session.add(evt)
-        safe_commit()
+        db.session.commit()
     except Exception:
         db.session.rollback()
         logger.warning("Failed to persist event %s for user %s", event_type, user_id, exc_info=True)

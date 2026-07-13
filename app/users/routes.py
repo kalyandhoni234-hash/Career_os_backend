@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.extensions import db
-from app.core.session import safe_commit
 from app.users.models import Profile
 
 users_bp = Blueprint("users", __name__)
@@ -133,7 +132,7 @@ def upsert_profile():
         if field in data:
             setattr(resume, field, data[field])
 
-    safe_commit()
+    db.session.commit()
 
     from app.core.integration import on_profile_changed
     on_profile_changed(current_user.id)
@@ -350,7 +349,7 @@ def save_notification_preferences():
     if "interview_reminders" in prefs_in:
         prefs.reminder_freq = "daily" if prefs_in["interview_reminders"] else "never"
 
-    safe_commit()
+    db.session.commit()
     return jsonify({"message": "Notification preferences saved"}), 200
 
 
@@ -390,7 +389,7 @@ def save_ai_preferences():
     if "coaching_mode" in prefs_in:
         prefs.ai_tone = prefs_in["coaching_mode"]
 
-    safe_commit()
+    db.session.commit()
     return jsonify({"message": "AI preferences saved"}), 200
 
 

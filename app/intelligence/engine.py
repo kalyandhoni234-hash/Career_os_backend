@@ -3,7 +3,6 @@
 import logging
 from datetime import datetime, timezone
 from app.extensions import db
-from app.core.session import safe_commit
 from app.intelligence.models import CanonicalProject, CanonicalExperience, CanonicalCertificate, CareerEvent
 from app.career.models import UserSkill, UserEducation, UserInterest, UserLanguage, CareerGoal, CareerProfile, UserPreference
 from app.users.models import Profile
@@ -510,7 +509,7 @@ def log_event(user_id: int, event_type: str, title: str, description: str = "", 
             occurred_at=_now(),
         )
         db.session.add(event)
-        safe_commit()
+        db.session.commit()
     except Exception as e:
         db.session.rollback()
         logger.warning("Failed to log career event: %s", e)

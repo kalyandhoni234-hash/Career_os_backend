@@ -3,7 +3,6 @@ from flask import Flask, jsonify
 from flask_cors import CORS
 from config import Config
 from app.extensions import db, migrate, login_manager, bcrypt, oauth, limiter
-from app import csrf
 
 
 def create_app():
@@ -18,14 +17,6 @@ def create_app():
     bcrypt.init_app(app)
     oauth.init_app(app)
     limiter.init_app(app)
-
-    @app.before_request
-    def check_csrf():
-        return csrf.protect()
-
-    @app.after_request
-    def attach_csrf_cookie(response):
-        return csrf.set_csrf_cookie(response)
 
     oauth.register(
         name="google",
@@ -89,9 +80,6 @@ def create_app():
         InterviewInvite,
         RecruiterNotification,
     )
-    from app.relationships.models import Contact, Interaction  # noqa: F401
-    from app.knowledge.models import InterviewRecord  # noqa: F401
-    from app.engine.models import RuleExecutionLog  # noqa: F401
     from app.integrations.models import Integration  # noqa: F401
     import importlib
 
@@ -144,18 +132,6 @@ def create_app():
 
     app.register_blueprint(intelligence_bp)
 
-    from app.relationships.routes import relationships_bp
-
-    app.register_blueprint(relationships_bp, url_prefix="/api/relationships")
-
-    from app.knowledge.routes import knowledge_bp
-
-    app.register_blueprint(knowledge_bp, url_prefix="/api/knowledge")
-
-    from app.engine.routes import engine_bp
-
-    app.register_blueprint(engine_bp)
-
     @app.after_request
     def set_security_headers(response):
         response.headers["X-Content-Type-Options"] = "nosniff"
@@ -165,38 +141,25 @@ def create_app():
 
     @app.errorhandler(401)
     def unauthorized(error):
-        db.session.rollback()
         app.logger.warning("401 Unauthorized: %s", error)
         return jsonify({"error": "Unauthorized — please log in again", "code": "UNAUTHORIZED", "message": "Authentication required", "details": {}}), 401
 
     @app.errorhandler(500)
     def internal_error(error):
-        db.session.rollback()
         tb = traceback.format_exc()
         app.logger.error("500 Internal Server Error: %s\n%s", error, tb)
+        debug = app.config.get("DEBUG", False) or app.config.get("ENV") == "development"
         return jsonify({
             "error": "Internal server error",
             "code": "INTERNAL_ERROR",
             "message": "An unexpected error occurred",
-            "details": {},
+            "details": {"traceback": tb} if debug else {},
         }), 500
 
     @app.errorhandler(404)
     def not_found(error):
-        db.session.rollback()
         app.logger.warning("404 Not Found: %s", error)
         return jsonify({"error": "Not found", "code": "NOT_FOUND", "message": "The requested resource was not found", "details": {}}), 404
-
-    @app.errorhandler(429)
-    def rate_limited(error):
-        app.logger.warning("429 Rate Limit Exceeded: %s", error)
-        return jsonify({"error": "Rate limit exceeded", "code": "RATE_LIMIT_EXCEEDED", "message": "Too many requests — please try again later", "details": {}}), 429
-
-    @app.errorhandler(503)
-    def service_unavailable(error):
-        db.session.rollback()
-        app.logger.warning("503 Service Unavailable: %s", error)
-        return jsonify({"error": "Service unavailable", "code": "SERVICE_UNAVAILABLE", "message": "Service temporarily unavailable — please try again later", "details": {}}), 503
 
     from app.resume.pdf_engine import get_status as _pdf_status
 
@@ -210,26 +173,6 @@ def create_app():
             "See /api/resume/pdf-health for details.",
             _pdf["error"],
         )
-
-    # Start background rule engine scheduler once
-    if app.config.get("SCHEDULER_ENABLED", True):
-        _sched_started = getattr(app, "_scheduler_started", False)
-        if not _sched_started:
-            app._scheduler_started = True
-            from app.engine.scheduler import init_scheduler
-
-            try:
-                init_scheduler(app)
-            except Exception as e:
-                app.logger.warning("Background scheduler failed to start: %s", e)
-
-    @app.teardown_request
-    def teardown_request(exception=None):
-        if exception:
-            db.session.rollback()
-        elif db.session.is_active is False:
-            db.session.rollback()
-        db.session.remove()
 
     @app.route("/health")
     def health():

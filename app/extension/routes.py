@@ -13,7 +13,6 @@ from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.extensions import db
-from app.core.session import safe_commit
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +76,7 @@ def create_extension_application():
         next_action=(datetime.utcnow() + timedelta(days=7)).strftime("%Y-%m-%d"),
     )
     db.session.add(job)
-    safe_commit()
+    db.session.commit()
 
     skill_gaps = []
     if job_description:

@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime, timezone, timedelta
 from app.extensions import db
-from app.core.session import safe_commit
 from app.agents.models import CareerAgent, AgentTask, AGENT_TYPES
 
 logger = logging.getLogger(__name__)
@@ -39,7 +38,7 @@ def ensure_default_agents(user_id):
                 config={"schedule_minutes": int(schedule.total_seconds() / 60)},
             )
             db.session.add(agent)
-    safe_commit()
+    db.session.commit()
     return (
         CareerAgent.query.filter_by(user_id=user_id)
         .order_by(CareerAgent.agent_type)
@@ -136,7 +135,7 @@ def run_agent(user_id, agent_type):
         started_at=datetime.now(timezone.utc),
     )
     db.session.add(task)
-    safe_commit()
+    db.session.commit()
 
     try:
         result = _execute_agent_task(agent_type, user_id)
@@ -148,10 +147,9 @@ def run_agent(user_id, agent_type):
         agent.last_run_at = datetime.now(timezone.utc)
         schedule = DEFAULT_SCHEDULES.get(agent_type, timedelta(days=1))
         agent.next_run_at = datetime.now(timezone.utc) + schedule
-        safe_commit()
+        db.session.commit()
         return {"task_id": task.id, "status": "completed", "result": result}
     except Exception as e:
-        db.session.rollback()
         logger.error(
             "Agent %s failed for user %s: %s",
             agent_type,
@@ -164,7 +162,7 @@ def run_agent(user_id, agent_type):
         task.completed_at = datetime.now(timezone.utc)
         agent.status = "error"
         agent.total_errors += 1
-        safe_commit()
+        db.session.commit()
         return {"task_id": task.id, "status": "failed", "error": str(e)}
 
 
@@ -205,7 +203,6 @@ def _run_job_discovery(user_id):
             create_opportunity(user_id, job_data)
             found += 1
         except Exception as e:
-            db.session.rollback()
             logger.warning("Failed to create opportunity: %s", e)
     return {"jobs_found": found, "query": query}
 

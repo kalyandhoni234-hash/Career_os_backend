@@ -30,21 +30,3 @@ from app.opportunities.services.resume_optimizer import (
     generate_linkedin_message as generate_linkedin_message,
     generate_interview_questions as generate_interview_questions,
 )
-from app.opportunities.services.job_parser import (
-    parse_job_url as parse_job_url,
-    detect_platform as detect_platform,
-)
-from app.opportunities.services.opportunity_intelligence_service import (
-    compute_opportunity_intelligence as compute_opportunity_intelligence,
-)
-from app.opportunities.services.career_agent_service import (
-    generate_prioritized_actions as generate_prioritized_actions,
-    generate_ai_career_advice as generate_ai_career_advice,
-)
-from app.opportunities.services.health_score_service import (
-    compute_application_health as compute_application_health,
-    compute_health_for_all_saved as compute_health_for_all_saved,
-)
-from app.opportunities.services.predictive_analytics_service import (
-    compute_predictive_analytics as compute_predictive_analytics,
-)

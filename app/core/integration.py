@@ -10,7 +10,6 @@ import logging
 from datetime import datetime, timezone
 
 from app.extensions import db
-from app.core.session import safe_commit
 
 logger = logging.getLogger(__name__)
 
@@ -31,12 +30,10 @@ def on_resume_changed(user_id: int) -> None:
         try:
             generate_recommendations(user_id, force=True)
         except Exception:
-            db.session.rollback()
             logger.warning("Recommendation generation skipped (AI may be unavailable)", exc_info=True)
 
         logger.info("Integration: resume changed for user %s — skill gaps, score, and recommendations updated", user_id)
     except Exception as e:
-        db.session.rollback()
         logger.error("Integration error on_resume_changed: %s", e, exc_info=True)
 
 
@@ -53,12 +50,10 @@ def on_roadmap_progress_changed(user_id: int, node_id: int) -> None:
         try:
             generate_recommendations(user_id)
         except Exception:
-            db.session.rollback()
             logger.warning("Recommendation generation skipped", exc_info=True)
 
         logger.info("Integration: roadmap progress changed for user %s node %s — score updated", user_id, node_id)
     except Exception as e:
-        db.session.rollback()
         logger.error("Integration error on_roadmap_progress_changed: %s", e, exc_info=True)
 
 
@@ -84,11 +79,10 @@ def on_application_changed(user_id: int, job_id: int) -> None:
                 importance=3,
             )
             db.session.add(event)
-            safe_commit()
+            db.session.commit()
 
         logger.info("Integration: application changed for user %s job %s — score updated", user_id, job_id)
     except Exception as e:
-        db.session.rollback()
         logger.error("Integration error on_application_changed: %s", e, exc_info=True)
 
 

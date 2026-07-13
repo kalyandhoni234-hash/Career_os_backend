@@ -1,6 +1,5 @@
 import logging
 from app.extensions import db
-from app.core.session import safe_commit
 from app.opportunities.models import Opportunity, OpportunityMatchScore
 
 logger = logging.getLogger(__name__)
@@ -29,7 +28,7 @@ def calculate_match_score(
             user_id=user_id, opportunity_id=opportunity_id, **scores
         )
         db.session.add(existing)
-    safe_commit()
+    db.session.commit()
 
     return _score_to_dict(existing)
 

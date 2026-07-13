@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime, timezone
 from app.extensions import db
-from app.core.session import safe_commit
 from .models import ImportRecord
 from app.career.models import UserSkill
 from .normalizer import ImportNormalizer
@@ -42,7 +41,7 @@ class ImportService:
         db.session.add(record)
 
         try:
-            safe_commit()
+            db.session.commit()
             logger.debug("ImportRecord created: id=%s", record.id)
 
             parser_cls = PARSER_MAP.get(source)
@@ -85,7 +84,7 @@ class ImportService:
 
         try:
             record.updated_at = datetime.now(timezone.utc)
-            safe_commit()
+            db.session.commit()
         except Exception:
             db.session.rollback()
 

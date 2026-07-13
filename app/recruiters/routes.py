@@ -5,9 +5,7 @@ from functools import wraps
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.extensions import db, limiter
-from app.core.session import safe_commit
 from app.auth.models import User
-from app.validation import validate_email_format
 from app.users.models import Profile
 from app.recruiters.models import (
     Recruiter,
@@ -73,7 +71,7 @@ def recruiter_signup():
 
     if not email or not password or not company_name:
         return jsonify({"error": "Email, password, and company name are required"}), 400
-    if not validate_email_format(email):
+    if "@" not in email:
         return jsonify({"error": "Invalid email format"}), 400
     if len(password) < 8:
         return jsonify({"error": "Password must be at least 8 characters"}), 400
@@ -99,7 +97,7 @@ def recruiter_signup():
         user_id=user.id, company_id=company.id, full_name=full_name, title=title
     )
     db.session.add(recruiter)
-    safe_commit()
+    db.session.commit()
 
     return jsonify({"message": "Recruiter account created", "user_id": user.id}), 201
 
@@ -213,7 +211,7 @@ def company_crud():
     ):
         if field in data:
             setattr(company, field, data[field])
-    safe_commit()
+    db.session.commit()
     return jsonify({"message": "Company updated"}), 200
 
 
@@ -230,7 +228,7 @@ def update_recruiter_profile():
     for field in ("full_name", "title", "phone", "linkedin", "department"):
         if field in data:
             setattr(recruiter, field, data[field])
-    safe_commit()
+    db.session.commit()
     return jsonify({"message": "Profile updated"}), 200
 
 
@@ -402,7 +400,7 @@ def candidate_detail(candidate_id):
             recruiter_id=recruiter.id, candidate_id=candidate_id, source="profile_view"
         )
         db.session.add(view)
-        safe_commit()
+        db.session.commit()
 
     profile = Profile.query.filter_by(user_id=candidate_id).first()
     resume = Resume.query.filter_by(user_id=candidate_id).first()
@@ -701,7 +699,7 @@ def save_candidate():
         notes=notes,
     )
     db.session.add(saved)
-    safe_commit()
+    db.session.commit()
 
     return jsonify({"message": "Candidate saved", "saved_id": saved.id}), 201
 
@@ -720,7 +718,7 @@ def unsave_candidate(saved_id):
         return jsonify({"error": "Not found"}), 404
 
     db.session.delete(saved)
-    safe_commit()
+    db.session.commit()
     return jsonify({"message": "Candidate removed"}), 200
 
 
@@ -741,7 +739,7 @@ def update_saved_candidate(saved_id):
     for field in ("notes", "rating", "status", "pipeline_id"):
         if field in data:
             setattr(saved, field, data[field])
-    safe_commit()
+    db.session.commit()
     return jsonify({"message": "Updated"}), 200
 
 
@@ -791,7 +789,7 @@ def create_pipeline():
         color=data.get("color"),
     )
     db.session.add(pipeline)
-    safe_commit()
+    db.session.commit()
 
     return jsonify(
         {
@@ -825,14 +823,14 @@ def pipeline_crud(pipeline_id):
 
     if request.method == "DELETE":
         db.session.delete(pipeline)
-        safe_commit()
+        db.session.commit()
         return jsonify({"message": "Pipeline deleted"}), 200
 
     data = request.get_json(silent=True) or {}
     for field in ("name", "description", "color"):
         if field in data:
             setattr(pipeline, field, data[field])
-    safe_commit()
+    db.session.commit()
     return jsonify({"message": "Pipeline updated"}), 200
 
 
@@ -880,7 +878,7 @@ def get_job_post(job_id):
     if not recruiter:
         return jsonify({"error": "Recruiter profile not found"}), 404
 
-    job = JobPost.query.filter_by(id=job_id, recruiter_id=recruiter.id).first()
+    job = JobPost.query.filter_by(id=job_id).first()
     if not job:
         return jsonify({"error": "Job post not found"}), 404
 
@@ -947,7 +945,7 @@ def create_job_post():
         status=data.get("status", "active"),
     )
     db.session.add(job)
-    safe_commit()
+    db.session.commit()
 
     return jsonify({"message": "Job post created", "job_id": job.id}), 201
 
@@ -990,7 +988,7 @@ def update_job_post(job_id):
         job.application_deadline = datetime.fromisoformat(
             data["application_deadline"]
         ).date()
-    safe_commit()
+    db.session.commit()
 
     return jsonify({"message": "Job post updated"}), 200
 
@@ -1007,7 +1005,7 @@ def delete_job_post(job_id):
         return jsonify({"error": "Job post not found"}), 404
 
     db.session.delete(job)
-    safe_commit()
+    db.session.commit()
     return jsonify({"message": "Job post deleted"}), 200
 
 
@@ -1088,7 +1086,7 @@ def create_invite():
         data={"invite_id": invite.id, "candidate_id": candidate_id},
     )
     db.session.add(notification)
-    safe_commit()
+    db.session.commit()
 
     return jsonify({"message": "Invite sent", "invite_id": invite.id}), 201
 
@@ -1118,7 +1116,7 @@ def update_invite(invite_id):
             setattr(invite, field, data[field])
     if data.get("scheduled_date"):
         invite.scheduled_date = datetime.fromisoformat(data["scheduled_date"])
-    safe_commit()
+    db.session.commit()
     return jsonify({"message": "Invite updated"}), 200
 
 
@@ -1174,7 +1172,7 @@ def mark_notifications_read():
         RecruiterNotification.query.filter_by(
             recruiter_id=recruiter.id, is_read=False
         ).update({"is_read": True}, synchronize_session=False)
-    safe_commit()
+    db.session.commit()
     return jsonify({"message": "Notifications marked read"}), 200
 
 
@@ -1389,7 +1387,7 @@ def contact_candidate(candidate_id):
             data={"candidate_id": candidate_id},
         )
         db.session.add(notification)
-        safe_commit()
+        db.session.commit()
         return jsonify({"message": "Resume request sent"}), 200
 
     if action == "save":
@@ -1402,7 +1400,7 @@ def contact_candidate(candidate_id):
             recruiter_id=recruiter.id, candidate_id=candidate_id, status="contacted"
         )
         db.session.add(saved)
-        safe_commit()
+        db.session.commit()
         return jsonify({"message": "Candidate saved", "saved_id": saved.id}), 201
 
     if action == "reject":
@@ -1411,7 +1409,7 @@ def contact_candidate(candidate_id):
         ).first()
         if saved:
             saved.status = "rejected"
-            safe_commit()
+            db.session.commit()
         return jsonify({"message": "Candidate rejected"}), 200
 
     return jsonify({"error": "Invalid action"}), 400
@@ -1423,10 +1421,7 @@ def contact_candidate(candidate_id):
 @recruiters_bp.route("/jobs/<int:job_id>/match", methods=["GET"])
 @recruiter_required
 def match_candidates_to_job(job_id):
-    recruiter = _get_recruiter()
-    if not recruiter:
-        return jsonify({"error": "Recruiter profile not found"}), 404
-    job = JobPost.query.filter_by(id=job_id, recruiter_id=recruiter.id).first()
+    job = JobPost.query.get(job_id)
     if not job:
         return jsonify({"error": "Job not found"}), 404
 

@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta, date
 from app.extensions import db
-from app.core.session import safe_commit
 from app.career.models import (
     CareerReport,
     AIRecommendation,
@@ -82,7 +81,7 @@ def generate_weekly_report(user_id):
         summary=_generate_summary(score_before, score_after, metrics, achievements),
     )
     db.session.add(report)
-    safe_commit()
+    db.session.commit()
 
     return _serialize_report(report)
 

@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime, timezone
 from app.extensions import db
-from app.core.session import safe_commit
 from app.integrations.models import Integration
 from app.users.models import Profile
 from app.career.models import UserEducation
@@ -116,7 +115,7 @@ def sync_profile_from_github(user_id: int, integration: Integration) -> None:
         event_source="github",
     )
 
-    safe_commit()
+    db.session.commit()
     logger.info("Profile synced from GitHub for user %s", user_id)
 
 
@@ -280,7 +279,7 @@ def sync_profile_from_linkedin(user_id: int, integration: Integration) -> None:
         event_source="linkedin",
     )
 
-    safe_commit()
+    db.session.commit()
     logger.info("Profile synced from LinkedIn for user %s", user_id)
 
 

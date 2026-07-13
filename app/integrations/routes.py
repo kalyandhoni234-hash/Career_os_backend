@@ -4,7 +4,6 @@ from flask import Blueprint, request, jsonify, redirect, current_app
 from flask_login import login_required, current_user
 
 from app.extensions import db
-from app.core.session import safe_commit
 from app.integrations.models import Integration, OAuthState
 from app.integrations.services.github import GitHubService
 from app.integrations.services.linkedin import LinkedInService, import_from_profile_url
@@ -48,7 +47,7 @@ def _get_integration(user_id: int, provider: str) -> Integration:
     if not integration:
         integration = Integration(user_id=user_id, provider=provider)
         db.session.add(integration)
-        safe_commit()
+        db.session.commit()
     return integration
 
 
@@ -79,7 +78,7 @@ def _refresh_if_needed(integration: Integration, service: object) -> bool:
                 integration.refresh_token = token_data.get(
                     "refresh_token", integration.refresh_token
                 )
-                safe_commit()
+                db.session.commit()
                 return True
             except Exception as e:
                 logger.warning(
@@ -87,12 +86,12 @@ def _refresh_if_needed(integration: Integration, service: object) -> bool:
                 )
                 integration.sync_status = "connection_error"
                 integration.sync_error = str(e)
-                safe_commit()
+                db.session.commit()
                 return False
         else:
             integration.sync_status = "connection_error"
             integration.sync_error = "Token expired and no refresh token available"
-            safe_commit()
+            db.session.commit()
             return False
     return True
 
@@ -370,7 +369,7 @@ def oauth_callback(provider):
         len((integration.provider_data or {}).get("skills", [])),
     )
 
-    safe_commit()
+    db.session.commit()
 
     try:
         sync_profile_from_integration(integration, user_id)
@@ -384,7 +383,7 @@ def oauth_callback(provider):
             importance=3,
         )
         db.session.add(event)
-        safe_commit()
+        db.session.commit()
     except Exception as e:
         logger.warning("Profile sync failed after callback for %s: %s", provider, e)
 
@@ -423,7 +422,7 @@ def disconnect(provider):
     integration.sync_status = "not_connected"
     integration.sync_error = None
     integration.provider_data = {}
-    safe_commit()
+    db.session.commit()
 
     return jsonify({"message": f"{provider} disconnected"}), 200
 
@@ -447,7 +446,7 @@ def sync(provider):
         ), 401
 
     integration.sync_status = "syncing"
-    safe_commit()
+    db.session.commit()
 
     try:
         sync_result = svc.sync_data(integration.access_token)
@@ -467,7 +466,7 @@ def sync(provider):
         integration.sync_status = "connected"
         integration.sync_error = None
         _record_sync_history(integration, "success", "Sync completed")
-        safe_commit()
+        db.session.commit()
 
         try:
             sync_profile_from_integration(integration, current_user.id)
@@ -487,7 +486,7 @@ def sync(provider):
         integration.sync_status = "sync_failed"
         integration.sync_error = str(e)
         _record_sync_history(integration, "failed", str(e))
-        safe_commit()
+        db.session.commit()
         logger.error("Sync failed for %s: %s", provider, e)
         return jsonify({"error": f"Sync failed: {str(e)}"}), 500
 
@@ -525,7 +524,7 @@ def linkedin_import():
     integration.provider_data = result.get("provider_data", {})
     integration.connected_at = datetime.now(timezone.utc).replace(tzinfo=None)
     integration.last_sync_at = datetime.now(timezone.utc).replace(tzinfo=None)
-    safe_commit()
+    db.session.commit()
 
     from app.career.models import CareerTimelineEvent
     event = CareerTimelineEvent(
@@ -537,7 +536,7 @@ def linkedin_import():
         importance=3,
     )
     db.session.add(event)
-    safe_commit()
+    db.session.commit()
 
     return jsonify(
         {"message": "LinkedIn profile imported", "integration": integration.to_dict()}

@@ -10,7 +10,6 @@ from datetime import datetime, timezone
 from typing import Any
 
 from app.extensions import db
-from app.core.session import safe_commit
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +127,7 @@ def add_skill_evidence(
         )
         db.session.add(existing)
 
-    safe_commit()
+    db.session.commit()
 
     return get_skill_state(user_id, skill_name)
 

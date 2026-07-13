@@ -1,7 +1,6 @@
 import secrets
 from datetime import datetime, timezone
 from app.extensions import db
-from app.core.session import safe_commit
 
 
 class OAuthState(db.Model):
@@ -27,7 +26,7 @@ class OAuthState(db.Model):
             state=state, user_id=user_id, provider=provider, expires_at=expires_at
         )
         db.session.add(record)
-        safe_commit()
+        db.session.commit()
         return state
 
     @classmethod
@@ -42,14 +41,14 @@ class OAuthState(db.Model):
         user_id = record.user_id
         provider = record.provider
         db.session.delete(record)
-        safe_commit()
+        db.session.commit()
         return (user_id, provider)
 
     @classmethod
     def cleanup_expired(cls):
         now = datetime.now(timezone.utc).replace(tzinfo=None)
         cls.query.filter(cls.expires_at <= now).delete()
-        safe_commit()
+        db.session.commit()
 
 
 class Integration(db.Model):

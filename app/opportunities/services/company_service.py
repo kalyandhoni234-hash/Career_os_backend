@@ -1,7 +1,6 @@
 import logging
 from typing import Optional
 from app.extensions import db
-from app.core.session import safe_commit
 from app.opportunities.models import CompanyProfile
 
 logger = logging.getLogger(__name__)
@@ -13,7 +12,7 @@ def get_or_create_company(name: str) -> CompanyProfile:
         return company
     company = CompanyProfile(name=name)
     db.session.add(company)
-    safe_commit()
+    db.session.commit()
     return company
 
 

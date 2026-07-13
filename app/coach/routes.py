@@ -1,7 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 from app.extensions import db, limiter
-from app.core.session import safe_commit
 from app.coach.models import CoachMessage
 
 coach_bp = Blueprint("coach", __name__)
@@ -100,7 +99,7 @@ Conversation so far:
     )
     db.session.add(user_msg)
     db.session.add(assistant_msg)
-    safe_commit()
+    db.session.commit()
 
     return jsonify({"response": ai_response}), 200
 
@@ -109,5 +108,5 @@ Conversation so far:
 @login_required
 def clear_history():
     CoachMessage.query.filter_by(user_id=current_user.id).delete()
-    safe_commit()
+    db.session.commit()
     return jsonify({"message": "History cleared"}), 200

@@ -2,7 +2,6 @@ import logging
 from typing import Optional
 from sqlalchemy import or_
 from app.extensions import db
-from app.core.session import safe_commit
 from app.opportunities.models import Opportunity, CompanyProfile
 
 logger = logging.getLogger(__name__)
@@ -129,7 +128,7 @@ def get_opportunity_detail(opportunity_id: int) -> Optional[dict]:
 def create_opportunity(data: dict) -> dict:
     opp = Opportunity(**data)
     db.session.add(opp)
-    safe_commit()
+    db.session.commit()
     return _opp_to_dict(opp)
 
 
@@ -140,7 +139,7 @@ def update_opportunity(opportunity_id: int, data: dict) -> Optional[dict]:
     for key, val in data.items():
         if hasattr(opp, key):
             setattr(opp, key, val)
-    safe_commit()
+    db.session.commit()
     return _opp_to_dict(opp)
 
 
@@ -149,7 +148,7 @@ def delete_opportunity(opportunity_id: int) -> bool:
     if not opp:
         return False
     db.session.delete(opp)
-    safe_commit()
+    db.session.commit()
     return True
 
 

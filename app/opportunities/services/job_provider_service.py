@@ -2,7 +2,6 @@ import logging
 from datetime import datetime, timezone
 from typing import Optional
 from abc import ABC, abstractmethod
-from app.core.session import safe_commit
 
 logger = logging.getLogger(__name__)
 
@@ -391,5 +390,5 @@ def seed_sample_opportunities():
         db.session.add(opp)
         count += 1
 
-    safe_commit()
+    db.session.commit()
     logger.info("Seeded %d sample opportunities", count)

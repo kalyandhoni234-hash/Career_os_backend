@@ -1,6 +1,5 @@
 import logging
 from typing import Optional
-from app.core.session import safe_commit
 from app.opportunities.models import SalaryInsight, MarketTrend
 
 logger = logging.getLogger(__name__)
@@ -273,7 +272,7 @@ def get_market_trends() -> dict:
         for entry in MARKET_TRENDS_SAMPLE:
             trend = MarketTrend(**entry)
             db.session.add(trend)
-        safe_commit()
+        db.session.commit()
         trends = (
             MarketTrend.query.order_by(MarketTrend.created_at.desc()).limit(50).all()
         )
