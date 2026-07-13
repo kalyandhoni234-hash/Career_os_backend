@@ -549,6 +549,20 @@ def application_readiness(opportunity_id):
     ), 200
 
 
+# ── Agent Actions ───────────────────────────────────────────
+
+
+@opportunities_bp.route("/agent/actions", methods=["GET"])
+@login_required
+def agent_actions():
+    return jsonify({
+        "top_recommendation": None,
+        "tasks": [],
+        "reasoning": [],
+        "message": None,
+    }), 200
+
+
 # ── Recommendations ────────────────────────────────────────
 
 
