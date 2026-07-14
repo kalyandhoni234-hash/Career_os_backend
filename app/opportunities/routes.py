@@ -1,4 +1,5 @@
 import logging
+from sqlalchemy import or_
 from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 
@@ -570,16 +571,25 @@ def agent_actions():
 @login_required
 def get_opportunity_recommendations():
     from app.career.models import CareerProfile
+    from app.opportunities.services.role_taxonomy import expand_role_keywords
 
     profile = CareerProfile.query.filter_by(user_id=current_user.id).first()
 
     q = Opportunity.query.filter_by(is_active=True)
     if profile and profile.target_role:
-        q = q.filter(Opportunity.title.ilike(f"%{profile.target_role}%"))
+        keywords = expand_role_keywords(profile.target_role)
+        conditions = []
+        for kw in keywords:
+            like = f"%{kw}%"
+            conditions.append(Opportunity.title.ilike(like))
+            conditions.append(Opportunity.tech_stack.cast(db.String).ilike(like))
+            conditions.append(Opportunity.description.ilike(like))
+        if conditions:
+            q = q.filter(or_(*conditions))
     if profile and profile.target_location:
         q = q.filter(Opportunity.location.ilike(f"%{profile.target_location}%"))
 
-    opportunities = q.order_by(Opportunity.created_at.desc()).limit(20).all()
+    opportunities = q.order_by(Opportunity.created_at.desc()).limit(40).all()
 
     scored = []
     for opp in opportunities:
@@ -605,4 +615,4 @@ def get_opportunity_recommendations():
 
     scored.sort(key=lambda x: x["match_score"].get("overall_score", 0), reverse=True)
 
-    return jsonify({"recommendations": scored[:10]}), 200
+    return jsonify({"recommendations": scored[:15]}), 200
