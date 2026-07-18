@@ -166,7 +166,7 @@ def _get_skill_data(user_id):
     if not resume:
         raw = []
     else:
-        raw = resume.skills or []
+        raw = resume.skills_list
     if isinstance(raw, str):
         raw = [raw]
     clean = []

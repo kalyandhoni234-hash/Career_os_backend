@@ -52,6 +52,8 @@ class Config:
     REMEMBER_COOKIE_SECURE = IS_PRODUCTION
     REMEMBER_COOKIE_HTTPONLY = True
 
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16 MB
+
     FRONTEND_URL = _strip_trailing_slash(
         os.environ.get("FRONTEND_URL", "http://localhost:3000")
     )

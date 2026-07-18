@@ -150,6 +150,7 @@ def run_agent(user_id, agent_type):
         db.session.commit()
         return {"task_id": task.id, "status": "completed", "result": result}
     except Exception as e:
+        db.session.rollback()
         logger.error(
             "Agent %s failed for user %s: %s",
             agent_type,
@@ -181,8 +182,9 @@ def _execute_agent_task(agent_type, user_id):
 
 
 def _run_job_discovery(user_id):
-    from app.opportunities.services.job_provider_service import search_providers
+    from app.opportunities.services.job_provider_service import search_providers, seed_sample_opportunities
     from app.opportunities.services.opportunity_service import create_opportunity
+    from app.opportunities.models import Opportunity
     from app.career.models import CareerProfile
 
     cp = CareerProfile.query.filter_by(user_id=user_id).first()
@@ -197,10 +199,31 @@ def _run_job_discovery(user_id):
         return {"jobs_found": 0, "message": "No target role set"}
 
     results = search_providers(query=query, limit=5)
+    if not results:
+        seed_sample_opportunities()
+        results = [o.serialize() if hasattr(o, 'serialize') else {
+            "title": o.title,
+            "company_name": o.company_name,
+            "location": o.location,
+            "description": o.description,
+            "tech_stack": o.tech_stack or [],
+            "salary_min": o.salary_min,
+            "salary_max": o.salary_max,
+            "employment_type": o.employment_type,
+            "remote_type": o.remote_type,
+            "provider": o.provider or "sample",
+        } for o in Opportunity.query.order_by(Opportunity.created_at.desc()).limit(5).all()]
+
     found = 0
     for job_data in results:
         try:
-            create_opportunity(user_id, job_data)
+            data = {k: v for k, v in job_data.items() if k in {
+                "title", "company_name", "company_logo", "location",
+                "remote_type", "salary_min", "salary_max", "currency",
+                "employment_type", "description", "requirements",
+                "responsibilities", "tech_stack", "provider", "url",
+            }}
+            create_opportunity(data)
             found += 1
         except Exception as e:
             logger.warning("Failed to create opportunity: %s", e)
@@ -602,7 +625,7 @@ def get_agent_briefing(user_id):
         # From skill gaps
         if resume and resume.skills:
             marketing = analyze_skills_gaps_local(
-                resume.skills or [], "Backend Engineer"
+                resume.skills_list, "Backend Engineer"
             )
             for skill, score in marketing.get("gaps", [])[:2]:
                 recommendations.append(
@@ -677,7 +700,7 @@ def get_agent_briefing(user_id):
         "career_goal": cp.target_role if cp else "Not set",
         "preferred_location": cp.target_location if cp else "Not set",
         "target_companies": [cp.target_company] if cp and cp.target_company else [],
-        "preferred_stack": resume.skills[:5] if resume and resume.skills else [],
+        "preferred_stack": resume.skills_list[:5] if resume else [],
         "preferred_roles": cp.preferred_roles if cp and cp.preferred_roles else [],
         "preferred_locations": cp.preferred_locations
         if cp and cp.preferred_locations

@@ -317,6 +317,7 @@ def save_wizard_step(step):
                 "employment_type", getattr(cp, "employment_type", "")
             )
             db.session.commit()
+            from app.core.integration import on_profile_changed
             on_profile_changed(uid)
 
         elif step == "dream_career":
@@ -340,6 +341,7 @@ def save_wizard_step(step):
                 "target_joining_year", getattr(cp, "target_joining_year", None)
             )
             db.session.commit()
+            from app.core.integration import on_profile_changed
             on_profile_changed(uid)
 
         elif step == "preferences":
@@ -359,6 +361,7 @@ def save_wizard_step(step):
                 if field in data:
                     setattr(pref, field, data[field])
             db.session.commit()
+            from app.core.integration import on_profile_changed
             on_profile_changed(uid)
 
         else:
@@ -802,6 +805,11 @@ def upload_resume():
         return jsonify({"error": "No file selected"}), 400
     if not allowed_file(file.filename):
         return jsonify({"error": "Only PDF and DOCX files are allowed"}), 400
+    file.seek(0, os.SEEK_END)
+    size = file.tell()
+    file.seek(0)
+    if size > current_app.config.get("MAX_CONTENT_LENGTH", 16 * 1024 * 1024):
+        return jsonify({"error": "File too large. Maximum size is 16 MB"}), 413
 
     upload_dir = os.path.join(
         current_app.root_path, "..", "uploads", "resumes", str(current_user.id)

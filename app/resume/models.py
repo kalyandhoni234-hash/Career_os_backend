@@ -63,3 +63,20 @@ class Resume(db.Model):
     versions = db.relationship(
         "ResumeVersion", backref="resume", lazy="dynamic", cascade="all, delete-orphan"
     )
+
+    @property
+    def skills_list(self):
+        raw = self.skills
+        if not raw:
+            return []
+        if isinstance(raw, dict):
+            flat = []
+            for value in raw.values():
+                if isinstance(value, list):
+                    flat.extend(v for v in value if isinstance(v, str))
+                elif isinstance(value, str):
+                    flat.append(value)
+            return flat
+        if isinstance(raw, list):
+            return [s for s in raw if isinstance(s, str)]
+        return []

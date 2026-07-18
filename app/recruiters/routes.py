@@ -36,17 +36,6 @@ def recruiter_required(f):
     return decorated
 
 
-def admin_required(f):
-    @wraps(f)
-    @login_required
-    def decorated(*args, **kwargs):
-        if current_user.role != "admin":
-            return jsonify({"error": "Admin access required"}), 403
-        return f(*args, **kwargs)
-
-    return decorated
-
-
 def _get_recruiter():
     return Recruiter.query.filter_by(user_id=current_user.id).first()
 
@@ -529,8 +518,8 @@ def candidate_ai_summary(candidate_id):
     context_parts = []
     if resume.summary:
         context_parts.append(f"Professional Summary: {resume.summary}")
-    if resume.skills:
-        context_parts.append(f"Skills: {', '.join(resume.skills[:15])}")
+    if resume.skills_list:
+        context_parts.append(f"Skills: {', '.join(resume.skills_list[:15])}")
     if resume.experience:
         exp_texts = []
         for exp in resume.experience[:3]:
@@ -586,10 +575,12 @@ Write in professional recruiter language. Highlight strengths, key skills, and w
 @recruiters_bp.route("/candidates/<int:candidate_id>/match", methods=["POST"])
 @recruiter_required
 def candidate_match_score(candidate_id):
+    from app.ai_service import sanitize_for_prompt, generate_text
+
     data = request.get_json(silent=True) or {}
-    job_description = data.get("job_description", "")
-    job_title = data.get("job_title", "")
-    skills_required = data.get("skills_required", [])
+    job_description = sanitize_for_prompt(data.get("job_description", ""))
+    job_title = sanitize_for_prompt(data.get("job_title", ""))
+    skills_required = [sanitize_for_prompt(s) for s in data.get("skills_required", [])]
 
     user = User.query.get(candidate_id)
     if not user:
@@ -614,9 +605,6 @@ Candidate Profile:
 Return valid JSON only with this structure:
 {{"match_score": <0-100 integer>, "strengths": ["strength1", "strength2", ...], "gaps": ["gap1", "gap2", ...], "reason": "<1-2 sentence explanation>"}}"""
 
-    import json as json_lib
-    from app.ai_service import generate_text
-
     try:
         raw = generate_text(match_prompt, model="gemini")
         cleaned = raw.strip()
@@ -625,7 +613,7 @@ Return valid JSON only with this structure:
             cleaned = parts[1] if len(parts) > 1 else cleaned
             if cleaned.startswith("json"):
                 cleaned = cleaned[4:]
-        result = json_lib.loads(cleaned)
+        result = json.loads(cleaned)
         return jsonify({"match": result}), 200
     except Exception as e:
         logger.warning("AI match failed: %s", e)
@@ -878,7 +866,7 @@ def get_job_post(job_id):
     if not recruiter:
         return jsonify({"error": "Recruiter profile not found"}), 404
 
-    job = JobPost.query.filter_by(id=job_id).first()
+    job = JobPost.query.filter_by(id=job_id, recruiter_id=recruiter.id).first()
     if not job:
         return jsonify({"error": "Job post not found"}), 404
 
@@ -1421,7 +1409,11 @@ def contact_candidate(candidate_id):
 @recruiters_bp.route("/jobs/<int:job_id>/match", methods=["GET"])
 @recruiter_required
 def match_candidates_to_job(job_id):
-    job = JobPost.query.get(job_id)
+    recruiter = _get_recruiter()
+    if not recruiter:
+        return jsonify({"error": "Recruiter profile not found"}), 404
+
+    job = JobPost.query.filter_by(id=job_id, recruiter_id=recruiter.id).first()
     if not job:
         return jsonify({"error": "Job not found"}), 404
 

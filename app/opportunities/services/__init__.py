@@ -9,7 +9,6 @@ from app.opportunities.services.opportunity_service import (
     update_opportunity as update_opportunity,
 )
 from app.opportunities.services.company_service import (
-    get_or_create_company as get_or_create_company,
     get_company_insights as get_company_insights,
     search_companies as search_companies,
 )

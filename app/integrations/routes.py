@@ -81,6 +81,7 @@ def _refresh_if_needed(integration: Integration, service: object) -> bool:
                 db.session.commit()
                 return True
             except Exception as e:
+                db.session.rollback()
                 logger.warning(
                     "Token refresh failed for %s: %s", integration.provider, e
                 )
@@ -173,23 +174,13 @@ def list_integrations():
         }
         if record and key == "linkedin":
             pd = record.provider_data or {}
-            logger.info(
-                "LIST INTEGRATIONS linkedin: connected=%s provider_data keys=%s name=%s headline=%s vanity=%s experience=%d education=%d skills=%d",
+            logger.debug(
+                "LIST INTEGRATIONS linkedin: connected=%s experience=%d education=%d skills=%d",
                 entry["connected"],
-                list(pd.keys()),
-                pd.get("name", "(empty)"),
-                pd.get("headline", "(empty)"),
-                pd.get("vanity_name", "(empty)"),
                 len(pd.get("experience", [])),
                 len(pd.get("education", [])),
                 len(pd.get("skills", [])),
             )
-            for idx, exp in enumerate(pd.get("experience", [])):
-                logger.info("LIST INTEGRATIONS linkedin experience[%d]: %s", idx, exp)
-            for idx, edu in enumerate(pd.get("education", [])):
-                logger.info("LIST INTEGRATIONS linkedin education[%d]: %s", idx, edu)
-            for idx, skill in enumerate(pd.get("skills", [])):
-                logger.info("LIST INTEGRATIONS linkedin skills[%d]: %s", idx, skill)
 
         if record:
             entry["token_health"] = _check_token_health(record)
@@ -325,12 +316,9 @@ def oauth_callback(provider):
 
     try:
         sync_result = svc.sync_data(access_token)
-        logger.info(
-            "OAUTH CALLBACK: sync_data returned. provider_user_id=%s provider_username=%s provider_email=%s provider_data_keys=%s",
+        logger.debug(
+            "OAUTH CALLBACK: sync_data returned. provider_user_id=%s",
             sync_result.get("provider_user_id"),
-            sync_result.get("provider_username"),
-            sync_result.get("provider_email"),
-            list((sync_result.get("provider_data") or {}).keys()),
         )
         if sync_result.get("provider_user_id"):
             integration.provider_user_id = sync_result["provider_user_id"]
@@ -340,16 +328,11 @@ def oauth_callback(provider):
             integration.provider_email = sync_result["provider_email"]
         if sync_result.get("provider_data"):
             existing = integration.provider_data or {}
-            logger.info(
-                "OAUTH CALLBACK: existing provider_data keys=%s values=%s",
-                list(existing.keys()),
-                {k: (v if k != "name" else "***redacted***") for k, v in existing.items()},
-            )
             if isinstance(sync_result["provider_data"], dict):
                 existing.update(sync_result["provider_data"])
             integration.provider_data = existing
-            logger.info(
-                "OAUTH CALLBACK: merged provider_data FINAL keys=%s",
+            logger.debug(
+                "OAUTH CALLBACK: merged provider_data keys=%s",
                 list(integration.provider_data.keys()),
             )
         integration.last_sync_at = datetime.now(timezone.utc).replace(tzinfo=None)
@@ -361,9 +344,8 @@ def oauth_callback(provider):
         integration.sync_error = str(e)
         _record_sync_history(integration, "failed", str(e))
 
-    logger.info(
-        "OAUTH CALLBACK: before profile_sync, integration.provider_data keys=%s experience=%d education=%d skills=%d",
-        list((integration.provider_data or {}).keys()),
+    logger.debug(
+        "OAUTH CALLBACK: before profile_sync, experience=%d education=%d skills=%d",
         len((integration.provider_data or {}).get("experience", [])),
         len((integration.provider_data or {}).get("education", [])),
         len((integration.provider_data or {}).get("skills", [])),
@@ -385,6 +367,7 @@ def oauth_callback(provider):
         db.session.add(event)
         db.session.commit()
     except Exception as e:
+        db.session.rollback()
         logger.warning("Profile sync failed after callback for %s: %s", provider, e)
 
     try:
@@ -483,6 +466,7 @@ def sync(provider):
             {"message": "Sync completed", "integration": integration.to_dict()}
         ), 200
     except Exception as e:
+        db.session.rollback()
         integration.sync_status = "sync_failed"
         integration.sync_error = str(e)
         _record_sync_history(integration, "failed", str(e))

@@ -1,6 +1,4 @@
-import secrets
 import logging
-from datetime import datetime, timedelta
 from flask import Blueprint, request, jsonify, redirect, current_app, session
 from flask_login import login_user, logout_user, login_required, current_user
 from app.extensions import db, bcrypt, oauth, limiter
@@ -55,8 +53,11 @@ def login():
         return jsonify({"error": "Email and password are required"}), 400
 
     user = User.query.filter_by(email=email).first()
-    if not user or not user.password_hash:
+    if not user:
         return jsonify({"error": "Invalid email or password"}), 401
+
+    if not user.password_hash:
+        return jsonify({"error": "This account uses Google sign-in. Please use 'Continue with Google'."}), 401
 
     if not bcrypt.check_password_hash(user.password_hash, password):
         return jsonify({"error": "Invalid email or password"}), 401
@@ -116,6 +117,7 @@ def google_callback():
             state_from_req,
             str(stored_state)[:20],
             session_keys,
+            exc_info=True,
         )
         return redirect(
             current_app.config["FRONTEND_URL"] + "/login?error=oauth_failed"
@@ -141,55 +143,6 @@ def google_callback():
     login_user(user, remember=True)
     logger.info("OAuth login success — email=%s", email)
     return redirect(current_app.config["FRONTEND_URL"] + "/onboarding")
-
-
-@auth_bp.route("/forgot-password", methods=["POST"])
-@limiter.limit("3 per minute")
-def forgot_password():
-    data = request.get_json(silent=True) or {}
-    email = data.get("email", "").strip().lower()
-
-    user = User.query.filter_by(email=email).first()
-    if not user:
-        return jsonify(
-            {"message": "If that email exists, a reset link has been sent"}
-        ), 200
-
-    token = secrets.token_urlsafe(32)
-    user.reset_token = token
-    user.reset_token_expiry = datetime.utcnow() + timedelta(hours=1)
-    db.session.commit()
-
-    return jsonify({"message": "Reset token generated", "reset_token": token}), 200
-
-
-@auth_bp.route("/reset-password", methods=["POST"])
-@limiter.limit("5 per minute")
-def reset_password():
-    data = request.get_json(silent=True) or {}
-    token = data.get("token", "")
-    new_password = data.get("new_password", "")
-
-    if not token or not new_password:
-        return jsonify({"error": "Token and new password are required"}), 400
-
-    if len(new_password) < 8:
-        return jsonify({"error": "Password must be at least 8 characters"}), 400
-
-    user = User.query.filter_by(reset_token=token).first()
-    if (
-        not user
-        or not user.reset_token_expiry
-        or user.reset_token_expiry < datetime.utcnow()
-    ):
-        return jsonify({"error": "Invalid or expired reset token"}), 400
-
-    user.password_hash = bcrypt.generate_password_hash(new_password).decode("utf-8")
-    user.reset_token = None
-    user.reset_token_expiry = None
-    db.session.commit()
-
-    return jsonify({"message": "Password reset successful"}), 200
 
 
 @auth_bp.route("/change-password", methods=["POST"])
@@ -227,6 +180,7 @@ def delete_account():
         logout_user()
         return jsonify({"message": "Account deleted successfully"}), 200
     except Exception as exc:
+        db.session.rollback()
         logger.error("Failed to delete account for user %s: %s", current_user.id, exc)
         return jsonify({"error": "Failed to delete account"}), 500
 

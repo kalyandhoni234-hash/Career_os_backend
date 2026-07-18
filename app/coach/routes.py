@@ -37,7 +37,7 @@ def get_history():
 @login_required
 @limiter.limit("10 per minute")
 def chat():
-    from app.ai_service import generate_text
+    from app.ai_service import generate_text, sanitize_for_prompt
 
     data = request.get_json(silent=True) or {}
     user_message = data.get("message", "").strip()
@@ -47,6 +47,8 @@ def chat():
 
     if len(user_message) > 2000:
         return jsonify({"error": "Message too long (max 2000 characters)"}), 400
+
+    user_message = sanitize_for_prompt(user_message)
 
     from app.career.services.career_memory_service import build_career_memory
 

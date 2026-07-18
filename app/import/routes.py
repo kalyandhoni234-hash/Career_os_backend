@@ -1,6 +1,7 @@
+import os
 import logging
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 from .models import ImportRecord
 from .import_service import ImportService
@@ -114,6 +115,11 @@ def upload_resume():
     file = request.files["file"]
     if file.filename == "":
         return jsonify({"error": "Empty filename"}), 400
+    file.seek(0, os.SEEK_END)
+    size = file.tell()
+    file.seek(0)
+    if size > current_app.config.get("MAX_CONTENT_LENGTH", 16 * 1024 * 1024):
+        return jsonify({"error": "File too large. Maximum size is 16 MB"}), 413
 
     text = ""
     try:
@@ -134,7 +140,7 @@ def upload_resume():
             doc = Document(file)
             text = "\n".join(p.text for p in doc.paragraphs)
         else:
-            text = file.read().decode("utf-8", errors="replace")
+            return jsonify({"error": "Only PDF and DOCX files are supported"}), 400
     except Exception as e:
         return jsonify({"error": f"Failed to extract text: {str(e)}"}), 400
 

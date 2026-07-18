@@ -1042,12 +1042,12 @@ def compare_versions():
 @login_required
 @limiter.limit("10 per minute")
 def improve_summary():
-    from app.ai_service import generate_text
+    from app.ai_service import generate_text, sanitize_for_prompt
 
     data = request.get_json(silent=True) or {}
-    summary = data.get("summary", "")
-    tone = data.get("tone", "professional")
-    skills = data.get("skills", [])
+    summary = sanitize_for_prompt(data.get("summary", ""))
+    tone = sanitize_for_prompt(data.get("tone", "professional"))
+    skills = [sanitize_for_prompt(s) for s in data.get("skills", [])]
 
     prompt = f"""Current summary: "{summary}"
 Tone: {tone}
@@ -1064,12 +1064,12 @@ Rewrite this professional summary to be more impactful and ATS-friendly. Return 
 @login_required
 @limiter.limit("10 per minute")
 def rewrite_bullet():
-    from app.ai_service import generate_text
+    from app.ai_service import generate_text, sanitize_for_prompt
 
     data = request.get_json(silent=True) or {}
-    bullet = data.get("bullet", "")
-    tone = data.get("tone", "professional")
-    context = data.get("context", "")
+    bullet = sanitize_for_prompt(data.get("bullet", ""))
+    tone = sanitize_for_prompt(data.get("tone", "professional"))
+    context = sanitize_for_prompt(data.get("context", ""))
 
     prompt = f"""Original bullet point: "{bullet}"
 Role context: {context or "Not specified"}
@@ -1111,11 +1111,11 @@ Return in JSON format:
 @login_required
 @limiter.limit("5 per minute")
 def ats_optimize():
-    from app.ai_service import generate_text
+    from app.ai_service import generate_text, sanitize_for_prompt
 
     data = request.get_json(silent=True) or {}
-    text = data.get("text", "")
-    job_description = data.get("job_description", "")
+    text = sanitize_for_prompt(data.get("text", ""))
+    job_description = sanitize_for_prompt(data.get("job_description", ""))
 
     prompt = f"""Resume text: "{text}"
 Target job description: "{job_description}"
@@ -1194,11 +1194,11 @@ Return as JSON list:
 @login_required
 @limiter.limit("10 per minute")
 def change_tone():
-    from app.ai_service import generate_text
+    from app.ai_service import generate_text, sanitize_for_prompt
 
     data = request.get_json(silent=True) or {}
-    text = data.get("text", "")
-    target_tone = data.get("tone", "professional")
+    text = sanitize_for_prompt(data.get("text", ""))
+    target_tone = sanitize_for_prompt(data.get("tone", "professional"))
 
     prompt = f"""Text: "{text}"
 Target tone: {target_tone}
@@ -1219,13 +1219,13 @@ Return the rewritten text only."""
 @login_required
 @limiter.limit("5 per minute")
 def generate_cover_letter():
-    from app.ai_service import generate_text
+    from app.ai_service import generate_text, sanitize_for_prompt
 
     data = request.get_json(silent=True) or {}
-    company = data.get("company", "")
-    role = data.get("role", "")
-    job_description = data.get("job_description", "")
-    tone = data.get("tone", "professional")
+    company = sanitize_for_prompt(data.get("company", ""))
+    role = sanitize_for_prompt(data.get("role", ""))
+    job_description = sanitize_for_prompt(data.get("job_description", ""))
+    tone = sanitize_for_prompt(data.get("tone", "professional"))
 
     resume = Resume.query.filter_by(user_id=current_user.id).first()
     resume_text = ""

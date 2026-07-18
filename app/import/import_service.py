@@ -78,6 +78,7 @@ class ImportService:
             record.status = "completed"
             logger.info("Import completed successfully: record_id=%s", record.id)
         except Exception as e:
+            db.session.rollback()
             logger.exception("Import failed for user=%s source=%s", self.user_id, source)
             record.status = "failed"
             record.error_message = f"{type(e).__name__}: {str(e)}"

@@ -1,7 +1,14 @@
+import re
 import os
 from google import genai
 from google.genai import types as genai_types
 from groq import Groq
+
+
+def sanitize_for_prompt(text: str) -> str:
+    text = re.sub(r'<\|im_start\|>|<\|im_end\|>|<\|system\|>|<\|user\|>|<\|assistant\|>', '', text)
+    text = text.replace('\x00', '')
+    return text[:10000]
 
 
 def get_gemini_client():

@@ -132,6 +132,12 @@ def create_app():
 
     app.register_blueprint(intelligence_bp)
 
+    @app.teardown_appcontext
+    def shutdown_session(exception=None):
+        if exception:
+            db.session.rollback()
+        db.session.remove()
+
     @app.after_request
     def set_security_headers(response):
         response.headers["X-Content-Type-Options"] = "nosniff"

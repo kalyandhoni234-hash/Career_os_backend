@@ -79,13 +79,10 @@ class LinkedInService(BaseIntegrationService):
         family_name = user_info.get("family_name", "")
         picture = user_info.get("picture", "")
 
-        logger.info(
-            "LINKEDIN SYNC /userinfo: sub=%s name=%s email=%s given_name=%s family_name=%s picture=%s email_verified=%s",
-            sub, name, email, given_name, family_name,
-            "present" if picture else "absent",
-            user_info.get("email_verified"),
+        logger.debug(
+            "LINKEDIN SYNC /userinfo: sub=%s email=%s email_verified=%s",
+            sub, email, user_info.get("email_verified"),
         )
-        logger.info("LINKEDIN SYNC /userinfo ALL KEYS: %s", list(user_info.keys()))
 
         profile_email = bool(user_info.get("email_verified")) if email else None
 
@@ -98,7 +95,6 @@ class LinkedInService(BaseIntegrationService):
         }
 
         # ── Stage 2: /me (basic profile) ────────────────────────
-        logger.info("LINKEDIN SYNC: fetching /me (basic)")
         try:
             profile_resp = requests.get(
                 "https://api.linkedin.com/v2/me?projection=(id,localizedHeadline,vanityName,profilePicture)",
@@ -111,18 +107,12 @@ class LinkedInService(BaseIntegrationService):
                 vanity = profile_data.get("vanityName", "")
                 provider_data["headline"] = headline
                 provider_data["vanity_name"] = vanity
-                logger.info(
-                    "LINKEDIN SYNC /me basic: headline=%s vanity=%s ALL_KEYS=%s",
-                    headline, vanity, list(profile_data.keys()),
-                )
             else:
-                logger.warning("LINKEDIN SYNC /me basic FAILED: status=%s body=%s",
-                              profile_resp.status_code, profile_resp.text[:500])
+                logger.warning("LINKEDIN SYNC /me basic FAILED: status=%s", profile_resp.status_code)
         except Exception as e:
             logger.warning("LINKEDIN SYNC /me basic exception: %s", e)
 
         # ── Stage 3: /me (extended: positions, education, skills) ──
-        logger.info("LINKEDIN SYNC: fetching /me (extended with positions,education,skills)")
         try:
             extended_resp = requests.get(
                 "https://api.linkedin.com/v2/me?projection=(id,localizedHeadline,vanityName,positions,education,skills)",
@@ -131,20 +121,10 @@ class LinkedInService(BaseIntegrationService):
             )
             if extended_resp.ok:
                 ext_data = extended_resp.json()
-                logger.info("LINKEDIN SYNC /me extended ALL_KEYS: %s", list(ext_data.keys()))
 
-                # positions
                 positions_raw = ext_data.get("positions", {})
-                logger.info(
-                    "LINKEDIN SYNC positions: type=%s value=%s",
-                    type(positions_raw).__name__,
-                    str(positions_raw)[:1000],
-                )
                 if isinstance(positions_raw, dict):
-                    elem = positions_raw.get("elements") or positions_raw.get(
-                        "values", []
-                    )
-                    logger.info("LINKEDIN SYNC positions elements: count=%d", len(elem))
+                    elem = positions_raw.get("elements") or positions_raw.get("values", [])
                     if elem:
                         parsed = []
                         for p in elem:
@@ -163,24 +143,12 @@ class LinkedInService(BaseIntegrationService):
                                 if isinstance(p.get("dateRange"), dict)
                                 else {},
                             }
-                            logger.info("LINKEDIN SYNC position entry: %s", entry)
                             parsed.append(entry)
                         provider_data["experience"] = parsed
-                else:
-                    logger.warning("LINKEDIN SYNC positions not a dict: %s", type(positions_raw).__name__)
 
-                # education
                 education_raw = ext_data.get("education", {})
-                logger.info(
-                    "LINKEDIN SYNC education: type=%s value=%s",
-                    type(education_raw).__name__,
-                    str(education_raw)[:1000],
-                )
                 if isinstance(education_raw, dict):
-                    elem = education_raw.get("elements") or education_raw.get(
-                        "values", []
-                    )
-                    logger.info("LINKEDIN SYNC education elements: count=%d", len(elem))
+                    elem = education_raw.get("elements") or education_raw.get("values", [])
                     if elem:
                         parsed = []
                         for e in elem:
@@ -199,22 +167,12 @@ class LinkedInService(BaseIntegrationService):
                                 if isinstance(e.get("dateRange"), dict)
                                 else {},
                             }
-                            logger.info("LINKEDIN SYNC education entry: %s", entry)
                             parsed.append(entry)
                         provider_data["education"] = parsed
-                else:
-                    logger.warning("LINKEDIN SYNC education not a dict: %s", type(education_raw).__name__)
 
-                # skills
                 skills_raw = ext_data.get("skills", {})
-                logger.info(
-                    "LINKEDIN SYNC skills: type=%s value=%s",
-                    type(skills_raw).__name__,
-                    str(skills_raw)[:1000],
-                )
                 if isinstance(skills_raw, dict):
                     elem = skills_raw.get("elements") or skills_raw.get("values", [])
-                    logger.info("LINKEDIN SYNC skills elements: count=%d", len(elem))
                     if elem:
                         parsed = []
                         for s in elem:
@@ -227,24 +185,15 @@ class LinkedInService(BaseIntegrationService):
                                     else ""
                                 )
                             )
-                            logger.info("LINKEDIN SYNC skill entry: name=%s raw=%s", skill_name, str(s)[:300])
                             parsed.append(skill_name)
                         provider_data["skills"] = parsed
-                else:
-                    logger.warning("LINKEDIN SYNC skills not a dict: %s", type(skills_raw).__name__)
             else:
-                logger.warning("LINKEDIN SYNC /me extended FAILED: status=%s body=%s",
-                              extended_resp.status_code, extended_resp.text[:500])
+                logger.warning("LINKEDIN SYNC /me extended FAILED: status=%s", extended_resp.status_code)
         except Exception as e:
             logger.warning("LINKEDIN SYNC /me extended exception: %s", e)
 
-        # ── Stage 4: final provider_data summary ────────────────
-        logger.info(
-            "LINKEDIN SYNC provider_data FINAL keys=%s name=%s headline=%s vanity=%s experience=%d education=%d skills=%d",
-            list(provider_data.keys()),
-            provider_data.get("name", ""),
-            provider_data.get("headline", ""),
-            provider_data.get("vanity_name", ""),
+        logger.debug(
+            "LINKEDIN SYNC provider_data FINAL: experience=%d education=%d skills=%d",
             len(provider_data.get("experience", [])),
             len(provider_data.get("education", [])),
             len(provider_data.get("skills", [])),

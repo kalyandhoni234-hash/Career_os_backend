@@ -509,7 +509,7 @@ def auto_generate_on_onboarding(user_id: int):
     return result
 
 
-def recommend_next_lesson(roadmap_id: int, lesson_id: str) -> dict:
+def recommend_next_lesson(roadmap_id: int, lesson_id: str, user_id: int = 0) -> dict:
     """Generate AI recommendations after completing a lesson."""
     result: dict = {
         "next_lesson": None,
@@ -519,7 +519,7 @@ def recommend_next_lesson(roadmap_id: int, lesson_id: str) -> dict:
 
     try:
         lp = LessonProgress.query.filter_by(
-            roadmap_id=roadmap_id, lesson_id=lesson_id
+            roadmap_id=roadmap_id, lesson_id=lesson_id, user_id=user_id
         ).first()
         if not lp or lp.status != "completed":
             return result

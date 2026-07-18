@@ -1,5 +1,6 @@
 import logging
-from flask import Blueprint, request, jsonify
+from datetime import date
+from flask import Blueprint, request, jsonify, current_app
 from flask_login import login_required, current_user
 
 from app.extensions import db
@@ -18,10 +19,30 @@ from app.intelligence.engine import (
     sync_experience_from_source,
     log_event,
 )
+from app.intelligence.reasoning_engine import get_next_action
 
 logger = logging.getLogger(__name__)
 
 intelligence_bp = Blueprint("intelligence", __name__, url_prefix="/api/intelligence")
+
+_next_action_cache: dict[int, tuple[str, dict]] = {}
+
+
+@intelligence_bp.route("/next-action", methods=["GET"])
+@login_required
+def next_action():
+    today = date.today().isoformat()
+    cached_date, cached = _next_action_cache.get(current_user.id, (None, None))
+    if cached_date == today and cached is not None:
+        return jsonify({"action": cached, "cached": True}), 200
+
+    try:
+        action = get_next_action(current_user.id)
+        _next_action_cache[current_user.id] = (today, action)
+        return jsonify({"action": action, "cached": False}), 200
+    except Exception as e:
+        logger.error("Next-action failed for user %s: %s", current_user.id, e, exc_info=True)
+        return jsonify({"error": "Failed to determine next action"}), 500
 
 
 @intelligence_bp.route("/profile", methods=["GET"])

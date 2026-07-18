@@ -392,7 +392,7 @@ def update_lesson_progress_endpoint(roadmap_id, lesson_id):
 def get_lesson_recommendations(roadmap_id, lesson_id):
     """Get AI recommendations after completing a lesson."""
     try:
-        recs = recommend_next_lesson(roadmap_id, lesson_id)
+        recs = recommend_next_lesson(roadmap_id, lesson_id, current_user.id)
         return jsonify(recs), 200
     except Exception as e:
         logger.error("Failed to get recommendations for user %s: %s", current_user.id, e, exc_info=True)
