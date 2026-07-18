@@ -1,6 +1,6 @@
 import logging
 from datetime import date
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify
 from flask_login import login_required, current_user
 
 from app.extensions import db

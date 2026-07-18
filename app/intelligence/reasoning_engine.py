@@ -1,12 +1,12 @@
 import logging
-from datetime import datetime, timezone, date
+from datetime import date
 
 from app.intelligence.engine import get_unified_profile
 from app.career.services.career_score_service import compute_career_score
 from app.career.services.roadmap_engine import get_dashboard_roadmap
 from app.career.services.recommendation_service import get_action_center
 from app.career.services.skill_graph_service import build_skill_graph, analyze_skill_gaps
-from app.ai_service import generate_text, sanitize_for_prompt
+from app.ai_service import generate_text
 
 logger = logging.getLogger(__name__)
 
